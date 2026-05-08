@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-05-08T08:01:48Z"
+stopped_at: Completed 06-04-PLAN.md
+last_updated: "2026-05-08T07:25:00Z"
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 27
-  completed_plans: 25
+  completed_plans: 26
 ---
 
 # State: Google Ad Research Agent
@@ -58,6 +58,7 @@ progress:
 | Phase 06-negatives-report-assembly-and-persistence P01 | 12 | 1 tasks | 1 files |
 | Phase 06-negatives-report-assembly-and-persistence P02 | 5 | 1 tasks | 1 files |
 | Phase 06-negatives-report-assembly-and-persistence P03 | 8 | 1 tasks | 1 files |
+| Phase 06-negatives-report-assembly-and-persistence P04 | 10 | 1 tasks | 1 files |
 
 ### Execution History
 
@@ -135,6 +136,9 @@ progress:
 - [Phase 06-03]: main() accepts optional argv parameter for testability — test_run_folder_complete calls main(["--run-dir", str(run_dir)]) directly without subprocess
 - [Phase 06-03]: cluster_id derived at render time via _build_cluster_index(); null if keyword not in any cluster — ranked.json never mutated
 - [Phase 06-03]: Competitor section prefers advertisers[] over ads[] when both present (advertisers has richer domain + extract_status fields)
+- [Phase 06-04]: Open "a" mode for existing INDEX.md, write_text(HEADER+row) only on creation — avoids read-modify-write race and duplicate headers
+- [Phase 06-04]: --runs-root optional CLI flag added (default run_dir.parent) for non-standard directory layouts
+- [Phase 06-04]: Missing brief.md returns industry="unknown" with exit 0 — INDEX.md audit trail priority over completeness
 
 ### Open Questions / Todos
 
@@ -151,9 +155,9 @@ None.
 
 **Last session:** 2026-05-08T06:58:56.339Z
 
-**Stopped at:** Completed 06-03-PLAN.md
+**Stopped at:** Completed 06-04-PLAN.md
 
-**Next session:** Phase 06-04 — update_index.py (appends row to .runs/INDEX.md; SKILL.md Step 24 gate).
+**Next session:** Phase 06-05 — final integration (SKILL.md Steps 21-26 wiring).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`

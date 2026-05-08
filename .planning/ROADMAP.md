@@ -109,7 +109,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - [x] 06-01-PLAN.md — Wave 1: generate_negatives.py (enum validator + dedup) — NEGT-01, NEGT-02, NEGT-03
 - [x] 06-02-PLAN.md — Wave 1: lib/io.py escape_md_cell() — RPRT-04
 - [x] 06-03-PLAN.md — Wave 2: render_report.py (report.md + report.json) — RPRT-01, RPRT-02, RPRT-03, RPRT-05, PRST-01
-- [ ] 06-04-PLAN.md — Wave 2: update_index.py (.runs/INDEX.md append) — PRST-02
+- [x] 06-04-PLAN.md — Wave 2: update_index.py (.runs/INDEX.md append) — PRST-02
 - [ ] 06-05-PLAN.md — Wave 3: SKILL.md Steps 21-26 (negatives gen → validate → render → index → final STOP)
 
 ## Progress
@@ -121,7 +121,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 3. Ranking and Scoring | 3/3 | Complete    | 2026-05-08 |
 | 4. Clustering | 3/3 | Complete    | 2026-05-08 |
 | 5. Competitor Ad Copy and LP Extraction | 3/3 | Complete    | 2026-05-08 |
-| 6. Negatives, Report Assembly, and Persistence | 4/6 | In Progress|  |
+| 6. Negatives, Report Assembly, and Persistence | 5/6 | In Progress|  |
 
 ## Coverage Map
 
