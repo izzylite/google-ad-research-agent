@@ -142,7 +142,7 @@ If any failure happens, do NOT retry silently — explain the failure to the ope
 
 Tell the operator: "Run folder ready at `{run_dir}`. Brief saved at `{brief_path}`. Phase 1 complete — signal collection (Phase 2) lands in a future skill update."
 
-**STOP. Do not advance to any signal collection, do not call Serper or Tavily, do not invoke WebSearch. Phase 1 ends here.**
+**If Phase 2 signal collection is not yet in this SKILL.md, stop here.** Otherwise continue to Step 6.
 
 ## Anti-patterns (do not do these)
 
@@ -160,3 +160,120 @@ Tell the operator: "Run folder ready at `{run_dir}`. Brief saved at `{brief_path
 - `Read` — to verify the run folder + brief.md exist after `run_init.py` succeeds
 
 `WebSearch` is allowed in the frontmatter for Phase 2 use — do NOT call it in Phase 1.
+
+---
+
+## Phase 2: Signal Collection
+
+> Prerequisites: Phase 1 complete — `run_dir` and `brief.md` exist. `SERPER_API_KEY` and `TAVILY_API_KEY` set in `.env`.
+
+### Step 6: Generate seed keywords
+
+Read `brief.md` from `run_dir`. From the five required fields (industry, product, location, language, audience), generate 5-15 seed phrases:
+1. The exact product phrase (e.g., "same-day grocery delivery")
+2. 2-3 product + location composites (e.g., "london grocery delivery", "uk same-day grocery delivery")
+3. 2-3 product + audience composites (e.g., "grocery delivery for busy parents")
+4. 1-2 intent variations (e.g., "best grocery delivery", "cheap grocery delivery uk")
+5. 1-2 brand or comparison variations IF Brand terms are in brief (e.g., "tesco vs ocado delivery")
+
+Skip variations that contradict Geo exclusions or Language exclusions in brief.
+
+**Do not advance to Step 7 until you have 5-15 seed phrases written out.**
+
+### Step 7: WebSearch baseline (free signal)
+
+Call WebSearch 3-5 times using the seed phrases. Embed locale explicitly in every query string (e.g., "same day grocery delivery UK", "best grocery delivery London 2026") — do NOT rely on user_location parameter.
+
+Suggested query pattern for a UK grocery campaign:
+- "{product} {location}" (e.g., "same day grocery delivery uk")
+- "best {product} {location}" (e.g., "best grocery delivery london")
+- "how to {product intent} {location}" (e.g., "how to get grocery delivery uk")
+- "{brand} vs {competitor} delivery" (only if brand terms present in brief)
+
+After all WebSearch calls complete, write the digested findings as a structured JSON file using the Write tool:
+
+```json
+{
+  "source": "websearch-baseline",
+  "queries": [
+    {"q": "<query string>", "locale": "<location/language from brief>"}
+  ],
+  "results": [
+    {"query": "<q>", "title": "<title>", "url": "<url>", "snippet": "<snippet>", "page_age": "<age>"}
+  ],
+  "extracted_keywords": [
+    {"keyword": "<phrase from snippet>", "from_query": "<q>", "snippet_excerpt": "<short excerpt>"}
+  ],
+  "captured_at": "<ISO timestamp>"
+}
+```
+
+Write to: `{run_dir}/raw/websearch-baseline.json`
+
+**Rules for extracted_keywords:** Extract verbatim keyword phrases (2-7 words) that appear in result titles and snippets. Do NOT invent variations — only phrases explicitly present in the WebSearch output. This is extraction, not generation (Pitfall 6 mitigation).
+
+**Do not advance to Step 8 until `raw/websearch-baseline.json` exists.**
+
+### Step 8: Run Serper fetch and Tavily extract
+
+Derive locale parameters from brief:
+- `gl` = lowercased country code from Location field (e.g., "UK" → "uk", "United Kingdom" → "uk")
+- `hl` = language tag from Language field (e.g., "en-GB" stays "en-GB"; "English" → "en")
+
+Run Serper (passing all seeds from Step 6):
+```bash
+uv run "${CLAUDE_SKILL_DIR}/scripts/serp_fetch.py" \
+  --run-dir "{run_dir}" \
+  --seeds {seed1} {seed2} ... \
+  --gl {gl} \
+  --hl {hl}
+```
+
+Parse stdout JSON. Surface `organic_count`, `paa_count`, `related_count`, `ads_count`, `credits_used` to operator.
+
+If exit code 2 (retryable): tell operator "Serper returned a transient error — retry? (y/n)". Re-run once if yes. If exit code 3: stop and surface the error; do not proceed.
+
+Run Tavily extract for each competitor domain in brief's Competitor URLs field (up to 5 domains, up to 5 URLs each):
+```bash
+uv run "${CLAUDE_SKILL_DIR}/scripts/tavily_extract.py" \
+  --run-dir "{run_dir}" \
+  --competitor "domain1:url1,url2,url3" \
+  --competitor "domain2:url1,url2"
+```
+
+If no competitor URLs in brief: skip Tavily (no `--competitor` args means Tavily step is skipped; log "no competitor URLs — skipping Tavily extract").
+
+Parse stdout JSON. Surface `competitor_count`, `urls_succeeded`, `urls_failed`, `credits_used`.
+
+If exit code 2 (quota): warn operator "Tavily quota exceeded — continuing with partial data". If exit code 3: stop and surface error.
+
+**Do not advance to Step 9 until both scripts have exited (0 or 2 with partial data accepted).**
+
+### Step 9: Merge signals
+
+```bash
+uv run "${CLAUDE_SKILL_DIR}/scripts/merge_signals.py" --run-dir "{run_dir}"
+```
+
+Parse stdout JSON. Confirm `{run_dir}/keywords.json` exists. Surface `keywords_count`, `source_diversity_avg`, `variants_merged` to operator.
+
+If exit code 3: surface error; do not proceed.
+
+**Do not advance to Step 10 until `keywords.json` exists and keywords_count > 0.**
+
+### Step 10: Confirm Phase 2 complete and stop
+
+Tell the operator:
+
+> "Phase 2 complete. Signal collection summary:
+> - Serper: {organic_count} organic, {paa_count} PAA, {related_count} related, {ads_count} ads
+> - Tavily: {urls_succeeded} pages extracted across {competitor_count} competitor domains
+> - WebSearch: {len(extracted_keywords)} keyword phrases extracted
+> - Merged: {keywords_count} canonical keywords ({variants_merged} variants collapsed), avg source diversity {source_diversity_avg:.1f}
+>
+> Run folder: `{run_dir}`
+> Keyword file: `{run_dir}/keywords.json`
+>
+> Phase 3 (ranking and scoring) is not yet available in this skill."
+
+**STOP. Do not proceed to ranking, clustering, or any Phase 3+ activity.**
