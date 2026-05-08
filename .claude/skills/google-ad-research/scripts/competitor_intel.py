@@ -276,11 +276,35 @@ def main_with_args(argv: list[str]) -> int:
 
         normalised = normalise_response(raw, seed=rep_kw, gl=args.gl, hl=args.hl)
         ads_raw = normalised.get("ads", [])
+        source_label = "ads"
 
-        # 2. Affiliate filter
+        # 2a. Fall back to top organic when ads block is empty/sparse.
+        # Top organic results for the cluster's representative keyword are, by
+        # definition, the businesses competing on that intent — their landing
+        # pages contain the same value props paid advertisers would highlight.
+        # Serper's ads block is unreliable (often empty even when Google shows
+        # ads); organic is consistently populated.
+        if not ads_raw:
+            organic = normalised.get("organic", [])
+            ads_raw = [
+                {
+                    "title": o.get("title"),
+                    "snippet": o.get("snippet"),
+                    "link": o.get("link"),
+                    # treat link as displayUrl so dedupe + affiliate logic works
+                    "displayUrl": o.get("link"),
+                    "position": o.get("position"),
+                }
+                for o in organic
+                if o.get("link")
+            ]
+            source_label = "organic"
+            log.info(f"{name}: ads block empty, falling back to top organic ({len(ads_raw)} results)")
+
+        # 2b. Affiliate filter
         ads_clean, filtered_count = filter_ads(ads_raw)
         log.info(
-            f"{name}: {len(ads_raw)} ads raw, {filtered_count} filtered (affiliate), "
+            f"{name}: {len(ads_raw)} {source_label} raw, {filtered_count} filtered (affiliate), "
             f"{len(ads_clean)} remaining"
         )
 
@@ -339,6 +363,7 @@ def main_with_args(argv: list[str]) -> int:
         output["clusters"][name] = {
             "representative_keyword": rep_kw,
             "serper_fetched_at": fetched_at,
+            "advertiser_source": source_label,  # "ads" or "organic" fallback
             "ads_raw_count": len(ads_raw),
             "ads_filtered_count": filtered_count,
             "ads": [
