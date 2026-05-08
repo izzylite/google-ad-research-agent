@@ -6,15 +6,15 @@
 
 **Core value:** From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session.
 
-**Current focus:** Phase 1 — Skill Scaffold and Brief Intake (Plan 01-00 complete; next: Plan 01-01).
+**Current focus:** Phase 1 — Skill Scaffold and Brief Intake (Plan 01-01 complete; next: Plan 01-02).
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
 | Phase | 1 — Skill Scaffold and Brief Intake |
-| Plan | 01-01 (Plan A: lib/io.py + lib/config.py) |
-| Status | Plan 01-00 complete — Wave 0 test scaffolding done |
+| Plan | 01-02 (Plan B: run_init.py) |
+| Status | Plan 01-01 complete — lib/ package implemented, test_config.py + test_lib_io.py GREEN |
 | Progress | `[░░░░░░░░░░] 0/6 phases complete` |
 
 ## Performance Metrics
@@ -23,19 +23,22 @@
 |--------|-------|
 | Phases planned | 1 / 6 |
 | Phases complete | 0 / 6 |
-| Plans complete | 1 |
-| v1 requirements complete | 0 / 35 |
+| Plans complete | 2 |
+| v1 requirements complete | 2 / 35 |
 
 ### Execution History
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 01 | 00 | ~3 min | 3/3 | 5 created |
+| 01 | 01 | ~6 min | 2/2 | 4 created |
 
 ## Accumulated Context
 
 ### Decisions
 
+- find_dotenv(usecwd=True) not usecwd=False in lib/config.py — usecwd=False searches from calling stack frame (inside project tree during tests), defeating monkeypatch.chdir() isolation; usecwd=True correctly respects test CWD and production CWD.
+- lib/http.py intentionally absent from Phase 1 — no HTTP calls in Phase 1; writing untested stub now risks API mismatch when Serper/Tavily are designed in Phase 2.
 - Claude Code skill (not standalone app) — operator already lives in Claude Code; second runtime adds no value.
 - Three signal sources, three roles: WebSearch (free baseline), Serper.dev (structured SERP — PAA / related / ads), Tavily (deep competitor LP content).
 - No volume / CPC API in v1 — rank on `source_diversity` (primary) + `signal_count` (tiebreak) + LLM intent weight; explicit "not search volume" labelling.
@@ -60,11 +63,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08 — Completed Plan 01-00 (Wave 0 pytest scaffolding). 5 test files created: __init__.py, conftest.py, test_lib_io.py, test_config.py, test_run_init.py. 18 tests collect in 0.02s, all RED (ModuleNotFoundError until Plan A lands).
+**Last session:** 2026-05-08 — Completed Plan 01-01 (lib/ package). 4 files created: lib/__init__.py, lib/config.py, lib/io.py, lib/log.py. 12 tests GREEN (test_config.py 4/4, test_lib_io.py 8/8). Wave 0 RED->GREEN flip confirmed.
 
-**Stopped at:** Completed 01-00-PLAN.md
+**Stopped at:** Completed 01-01-PLAN.md
 
-**Next session:** Execute Plan 01-01 (Plan A — lib/io.py + lib/config.py implementation).
+**Next session:** Execute Plan 01-02 (Plan B — run_init.py brief intake script).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`

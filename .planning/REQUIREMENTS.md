@@ -11,8 +11,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **SCFD-01**: Skill installed at `.claude/skills/google-ad-research/` with `SKILL.md` and `scripts/` subfolder
 - [ ] **SCFD-02**: Python helper scripts run via `uv run` with PEP 723 inline dependency metadata
-- [ ] **SCFD-03**: API keys (Serper, Tavily) loaded from `.env` via python-dotenv; `.env` git-ignored, `.env.example` committed
-- [ ] **SCFD-04**: `scripts/lib/` package provides shared HTTP client (httpx + retry), config loader, IO helpers, structured logging
+- [x] **SCFD-03**: API keys (Serper, Tavily) loaded from `.env` via python-dotenv; `.env` git-ignored, `.env.example` committed
+- [x] **SCFD-04**: `scripts/lib/` package provides shared HTTP client (httpx + retry), config loader, IO helpers, structured logging
 - [ ] **SCFD-05**: `run_init.py` creates dated run folder `.runs/<ISO-timestamp>-<slug>/` containing `brief.md`, `raw/` subfolder
 
 ### Brief Intake
@@ -117,8 +117,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | SCFD-01 | Phase 1 | Pending |
 | SCFD-02 | Phase 1 | Pending |
-| SCFD-03 | Phase 1 | Pending |
-| SCFD-04 | Phase 1 | Pending |
+| SCFD-03 | Phase 1 | Complete |
+| SCFD-04 | Phase 1 | Complete |
 | SCFD-05 | Phase 1 | Pending |
 | INTK-01 | Phase 1 | Pending |
 | INTK-02 | Phase 1 | Pending |
