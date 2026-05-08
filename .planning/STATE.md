@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-04-PLAN.md
-last_updated: "2026-05-08T04:48:00.000Z"
+stopped_at: Completed 02-05-PLAN.md
+last_updated: "2026-05-08T12:21:30.000Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 2 — Signal Collection |
-| Plan | 02-04 COMPLETE (merge_signals.py — sources array + variant merge + 6-source taxonomy) |
-| Status | Phase 2 in-progress: plans 00-04 complete; 02-05 (SKILL.md update) remaining |
-| Progress | `[██░░░░░░░░] 1/6 phases complete (Phase 2 in-progress: 5/6 plans done)` |
+| Plan | 02-05 COMPLETE (SKILL.md Phase 2 Steps 6-10 — seed gen + WebSearch + serp_fetch + tavily + merge_signals) |
+| Status | Phase 2 COMPLETE: all 6 plans (02-00 through 02-05) done |
+| Progress | `[████░░░░░░] 2/6 phases complete (Phase 2 complete)` |
 
 ## Performance Metrics
 
@@ -44,6 +44,7 @@ progress:
 | Phase 02-signal-collection P02 | 8min | 2 tasks | 2 files |
 | Phase 02-signal-collection P03 | 15min | 1 tasks | 1 files |
 | Phase 02-signal-collection P04 | 4min | 2 tasks | 2 files |
+| Phase 02-signal-collection P05 | 12min | 2 tasks | 2 files |
 
 ### Execution History
 
@@ -93,6 +94,9 @@ progress:
 - [Phase 02-04]: source_diversity = distinct source strings not occurrence count (serper-paa + serper-organic = 2, not 1)
 - [Phase 02-04]: websearch-baseline.json treated as optional — merge proceeds without it (exit 3 only if run_dir or raw_dir missing)
 - [Phase 02-04]: keywords.json written to run_dir root (not raw/) to match Phase 3 consumption contract
+- [Phase 02-05]: WebSearch invoked from skill prompt (not Python script) — SIGL-03 pattern; extracted_keywords verbatim-only rule (Pitfall 6 mitigation)
+- [Phase 02-05]: Step 5 STOP replaced with conditional gate enabling progressive phase appending without breaking Phase 1 behaviour
+- [Phase 02-05]: Phase 2 ends at Step 10 STOP; no Phase 3 scope in this skill update
 
 ### Open Questions / Todos
 
@@ -107,11 +111,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08T04:48:00Z
+**Last session:** 2026-05-08T12:21:30Z
 
-**Stopped at:** Completed 02-04-PLAN.md
+**Stopped at:** Completed 02-05-PLAN.md
 
-**Next session:** Plan 02-05 — SKILL.md update (Steps 6-10: seed gen + WebSearch invocation + script invocations + stop gate). Final Phase 2 plan.
+**Next session:** Phase 3 planning — ranking and scoring (intent classification, source_diversity ranking, keyword tier assignment).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
