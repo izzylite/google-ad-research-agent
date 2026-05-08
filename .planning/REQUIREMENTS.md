@@ -10,17 +10,17 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Scaffold
 
 - [ ] **SCFD-01**: Skill installed at `.claude/skills/google-ad-research/` with `SKILL.md` and `scripts/` subfolder
-- [ ] **SCFD-02**: Python helper scripts run via `uv run` with PEP 723 inline dependency metadata
+- [x] **SCFD-02**: Python helper scripts run via `uv run` with PEP 723 inline dependency metadata
 - [x] **SCFD-03**: API keys (Serper, Tavily) loaded from `.env` via python-dotenv; `.env` git-ignored, `.env.example` committed
 - [x] **SCFD-04**: `scripts/lib/` package provides shared HTTP client (httpx + retry), config loader, IO helpers, structured logging
-- [ ] **SCFD-05**: `run_init.py` creates dated run folder `.runs/<ISO-timestamp>-<slug>/` containing `brief.md`, `raw/` subfolder
+- [x] **SCFD-05**: `run_init.py` creates dated run folder `.runs/<ISO-timestamp>-<slug>/` containing `brief.md`, `raw/` subfolder
 
 ### Brief Intake
 
 - [ ] **INTK-01**: Skill prompts operator for campaign brief in chat; operator pastes free-form context
 - [ ] **INTK-02**: Skill validates 5 required fields (industry, product, location, language, audience); loops until all non-empty
 - [ ] **INTK-03**: Skill solicits optional fields (budget signal, geo exclusions, language exclusions, brand terms, competitor URLs) when relevant
-- [ ] **INTK-04**: Validated brief saved verbatim to `brief.md` in run folder before any paid API call
+- [x] **INTK-04**: Validated brief saved verbatim to `brief.md` in run folder before any paid API call
 
 ### Signal Collection
 
