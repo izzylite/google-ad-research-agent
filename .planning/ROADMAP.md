@@ -47,7 +47,13 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. WebSearch is invoked from the skill prompt (not wrapped in a script), and its digested findings land in `raw/websearch-baseline.json` via the Write tool.
   4. Every keyword that survives harvest carries a `sources` array recording which source(s) surfaced it; single-source and multi-source keywords are distinguishable downstream.
   5. Close variants ("grocery delivery" / "groceries delivery" / "grocery deliveries") merge into a single canonical surface form via lemmatized + token-sorted hashing before scoring sees them.
-**Plans:** TBD
+**Plans:** 6 plans
+- [ ] 02-00-PLAN.md — Wave 0: test scaffolding (5 RED test files + 3 fixture JSONs + conftest extension)
+- [ ] 02-01-PLAN.md — Wave 1: lib/http.py (httpx RetryTransport) + lib/canon.py (inflect + token-sort hash)
+- [ ] 02-02-PLAN.md — Wave 2: serp_fetch.py (Serper REST, locale plumbing, all signal blocks)
+- [ ] 02-03-PLAN.md — Wave 2: tavily_extract.py (Tavily SDK extract, caps, failed_results persistence)
+- [ ] 02-04-PLAN.md — Wave 3: merge_signals.py (sources array, variant merge, 6-source taxonomy → keywords.json)
+- [ ] 02-05-PLAN.md — Wave 4: SKILL.md update (Steps 6-10: seed gen + WebSearch + script invocations + stop)
 
 ### Phase 3: Ranking and Scoring
 **Goal:** Every harvested keyword has a stable 4-class intent label, a match-type recommendation, and a composite score whose primary signal is source_diversity — locked into the canonical table schema.
@@ -97,7 +103,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Skill Scaffold and Brief Intake | 6/6 | Complete    | 2026-05-08 |
-| 2. Signal Collection | 0/0 | Not started | - |
+| 2. Signal Collection | 0/6 | In progress | - |
 | 3. Ranking and Scoring | 0/0 | Not started | - |
 | 4. Clustering | 0/0 | Not started | - |
 | 5. Competitor Ad Copy and LP Extraction | 0/0 | Not started | - |
@@ -129,3 +135,4 @@ No orphans. No duplicates. Every v1 requirement maps to exactly one phase.
 ---
 *Roadmap created: 2026-05-08*
 *Phase 1 plans drafted: 2026-05-08*
+*Phase 2 plans drafted: 2026-05-08*
