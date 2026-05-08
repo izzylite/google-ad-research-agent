@@ -34,9 +34,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Ranking
 
 - [ ] **RANK-01**: LLM classifies each keyword by 4-class intent (informational / commercial / transactional / navigational) using categorical rubric with anchor examples, temperature=0
-- [ ] **RANK-02**: Composite ranking uses `signal_count` (occurrences) + `source_diversity` (distinct sources) + intent weight; primary ranking signal is `source_diversity`
-- [ ] **RANK-03**: Match-type recommendation (broad / phrase / exact) suggested per keyword with conservative defaults (phrase by default; exact for high-confidence transactional/brand; broad rarely)
-- [ ] **RANK-04**: Ranked keyword table columns: `keyword`, `intent`, `match_type`, `theme`, `signal_count`, `source_diversity`, `sources`, `score`
+- [x] **RANK-02**: Composite ranking uses `signal_count` (occurrences) + `source_diversity` (distinct sources) + intent weight; primary ranking signal is `source_diversity`
+- [x] **RANK-03**: Match-type recommendation (broad / phrase / exact) suggested per keyword with conservative defaults (phrase by default; exact for high-confidence transactional/brand; broad rarely)
+- [x] **RANK-04**: Ranked keyword table columns: `keyword`, `intent`, `match_type`, `theme`, `signal_count`, `source_diversity`, `sources`, `score`
 
 ### Clustering
 
@@ -131,9 +131,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SIGL-05 | Phase 2 | Complete |
 | SIGL-06 | Phase 2 | Complete |
 | RANK-01 | Phase 3 | Pending |
-| RANK-02 | Phase 3 | Pending |
-| RANK-03 | Phase 3 | Pending |
-| RANK-04 | Phase 3 | Pending |
+| RANK-02 | Phase 3 | Complete |
+| RANK-03 | Phase 3 | Complete |
+| RANK-04 | Phase 3 | Complete |
 | CLST-01 | Phase 4 | Pending |
 | CLST-02 | Phase 4 | Pending |
 | CLST-03 | Phase 4 | Pending |

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-00-PLAN.md
-last_updated: "2026-05-08T05:14:13.972Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-05-08T05:17:07.369Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # State: Google Ad Research Agent
@@ -46,6 +46,7 @@ progress:
 | Phase 02-signal-collection P04 | 4min | 2 tasks | 2 files |
 | Phase 02-signal-collection P05 | 12min | 2 tasks | 2 files |
 | Phase 03-ranking-and-scoring P00 | 6min | 2 tasks | 3 files |
+| Phase 03-ranking-and-scoring P01 | 1min | 1 tasks | 1 files |
 
 ### Execution History
 
@@ -100,6 +101,7 @@ progress:
 - [Phase 02-05]: Phase 2 ends at Step 10 STOP; no Phase 3 scope in this skill update
 - [Phase 03-ranking-and-scoring]: MODULE_MISSING guard (try/except ImportError + pytest.skip) for Wave 0 RED stubs — consistent with Phase 2 pattern; keeps collection clean without xfail noise
 - [Phase 03-ranking-and-scoring]: Inline ocado login row fabricated in test_match_type_exact_navigational (diversity=3) to cover exact-navigational branch not present in fixture (ocado website is diversity=1)
+- [Phase 03-ranking-and-scoring]: match_type passthrough from intent-labels.json — rank_keywords.py reads but never recalculates match_type; heuristic belongs to skill prompt Step 11
 
 ### Open Questions / Todos
 
@@ -114,9 +116,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08T05:14:13.969Z
+**Last session:** 2026-05-08T05:17:07.366Z
 
-**Stopped at:** Completed 03-00-PLAN.md
+**Stopped at:** Completed 03-01-PLAN.md
 
 **Next session:** Phase 3 planning — ranking and scoring (intent classification, source_diversity ranking, keyword tier assignment).
 
