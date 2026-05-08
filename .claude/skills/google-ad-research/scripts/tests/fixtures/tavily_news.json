@@ -1,0 +1,13 @@
+{
+  "captured_at": "2026-05-08T07:00:00Z",
+  "horizon_days": 7,
+  "by_seed": [
+    {
+      "seed": "florida pip law",
+      "fetched_at": "2026-05-08T07:00:00Z",
+      "items": [
+        {"title": "Florida PIP law amendment summary", "link": "https://other.example.com/pip-summary", "snippet": "Tavily summary of new Florida PIP law amendment provisions.", "date": "2026-05-06", "source": "OtherNews", "score": 0.92, "from_seed": "florida pip law", "horizon_days": 7, "_source": "tavily-news"}
+      ]
+    }
+  ]
+}

@@ -128,6 +128,75 @@ def render_competitor_section(competitor_intel: dict) -> str:
     return "".join(parts)
 
 
+def render_niche_pulse_section(pulse: dict) -> str:
+    """Render the Niche Pulse section (markdown).
+
+    pulse is the niche-pulse.json dict produced by pulse_synth.py. Empty / missing
+    pulse renders a stub note.
+    """
+    if not pulse or not isinstance(pulse, dict):
+        return ""
+    parts = ["## Niche Pulse — last "
+             f"{pulse.get('horizon_days', 7)} days "
+             f"(captured {pulse.get('captured_at', 'n/a')})\n"]
+    parts.append(
+        f"\n_News-derived signals across "
+        f"{pulse.get('total_news_items', 0)} headlines. "
+        f"Time-sensitive — shelf life days to weeks. NOT merged into the "
+        f"main keyword ranking._\n"
+    )
+
+    themes = pulse.get("trending_themes", [])
+    parts.append(f"\n### Trending Themes ({len(themes)})\n")
+    if not themes:
+        parts.append("\n_No repeated themes surfaced in the harvest window._\n")
+    else:
+        for t in themes[:15]:
+            theme = escape_md_cell(t.get("theme", ""))
+            count = t.get("mention_count", 0)
+            first = t.get("first_seen", "—")
+            sources = ", ".join(t.get("sources", []))
+            parts.append(f"\n- **{theme}** — {count} mentions · first seen {first} · sources: {sources}\n")
+            for h in t.get("headlines", [])[:3]:
+                title = escape_md_cell(h.get("title", ""))
+                date = h.get("date") or ""
+                parts.append(f"    - _{date}_ {title}\n")
+
+    reg = pulse.get("regulatory_alerts", [])
+    parts.append(f"\n### Regulatory Alerts ({len(reg)})\n")
+    if not reg:
+        parts.append("\n_No regulatory keywords detected._\n")
+    else:
+        for r in reg[:10]:
+            title = escape_md_cell(r.get("title", ""))
+            date = r.get("date") or ""
+            kws = ", ".join(r.get("matched_keywords", []))
+            parts.append(f"\n- _{date}_ **{title}** — matched: `{kws}`\n")
+
+    comp = pulse.get("competitor_news", [])
+    parts.append(f"\n### Competitor News ({len(comp)})\n")
+    if not comp:
+        parts.append("\n_No competitor brand mentions in the news harvest._\n")
+    else:
+        for c in comp[:10]:
+            title = escape_md_cell(c.get("title", ""))
+            brand = c.get("matched_brand", "")
+            date = c.get("date") or ""
+            parts.append(f"\n- _{date}_ **{title}** — brand: `{brand}`\n")
+
+    negs = pulse.get("trending_negatives", [])
+    parts.append(f"\n### Trending Negative Candidates ({len(negs)})\n")
+    if not negs:
+        parts.append("\n_No scam/fraud/lawsuit triggers in the news window._\n")
+    else:
+        for n in negs[:10]:
+            title = escape_md_cell(n.get("title", ""))
+            trig = ", ".join(n.get("trigger_keywords", []))
+            parts.append(f"\n- **{title}** — triggers: `{trig}`\n")
+
+    return "".join(parts)
+
+
 def render_negatives_section(negatives: list[dict]) -> str:
     """Render the Negative Keywords section with Strong/Considered/Investigate tiers."""
     by_tier: dict[str, list[dict]] = {t: [] for t in TIER_ORDER}
@@ -216,6 +285,7 @@ def render_full_report(
     run_dir: Path,
     *,
     top_n: int = 100,
+    niche_pulse: dict | None = None,
 ) -> str:
     """Return full report.md content as a string."""
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -240,6 +310,10 @@ def render_full_report(
         "\n",
         render_negatives_section(negatives),
     ]
+    pulse_md = render_niche_pulse_section(niche_pulse or {})
+    if pulse_md:
+        sections.append("\n")
+        sections.append(pulse_md)
     return "".join(sections)
 
 
@@ -412,6 +486,13 @@ Keyword Planner for actual volume + CPC.
   <div id="competitorList"></div>
 </section>
 
+<section id="niche-pulse">
+  <h2>Niche Pulse <span class="cluster-meta" id="pulseMeta"></span></h2>
+  <div id="pulseContent">
+    <p style="color:#666;font-size:13px;">No niche-pulse.json found in this run — run Phase 7 (pulse_fetch + pulse_synth) to populate.</p>
+  </div>
+</section>
+
 <section>
   <h2>Negative Keywords</h2>
   <div class="toolbar">
@@ -501,6 +582,79 @@ function renderCompetitors() {{
   }}).join("");
 }}
 
+function renderNichePulse() {{
+  const pulse = REPORT.niche_pulse || {{}};
+  const meta = document.getElementById("pulseMeta");
+  const content = document.getElementById("pulseContent");
+  if (!pulse || !pulse.captured_at) {{
+    return;  // keep stub message
+  }}
+  meta.textContent = `last ${{pulse.horizon_days||7}} days · ${{pulse.total_news_items||0}} headlines · captured ${{pulse.captured_at}}`;
+  const themes = pulse.trending_themes || [];
+  const reg = pulse.regulatory_alerts || [];
+  const comp = pulse.competitor_news || [];
+  const negs = pulse.trending_negatives || [];
+
+  let html = "";
+  // Trending themes
+  html += `<details open><summary>Trending Themes <span class="cluster-meta">${{themes.length}}</span></summary>`;
+  if (!themes.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No repeated themes in window.</p>";
+  else {{
+    html += "<ul>";
+    themes.slice(0,15).forEach(t => {{
+      html += `<li><strong>${{htmlEscape(t.theme)}}</strong> <span class="cluster-meta">${{t.mention_count}} mentions · first seen ${{htmlEscape(t.first_seen||'—')}} · ${{(t.sources||[]).join(", ")}}</span>`;
+      if (t.headlines && t.headlines.length) {{
+        html += "<ul>";
+        t.headlines.slice(0,3).forEach(h => {{
+          html += `<li><em>${{htmlEscape(h.date||'')}}</em> ${{h.link?`<a href="${{htmlEscape(h.link)}}" target="_blank">${{htmlEscape(h.title||'')}}</a>`:htmlEscape(h.title||'')}}</li>`;
+        }});
+        html += "</ul>";
+      }}
+      html += "</li>";
+    }});
+    html += "</ul>";
+  }}
+  html += "</details>";
+
+  // Regulatory alerts
+  html += `<details><summary>Regulatory Alerts <span class="cluster-meta">${{reg.length}}</span></summary>`;
+  if (!reg.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No regulatory keywords detected.</p>";
+  else {{
+    html += "<ul>";
+    reg.slice(0,15).forEach(r => {{
+      html += `<li><em>${{htmlEscape(r.date||'')}}</em> ${{r.link?`<a href="${{htmlEscape(r.link)}}" target="_blank"><strong>${{htmlEscape(r.title||'')}}</strong></a>`:`<strong>${{htmlEscape(r.title||'')}}</strong>`}} <span class="cluster-meta">matched: ${{(r.matched_keywords||[]).map(k=>`<code>${{k}}</code>`).join(" ")}}</span></li>`;
+    }});
+    html += "</ul>";
+  }}
+  html += "</details>";
+
+  // Competitor news
+  html += `<details><summary>Competitor News <span class="cluster-meta">${{comp.length}}</span></summary>`;
+  if (!comp.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No competitor brand mentions in window.</p>";
+  else {{
+    html += "<ul>";
+    comp.slice(0,15).forEach(c => {{
+      html += `<li><em>${{htmlEscape(c.date||'')}}</em> ${{c.link?`<a href="${{htmlEscape(c.link)}}" target="_blank"><strong>${{htmlEscape(c.title||'')}}</strong></a>`:`<strong>${{htmlEscape(c.title||'')}}</strong>`}} <span class="cluster-meta">brand: <code>${{htmlEscape(c.matched_brand||'')}}</code></span></li>`;
+    }});
+    html += "</ul>";
+  }}
+  html += "</details>";
+
+  // Trending negatives
+  html += `<details><summary>Trending Negative Candidates <span class="cluster-meta">${{negs.length}}</span></summary>`;
+  if (!negs.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No scam/fraud/lawsuit triggers in window.</p>";
+  else {{
+    html += "<ul>";
+    negs.slice(0,15).forEach(n => {{
+      html += `<li><strong>${{htmlEscape(n.title||'')}}</strong> <span class="cluster-meta">triggers: ${{(n.trigger_keywords||[]).map(k=>`<code>${{k}}</code>`).join(" ")}}</span></li>`;
+    }});
+    html += "</ul>";
+  }}
+  html += "</details>";
+
+  content.innerHTML = html;
+}}
+
 function renderNegatives() {{
   const tbody = document.querySelector("#negTable tbody");
   const filter = document.getElementById("negFilter").value.toLowerCase();
@@ -569,7 +723,7 @@ document.getElementById("intentFilter").addEventListener("change", renderKeyword
 document.getElementById("negFilter").addEventListener("input", renderNegatives);
 document.getElementById("negTierFilter").addEventListener("change", renderNegatives);
 
-renderKeywords(); renderClusters(); renderCompetitors(); renderNegatives();
+renderKeywords(); renderClusters(); renderCompetitors(); renderNichePulse(); renderNegatives();
 makeSortable("kwTable"); makeSortable("negTable");
 </script>
 </body>
@@ -584,6 +738,8 @@ def build_report_json(
     negatives: list[dict],
     brief_text: str,
     run_dir: Path,
+    *,
+    niche_pulse: dict | None = None,
 ) -> dict:
     """Return canonical v1 report.json dict (not serialized)."""
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -617,6 +773,7 @@ def build_report_json(
         "clusters": clusters_data.get("clusters", []),
         "competitor_intel": competitor_intel,
         "negatives": negatives,
+        "niche_pulse": niche_pulse or {},
     }
 
 
@@ -664,14 +821,23 @@ def main(argv: list[str] | None = None) -> int:
     else:
         competitor_intel = {}
 
+    # Load optional niche pulse (Phase 7 sidecar)
+    pulse_path = run_dir / "niche-pulse.json"
+    niche_pulse: dict | None = None
+    if pulse_path.exists():
+        try:
+            niche_pulse = json.loads(pulse_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            niche_pulse = None
+
     # Render
     report_md = render_full_report(
         ranked, clusters_data, competitor_intel, negatives,
-        brief_text, run_dir, top_n=args.top_n,
+        brief_text, run_dir, top_n=args.top_n, niche_pulse=niche_pulse,
     )
     report_json = build_report_json(
         ranked, clusters_data, competitor_intel, negatives,
-        brief_text, run_dir,
+        brief_text, run_dir, niche_pulse=niche_pulse,
     )
 
     report_html = render_html_report(report_json)

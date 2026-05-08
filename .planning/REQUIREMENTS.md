@@ -69,6 +69,18 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **PRST-01**: Each run is an isolated dated folder containing `brief.md`, `report.md`, `report.json`, `raw/`
 - [x] **PRST-02**: `.runs/INDEX.md` lists past runs (date, brief slug, status) for operator browsing
 
+### Niche Pulse (Phase 7 — time-sensitive sidecar)
+
+- [x] **PULSE-01**: `pulse_fetch.py` calls Serper `/news` endpoint per seed keyword with `tbs=qdr:w` (last 7 days) and persists `raw/serper-news.json`
+- [x] **PULSE-02**: `pulse_fetch.py` calls Tavily `search` with `topic="news"` and `days=7` per seed keyword and persists `raw/tavily-news.json`
+- [x] **PULSE-03**: `pulse_synth.py` reads news raws and produces `niche-pulse.json` containing trending themes, regulatory alerts, competitor news, and trending negatives sections
+- [x] **PULSE-04**: Trending themes are clustered by repeated phrase/topic across both news sources with `mention_count`, `first_seen`, and `sources[]` attribution
+- [x] **PULSE-05**: Regulatory alerts are tagged via keyword heuristics (law/regulation/PIP/HIPAA/compliance/court/ruling/lawsuit terms)
+- [x] **PULSE-06**: `render_report.py` adds a Niche Pulse section to `report.md` and `report.html` showing trending themes, regulatory alerts, competitor news, freshness window
+- [x] **PULSE-07**: Niche Pulse data is tagged with `horizon_days` and `captured_at` so consumers know shelf life
+- [x] **PULSE-08**: SKILL.md Steps 27-30 wire the niche pulse phase as optional (skill prompts operator: run pulse?)
+- [x] **PULSE-09**: Niche pulse keywords/themes are NOT merged into the main `keywords.json` ranking (different lifecycle); they live in their own `niche-pulse.json`
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.

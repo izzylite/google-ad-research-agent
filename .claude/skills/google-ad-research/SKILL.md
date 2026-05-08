@@ -477,3 +477,9 @@ Phase 5 (competitor intel) begins at Step 18 below.
 ## Phase 6: Negatives, Report Assembly, and Persistence
 
 > See `.claude/skills/google-ad-research/references/phase6-negatives-report.md` for full step instructions (Steps 21-26). Load it with the Read tool when entering Phase 6.
+
+---
+
+## Phase 7: Niche Pulse (optional, time-sensitive sidecar)
+
+> See `.claude/skills/google-ad-research/references/phase7-niche-pulse.md` for full step instructions (Steps 27-30). Load it with the Read tool when entering Phase 7. Phase 7 is optional — ask the operator before running. It surfaces trending news themes, regulatory alerts, competitor news, and trending negative candidates from the last 7 days. Costs ~12 Serper + ~12 Tavily credits per run. Does NOT merge into the main `keywords.json` — produces its own `niche-pulse.json`.

@@ -112,6 +112,16 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - [x] 06-04-PLAN.md — Wave 2: update_index.py (.runs/INDEX.md append) — PRST-02
 - [x] 06-05-PLAN.md — Wave 3: SKILL.md Steps 21-26 (negatives gen → validate → render → index → final STOP)
 
+### Phase 7: Niche Pulse (time-sensitive sidecar)
+**Goal:** Surface trending themes, regulatory shifts, and competitor news from the last 7 days to capture event-driven keyword opportunities the evergreen pipeline misses. Sidecar phase — does NOT mutate `keywords.json`.
+**Depends on:** Phase 1 (run folder + brief.md). Phase 7 can run independently of Phases 2-6, but typical workflow runs after Phase 6 to enrich the report.
+**Requirements:** PULSE-01..09
+**Success Criteria** (what must be TRUE):
+  1. `pulse_fetch.py` calls Serper `/news` and Tavily `search(topic="news")` per seed and writes both raws to `raw/`.
+  2. `pulse_synth.py` produces `niche-pulse.json` with trending themes (mention_count, first_seen, sources), regulatory alerts, competitor news, and trending negatives sections.
+  3. `report.md` and `report.html` carry a Niche Pulse section showing the freshness window (`horizon_days`), trending themes, regulatory alerts, and competitor news.
+  4. Niche pulse keywords are NOT merged into `keywords.json` — they live in their own `niche-pulse.json` because they have a 1-30 day shelf life vs evergreen kw.
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -122,6 +132,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 4. Clustering | 3/3 | Complete    | 2026-05-08 |
 | 5. Competitor Ad Copy and LP Extraction | 3/3 | Complete    | 2026-05-08 |
 | 6. Negatives, Report Assembly, and Persistence | 6/6 | Complete    | 2026-05-08 |
+| 7. Niche Pulse | 2/2 | Complete    | 2026-05-08 |
 
 ## Coverage Map
 
@@ -133,7 +144,8 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 4 | CLST-01, CLST-02, CLST-03 | 3 |
 | 5 | COMP-01, COMP-02, COMP-03 | 3 |
 | 6 | NEGT-01, NEGT-02, NEGT-03, RPRT-01, RPRT-02, RPRT-03, RPRT-04, RPRT-05, PRST-01, PRST-02 | 10 |
-| **Total** | | **35 / 35** |
+| 7 | PULSE-01, PULSE-02, PULSE-03, PULSE-04, PULSE-05, PULSE-06, PULSE-07, PULSE-08, PULSE-09 | 9 |
+| **Total** | | **44 / 44** |
 
 No orphans. No duplicates. Every v1 requirement maps to exactly one phase.
 
