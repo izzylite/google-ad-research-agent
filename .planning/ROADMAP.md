@@ -104,7 +104,13 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. `report.json` exists alongside `report.md` with the same canonical keyword and cluster keys (stable from v1 so future run-diff works); markdown table cells are sanitized (pipes escaped, smart quotes normalized, newlines stripped).
   4. Each run is a sealed dated folder containing `brief.md`, `report.md`, `report.json`, and a `raw/` subfolder with every per-stage API response — no cross-run mutation.
   5. `.runs/INDEX.md` lists every past run (date, brief slug, status) so the operator can browse historical work without `ls`-ing dated folders.
-**Plans:** TBD
+**Plans:** 6 plans
+- [ ] 06-00-PLAN.md — Wave 0: RED test stubs (14 functions) + 2 fixtures + tabulate>=0.9.0 in pyproject.toml
+- [ ] 06-01-PLAN.md — Wave 1: generate_negatives.py (enum validator + dedup) — NEGT-01, NEGT-02, NEGT-03
+- [ ] 06-02-PLAN.md — Wave 1: lib/io.py escape_md_cell() — RPRT-04
+- [ ] 06-03-PLAN.md — Wave 2: render_report.py (report.md + report.json) — RPRT-01, RPRT-02, RPRT-03, RPRT-05, PRST-01
+- [ ] 06-04-PLAN.md — Wave 2: update_index.py (.runs/INDEX.md append) — PRST-02
+- [ ] 06-05-PLAN.md — Wave 3: SKILL.md Steps 21-26 (negatives gen → validate → render → index → final STOP)
 
 ## Progress
 
@@ -115,7 +121,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 3. Ranking and Scoring | 3/3 | Complete    | 2026-05-08 |
 | 4. Clustering | 3/3 | Complete    | 2026-05-08 |
 | 5. Competitor Ad Copy and LP Extraction | 3/3 | Complete    | 2026-05-08 |
-| 6. Negatives, Report Assembly, and Persistence | 0/0 | Not started | - |
+| 6. Negatives, Report Assembly, and Persistence | 0/6 | Not started | - |
 
 ## Coverage Map
 
@@ -146,3 +152,4 @@ No orphans. No duplicates. Every v1 requirement maps to exactly one phase.
 *Phase 2 plans drafted: 2026-05-08*
 *Phase 3 plans drafted: 2026-05-08*
 *Phase 5 plans drafted: 2026-05-08*
+*Phase 6 plans drafted: 2026-05-08*
