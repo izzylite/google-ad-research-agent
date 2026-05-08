@@ -1,0 +1,20 @@
+{
+  "results": [
+    {
+      "url": "https://tesco.com/groceries/delivery",
+      "raw_content": "Order your weekly shop for next-day delivery. Choose from thousands of products including fresh produce, bakery, dairy and more. Free delivery on orders over £40.",
+      "response_time": 1.2
+    }
+  ],
+  "failed_results": [
+    {
+      "url": "https://tesco.com/groceries/same-day",
+      "error": "timeout"
+    }
+  ],
+  "response_time": 2.4,
+  "request_id": "test-request-id-001",
+  "usage": {
+    "credits_used": 1
+  }
+}

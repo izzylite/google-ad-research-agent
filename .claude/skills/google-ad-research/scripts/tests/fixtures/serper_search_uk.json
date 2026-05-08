@@ -1,0 +1,72 @@
+{
+  "searchParameters": {
+    "q": "grocery delivery uk",
+    "gl": "uk",
+    "hl": "en-GB",
+    "num": 20,
+    "type": "search"
+  },
+  "organic": [
+    {
+      "position": 1,
+      "title": "Grocery Delivery UK | Same Day Delivery",
+      "link": "https://example-grocer.co.uk/delivery",
+      "snippet": "Order groceries online for same-day delivery across the UK."
+    },
+    {
+      "position": 2,
+      "title": "Online Grocery Shopping | Tesco",
+      "link": "https://www.tesco.com/groceries/delivery",
+      "snippet": "Shop for groceries online at Tesco and get home delivery or click and collect."
+    },
+    {
+      "position": 3,
+      "title": "Grocery Delivery | Ocado",
+      "link": "https://www.ocado.com/delivery",
+      "snippet": "Next-day and same-day grocery delivery slots available across the UK."
+    }
+  ],
+  "peopleAlsoAsk": [
+    {
+      "question": "What is the best grocery delivery service in the UK?",
+      "snippet": "Tesco and Ocado are among the top-rated services.",
+      "title": "Best UK Grocery Delivery",
+      "link": "https://example-grocer.co.uk/compare"
+    },
+    {
+      "question": "Is same day grocery delivery available in the UK?",
+      "snippet": "Several supermarkets including Tesco, Sainsbury's and Asda offer same-day delivery slots.",
+      "title": "Same Day Grocery Delivery UK",
+      "link": "https://example-grocer.co.uk/same-day"
+    },
+    {
+      "question": "How much does grocery delivery cost in the UK?",
+      "snippet": "Delivery fees typically range from £1 to £7 depending on the slot and retailer.",
+      "title": "UK Grocery Delivery Costs",
+      "link": "https://example-grocer.co.uk/costs"
+    }
+  ],
+  "relatedSearches": [
+    {"query": "cheap grocery delivery uk"},
+    {"query": "same day grocery delivery london"},
+    {"query": "online supermarket delivery uk"},
+    {"query": "grocery delivery app uk"},
+    {"query": "next day grocery delivery uk"}
+  ],
+  "ads": [
+    {
+      "title": "Grocery Delivery — Order Now",
+      "link": "https://ad-grocer.co.uk",
+      "snippet": "Fast delivery from your local store.",
+      "displayUrl": "ad-grocer.co.uk",
+      "position": 1
+    },
+    {
+      "title": "Same-Day Groceries Delivered | From £2.99",
+      "link": "https://quickbasket.co.uk/delivery",
+      "snippet": "Order before 2pm for same-day grocery delivery. Fresh produce guaranteed.",
+      "displayUrl": "quickbasket.co.uk/delivery",
+      "position": 2
+    }
+  ]
+}
