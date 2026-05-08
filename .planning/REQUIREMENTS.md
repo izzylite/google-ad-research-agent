@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Scaffold
 
-- [ ] **SCFD-01**: Skill installed at `.claude/skills/google-ad-research/` with `SKILL.md` and `scripts/` subfolder
+- [x] **SCFD-01**: Skill installed at `.claude/skills/google-ad-research/` with `SKILL.md` and `scripts/` subfolder
 - [x] **SCFD-02**: Python helper scripts run via `uv run` with PEP 723 inline dependency metadata
 - [x] **SCFD-03**: API keys (Serper, Tavily) loaded from `.env` via python-dotenv; `.env` git-ignored, `.env.example` committed
 - [x] **SCFD-04**: `scripts/lib/` package provides shared HTTP client (httpx + retry), config loader, IO helpers, structured logging
@@ -17,9 +17,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Brief Intake
 
-- [ ] **INTK-01**: Skill prompts operator for campaign brief in chat; operator pastes free-form context
-- [ ] **INTK-02**: Skill validates 5 required fields (industry, product, location, language, audience); loops until all non-empty
-- [ ] **INTK-03**: Skill solicits optional fields (budget signal, geo exclusions, language exclusions, brand terms, competitor URLs) when relevant
+- [x] **INTK-01**: Skill prompts operator for campaign brief in chat; operator pastes free-form context
+- [x] **INTK-02**: Skill validates 5 required fields (industry, product, location, language, audience); loops until all non-empty
+- [x] **INTK-03**: Skill solicits optional fields (budget signal, geo exclusions, language exclusions, brand terms, competitor URLs) when relevant
 - [x] **INTK-04**: Validated brief saved verbatim to `brief.md` in run folder before any paid API call
 
 ### Signal Collection
@@ -115,14 +115,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCFD-01 | Phase 1 | Pending |
+| SCFD-01 | Phase 1 | Complete |
 | SCFD-02 | Phase 1 | Pending |
 | SCFD-03 | Phase 1 | Complete |
 | SCFD-04 | Phase 1 | Complete |
 | SCFD-05 | Phase 1 | Pending |
-| INTK-01 | Phase 1 | Pending |
-| INTK-02 | Phase 1 | Pending |
-| INTK-03 | Phase 1 | Pending |
+| INTK-01 | Phase 1 | Complete |
+| INTK-02 | Phase 1 | Complete |
+| INTK-03 | Phase 1 | Complete |
 | INTK-04 | Phase 1 | Pending |
 | SIGL-01 | Phase 2 | Pending |
 | SIGL-02 | Phase 2 | Pending |
