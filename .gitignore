@@ -1,0 +1,32 @@
+# Secrets
+.env
+.env.local
+*.key
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+*.egg-info/
+
+# uv
+.uv/
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code local settings (commit .claude/skills/, ignore local machine state)
+.claude/settings.local.json
+
+# Run outputs (raw API dumps cleaned periodically; reports kept)
+.runs/*/raw/
+.runs/*/.tmp/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
