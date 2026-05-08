@@ -1,0 +1,52 @@
+{
+  "metadata": {
+    "generated_at": "2026-05-08T14:30:00Z",
+    "clusters_input": "clusters.json"
+  },
+  "clusters": {
+    "same_day_delivery_transactional": {
+      "representative_keyword": "order groceries uk",
+      "ads": [
+        {
+          "title": "Order Groceries Online | Same Day Delivery",
+          "description": "Fresh groceries delivered in 60 minutes. Free delivery on first order.",
+          "displayUrl": "ocado.com/same-day",
+          "link": "https://www.ocado.com/same-day-delivery",
+          "position": 1
+        }
+      ],
+      "advertisers": [
+        {
+          "domain": "ocado.com",
+          "ad_title": "Order Groceries Online | Same Day Delivery",
+          "ad_description": "Fresh groceries delivered in 60 minutes. Free delivery on first order.",
+          "landing_url": "https://www.ocado.com/same-day-delivery",
+          "extract_status": "success",
+          "raw_content": "Same-day grocery delivery from Ocado. Order by 11pm for delivery tomorrow."
+        }
+      ]
+    },
+    "grocery_brand_comparison_commercial": {
+      "representative_keyword": "best grocery delivery uk",
+      "ads": [
+        {
+          "title": "Tesco Delivery | Fast Grocery Delivery UK",
+          "description": "Weekly shop or same-day delivery available. Tesco Clubcard prices.",
+          "displayUrl": "tesco.com/delivery",
+          "link": "https://www.tesco.com/grocery/delivery",
+          "position": 1
+        }
+      ],
+      "advertisers": [
+        {
+          "domain": "tesco.com",
+          "ad_title": "Tesco Delivery | Fast Grocery Delivery UK",
+          "ad_description": "Weekly shop or same-day delivery available. Tesco Clubcard prices.",
+          "landing_url": "https://www.tesco.com/grocery/delivery",
+          "extract_status": "success",
+          "raw_content": "Tesco grocery delivery. Choose a delivery slot that works for you."
+        }
+      ]
+    }
+  }
+}

@@ -69,3 +69,53 @@ def test_write_brief_verbatim(tmp_runs_root: Path, sample_brief_text: str) -> No
     assert path.read_text(encoding="utf-8") == sample_brief_text
     # No CR injected on Windows — explicit LF newlines
     assert b"\r\n" not in path.read_bytes()
+
+
+# ---------------------------------------------------------------------------
+# RPRT-04: escape_md_cell — RED stubs (lib.io exists; function added in 06-02)
+# ---------------------------------------------------------------------------
+# Guard: skip if escape_md_cell has not yet been added to lib/io.py.
+try:
+    from lib.io import escape_md_cell as _escape_md_cell_check  # noqa: F401
+    _ESCAPE_MISSING = False
+except (ImportError, AttributeError):
+    _ESCAPE_MISSING = True
+
+_escape_skip = pytest.mark.skipif(
+    _ESCAPE_MISSING, reason="lib.io.escape_md_cell not yet implemented"
+)
+
+
+@_escape_skip
+def test_escape_md_cell_pipe() -> None:
+    """RPRT-04: Pipe character is escaped as \\| for safe GFM table cells."""
+    from lib.io import escape_md_cell
+
+    assert escape_md_cell("Free Delivery | Same Day") == r"Free Delivery \| Same Day"
+
+
+@_escape_skip
+def test_escape_md_cell_smart_quotes() -> None:
+    """RPRT-04: Smart (curly) double-quotes are normalised to ASCII double-quotes."""
+    from lib.io import escape_md_cell
+
+    assert escape_md_cell("“Best”") == '"Best"'
+
+
+@_escape_skip
+def test_escape_md_cell_newline() -> None:
+    """RPRT-04: Newline characters are replaced so the output fits in one table cell."""
+    from lib.io import escape_md_cell
+
+    assert "\n" not in escape_md_cell("line1\nline2")
+
+
+@_escape_skip
+def test_escape_md_cell_truncates() -> None:
+    """RPRT-04: Strings exceeding max_len are truncated with an ellipsis."""
+    from lib.io import escape_md_cell
+
+    long = "x" * 200
+    result = escape_md_cell(long, max_len=120)
+    assert len(result) <= 120
+    assert result.endswith("…")

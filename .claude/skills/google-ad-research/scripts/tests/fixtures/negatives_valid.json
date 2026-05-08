@@ -1,0 +1,38 @@
+[
+  {
+    "keyword": "grocery delivery jobs",
+    "tier": "Strong",
+    "category": "jobs-careers",
+    "justification": "Contains 'jobs' — recruitment intent, never converts for a delivery service"
+  },
+  {
+    "keyword": "free grocery delivery",
+    "tier": "Strong",
+    "category": "free-DIY-tutorial",
+    "justification": "Free-seeking modifier; unconditionally blocks brand unless a free-tier offer exists"
+  },
+  {
+    "keyword": "used grocery delivery boxes",
+    "tier": "Considered",
+    "category": "used-refurb-wholesale",
+    "justification": "Resale intent; low conversion but not zero if brand sells packaging accessories"
+  },
+  {
+    "keyword": "ocado discount code",
+    "tier": "Considered",
+    "category": "competitor-brand",
+    "justification": "Competitor brand name with voucher intent; exclude unless conquesting is in scope"
+  },
+  {
+    "keyword": "grocery delivery northern ireland",
+    "tier": "Investigate",
+    "category": "wrong-geo",
+    "justification": "Campaign targets mainland UK metro only; NI delivery may not be available"
+  },
+  {
+    "keyword": "pet food delivery",
+    "tier": "Investigate",
+    "category": "wrong-audience",
+    "justification": "Audience intent is human groceries; pet-only shoppers are out of scope"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "keyword": "grocery delivery near me",
+    "tier": "Investigate",
+    "category": "wrong-geo",
+    "justification": "This keyword also appears in ranked positives — should be removed by dedupe"
+  },
+  {
+    "keyword": "grocery delivery jobs",
+    "tier": "Strong",
+    "category": "jobs-careers",
+    "justification": "Recruitment intent; unconditional blocker"
+  },
+  {
+    "keyword": "free grocery delivery uk",
+    "tier": "Considered",
+    "category": "free-DIY-tutorial",
+    "justification": "Free-seeking modifier; review before adding for brands with a free tier"
+  },
+  {
+    "keyword": "bulk grocery wholesale",
+    "tier": "Investigate",
+    "category": "used-refurb-wholesale",
+    "justification": "Wholesale/bulk buying intent; unlikely to convert for single-household delivery"
+  }
+]
