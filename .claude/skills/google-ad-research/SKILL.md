@@ -362,4 +362,108 @@ Tell the operator:
 >
 > Phase 4 (clustering) is not yet available in this skill."
 
-**STOP. Do not proceed to any Phase 4+ activity.**
+Phase 4 (clustering) begins at Step 14 below.
+
+---
+
+## Phase 4: Clustering
+
+> Prerequisites: Phase 3 complete — `{run_dir}/ranked.json` exists.
+
+### Step 14: Partition keywords by intent
+
+Read `{run_dir}/ranked.json`. Partition all keywords into four lists by their `intent` field.
+
+Print a count summary to confirm the split:
+> "Intent partition: transactional=N, commercial=N, informational=N, navigational=N"
+
+Store each partition in memory. **Do not proceed to Step 15 until you have printed this summary and all keywords from ranked.json are accounted for (sum of partition counts == total rows in ranked.json).**
+
+### Step 15: Cluster semantically within each partition
+
+For each intent class that has ≥ 1 keyword, perform semantic clustering:
+
+1. Display the keyword list for that intent class (keyword + score, sorted by score descending).
+2. Group the keywords into thematic clusters following these rules:
+   - **Target size:** 5-15 keywords per cluster. Minimum 3.
+   - If a class has < 3 keywords total: create a single `misc_{intent}` cluster containing all of them.
+   - **Do NOT split keywords across intent classes.** Every cluster contains keywords of exactly one intent.
+   - **Naming:** Each cluster name must be `{theme_slug}_{intent}` — derive the theme slug from the 2-3 most-frequent meaningful words in the group's keywords. Use lowercase snake_case only. No hyphens. No numbers in the slug. No generic prefixes (cluster, theme, topic, group).
+     - Valid: `same_day_delivery_transactional`, `grocery_brand_comparison_commercial`
+     - Invalid: `cluster_1_transactional`, `Grocery_Transactional`, `grocery_transactional` (single-word theme)
+   - **Do NOT re-assign intent.** Do NOT create clusters that span more than one intent class.
+   - **Fold fragments:** If after grouping any cluster would have < 3 keywords, merge it into the nearest thematic neighbor within the same intent class.
+
+3. When all intent classes are clustered, write `{run_dir}/clusters.json` using the Write tool:
+
+```json
+{
+  "metadata": {
+    "clustered_at": "<ISO timestamp>",
+    "method": "llm-driven",
+    "model": "<your model name>",
+    "ranked_input": "ranked.json",
+    "total_keywords": <N>,
+    "total_clusters": <N>
+  },
+  "clusters": [
+    {
+      "name": "<theme_slug>_<intent>",
+      "intent": "<intent class>",
+      "keywords": [
+        {"keyword": "<keyword string>", "score": <score integer>}
+      ]
+    }
+  ],
+  "orphans": []
+}
+```
+
+Every keyword from ranked.json must appear in exactly one cluster or in `orphans`. Do not include any ranked.json fields beyond `keyword` and `score` in the clusters array.
+
+**Do not advance to Step 16 until `{run_dir}/clusters.json` exists.**
+
+### Step 16: Validate and fix loop
+
+Run the validator:
+
+```bash
+uv run "${CLAUDE_SKILL_DIR}/scripts/validate_clusters.py" --run-dir "{run_dir}"
+```
+
+Parse the stdout JSON and the exit code:
+
+**Exit 0 — valid:** Continue to Step 17.
+
+**Exit 1 — warnings only:** Surface the warnings to the operator:
+> "Clustering complete with warnings: {violations list}. Proceed anyway or fix? (proceed/fix)"
+If operator says fix: treat as exit 3 for the warned clusters and re-prompt. If proceed: continue to Step 17.
+
+**Exit 3 — hard violations:** Read the `violations` list from stdout. For each violation, identify the offending cluster by name. Re-prompt for ONLY those clusters:
+> "Validator found violations in clusters: {names}. Violation details: {violations}. Re-clustering only those groups now."
+
+Re-cluster the offending clusters (keeping all other clusters unchanged), rewrite only those entries in `{run_dir}/clusters.json` (preserve the rest), then re-run the validator.
+
+Maximum 2 fix iterations. If violations persist after 2 iterations:
+> "Clustering could not satisfy all invariants after 2 fix attempts. Remaining violations: {violations}. Stopping — operator review required."
+Do NOT proceed to Step 17.
+
+**Exit 2 — infrastructure error:** Surface the error to the operator. Do not retry silently.
+
+**Do not advance to Step 17 until validator exits 0 (or operator accepts exit 1 warnings).**
+
+### Step 17: Confirm Phase 4 complete and stop
+
+Tell the operator:
+
+> "Phase 4 complete. Clustering summary:
+> - {total_clusters} clusters created across {intent_count} intent classes
+> - {total_keywords} keywords assigned
+> - Orphans: {orphan_count}
+> - Validator: {valid status}
+>
+> Clusters file: `{run_dir}/clusters.json`
+>
+> Phase 5 (competitor intel) is not yet available in this skill."
+
+**STOP. Do not proceed to any Phase 5+ activity.**
