@@ -64,7 +64,10 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   2. The composite score visibly weighs `source_diversity` as primary (a 4-source keyword outranks a single-source keyword regardless of signal_count); ties break on signal_count then intent weight.
   3. Each keyword has a match-type recommendation (broad / phrase / exact) with a conservative default — phrase by default, exact only for high-confidence transactional or brand terms, broad rare and justified.
   4. The keyword table schema renders the canonical columns `keyword | intent | match_type | theme | signal_count | source_diversity | sources | score` and `signal_count` is never labelled "volume".
-**Plans:** TBD
+**Plans:** 3 plans
+- [ ] 03-00-PLAN.md — Wave 0: RED test stubs (test_rank_keywords.py, 16 tests) + keywords_phase2.json + intent_labels.json fixtures
+- [ ] 03-01-PLAN.md — Wave 1: rank_keywords.py (compute_score, build_ranked, validate_labels, CLI → ranked.json)
+- [ ] 03-02-PLAN.md — Wave 2: SKILL.md Steps 11-13 (4-class rubric + intent-labels.json write + rank_keywords.py invocation)
 
 ### Phase 4: Clustering
 **Goal:** Keywords arrive grouped into named, intent-homogeneous clusters of 5-15 members that a PPC manager can paste straight into Google Ads ad groups.
@@ -104,7 +107,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 |-------|----------------|--------|-----------|
 | 1. Skill Scaffold and Brief Intake | 6/6 | Complete    | 2026-05-08 |
 | 2. Signal Collection | 6/6 | Complete    | 2026-05-08 |
-| 3. Ranking and Scoring | 0/0 | Not started | - |
+| 3. Ranking and Scoring | 0/3 | In progress | - |
 | 4. Clustering | 0/0 | Not started | - |
 | 5. Competitor Ad Copy and LP Extraction | 0/0 | Not started | - |
 | 6. Negatives, Report Assembly, and Persistence | 0/0 | Not started | - |
@@ -136,3 +139,4 @@ No orphans. No duplicates. Every v1 requirement maps to exactly one phase.
 *Roadmap created: 2026-05-08*
 *Phase 1 plans drafted: 2026-05-08*
 *Phase 2 plans drafted: 2026-05-08*
+*Phase 3 plans drafted: 2026-05-08*
