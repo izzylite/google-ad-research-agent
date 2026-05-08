@@ -89,7 +89,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   1. Every cluster has at least one Serper requery against representative cluster keywords, harvesting paid headlines and descriptions from the ads block.
   2. Ad copy is deduplicated by advertiser display-URL domain; affiliate / aggregator / voucher domains are filtered out (URLs with `?ref=`, `aff_id`, awin/skimlinks/partnerize patterns).
   3. For the top 3-5 surviving advertisers per cluster, Tavily extracts the landing-page headline, primary CTA, and offer language and persists them per advertiser.
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 - [ ] 05-00-PLAN.md — Wave 0: RED test stubs (10 functions, all skipping) + 4 fixture JSONs + competitor_intel.py MODULE_MISSING stub
 - [ ] 05-01-PLAN.md — Wave 1: competitor_intel.py full implementation (affiliate filter, domain dedupe, per-cluster Serper requery, Tavily LP extraction caps) — COMP-01, COMP-02
 - [ ] 05-02-PLAN.md — Wave 2: SKILL.md Steps 18-20 (invoke competitor_intel.py, LLM extracts headline/CTA/offer from raw_content per advertiser) — COMP-03
@@ -114,7 +114,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 2. Signal Collection | 6/6 | Complete    | 2026-05-08 |
 | 3. Ranking and Scoring | 3/3 | Complete    | 2026-05-08 |
 | 4. Clustering | 3/3 | Complete    | 2026-05-08 |
-| 5. Competitor Ad Copy and LP Extraction | 1/3 | In Progress|  |
+| 5. Competitor Ad Copy and LP Extraction | 2/3 | In Progress|  |
 | 6. Negatives, Report Assembly, and Persistence | 0/0 | Not started | - |
 
 ## Coverage Map
