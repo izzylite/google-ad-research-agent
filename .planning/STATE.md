@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-00-PLAN.md
-last_updated: "2026-05-08T04:24:01.839Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-05-08T04:27:45.232Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 12
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # State: Google Ad Research Agent
@@ -40,6 +40,7 @@ progress:
 | Plans complete | 6 |
 | v1 requirements complete | 9 / 35 |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
+| Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
 
 ### Execution History
 
@@ -78,6 +79,9 @@ progress:
 - [Phase 02]: Module-missing guard (try/except ImportError + pytestmark skipif) chosen over xfail — keeps collection clean and makes RED-to-GREEN transition explicit when each Phase 2 module is implemented
 - [Phase 02]: Fixture JSONs use realistic shapes with correct keys (organic/PAA/relatedSearches/ads; results/failed_results) not empty dicts — future test assertions need real key presence
 - [Phase 02]: tmp_run_dir fixture pre-creates raw/ subdirectory to match production Phase 1 run-folder layout — tests can write to raw/ without extra setup
+- [Phase 02-signal-collection]: RetryTransport status_forcelist excludes 401 — auth failures are fatal, not transient; confirmed by test_no_retry_on_401
+- [Phase 02-signal-collection]: Module-level inflect engine (_INF = inflect.engine()) at import scope, not per call — avoids re-instantiation overhead
+- [Phase 02-signal-collection]: canonical_form is lowercased + punctuation-stripped input surface (not sorted lemma form) — merge_signals.py picks shortest surface per hash group as display name
 
 ### Open Questions / Todos
 
@@ -92,9 +96,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08T04:23:53.013Z
+**Last session:** 2026-05-08T04:27:45.230Z
 
-**Stopped at:** Completed 02-00-PLAN.md
+**Stopped at:** Completed 02-01-PLAN.md
 
 **Next session:** Plan Phase 2 — Signal Collection (Serper.dev + Tavily + WebSearch). First task: implement `lib/http.py` per RESEARCH.md Open Questions.
 

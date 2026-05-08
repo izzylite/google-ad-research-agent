@@ -29,7 +29,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **SIGL-03**: WebSearch tool invoked from skill prompt for free baseline signal
 - [ ] **SIGL-04**: Locale parameters (`gl`, `hl`, language hints) passed to all sources from brief fields
 - [ ] **SIGL-05**: Each keyword retains source attribution (which source(s) surfaced it) for downstream ranking
-- [ ] **SIGL-06**: Keywords lemmatized + canonicalized to merge close variants before scoring
+- [x] **SIGL-06**: Keywords lemmatized + canonicalized to merge close variants before scoring
 
 ### Ranking
 
@@ -129,7 +129,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SIGL-03 | Phase 2 | Pending |
 | SIGL-04 | Phase 2 | Pending |
 | SIGL-05 | Phase 2 | Pending |
-| SIGL-06 | Phase 2 | Pending |
+| SIGL-06 | Phase 2 | Complete |
 | RANK-01 | Phase 3 | Pending |
 | RANK-02 | Phase 3 | Pending |
 | RANK-03 | Phase 3 | Pending |
