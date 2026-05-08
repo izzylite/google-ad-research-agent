@@ -134,8 +134,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RANK-02 | Phase 3 | Complete |
 | RANK-03 | Phase 3 | Complete |
 | RANK-04 | Phase 3 | Complete |
-| CLST-01 | Phase 4 | Pending |
-| CLST-02 | Phase 4 | Pending |
+| CLST-01 | Phase 4 | Complete |
+| CLST-02 | Phase 4 | Complete |
 | CLST-03 | Phase 4 | Pending |
 | COMP-01 | Phase 5 | Pending |
 | COMP-02 | Phase 5 | Pending |

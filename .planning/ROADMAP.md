@@ -13,7 +13,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - [x] **Phase 1: Skill Scaffold and Brief Intake** — Project structure, env contract, run folder layout, conversational brief capture; nothing paid runs without a validated brief on disk. (completed 2026-05-08)
 - [x] **Phase 2: Signal Collection** — Three-source harvest (Serper, Tavily, WebSearch) with locale plumbing, source attribution, and lemmatized canonicalization before any scoring. (completed 2026-05-08)
 - [x] **Phase 3: Ranking and Scoring** — LLM 4-class intent classification + composite ranking (signal_count + source_diversity + intent weight) producing the canonical keyword table schema. (completed 2026-05-08)
-- [ ] **Phase 4: Clustering** — Intent-homogeneous LLM clusters of 5-15 keywords with descriptive theme + intent names, ad-group-paste-ready.
+- [x] **Phase 4: Clustering** — Intent-homogeneous LLM clusters of 5-15 keywords with descriptive theme + intent names, ad-group-paste-ready. (completed 2026-05-08)
 - [ ] **Phase 5: Competitor Ad Copy and LP Extraction** — Per-cluster Serper requery for ad block (domain-deduped, affiliate-filtered) plus Tavily LP value-prop extraction for top advertisers.
 - [ ] **Phase 6: Negatives, Report Assembly, and Persistence** — Tiered negatives (Strong / Considered / Investigate), four-section markdown report, JSON twin, run history index, raw API persistence.
 
@@ -77,7 +77,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   1. No cluster contains keywords spanning more than one intent label; the clustering step rejects mixed clusters and re-splits them.
   2. Each cluster contains 5-15 keywords (minimum size 3); over-clustered fragments fold into nearest neighbours, and any cluster exceeding 25 splits.
   3. Cluster names follow the `{theme}_{intent}` pattern (e.g., "same-day-delivery_transactional") — no numeric or abstract names like "Cluster 3" or "Theme A".
-**Plans:** 2 complete (04-00, 04-01), remaining TBD
+**Plans:** 3/3 plans complete
 - [x] 04-00-PLAN.md — Wave 0: RED test stubs (9 functions, all skipping) + 4 fixture JSONs (clusters_valid, clusters_mixed_intent, clusters_oversize, ranked_phase3)
 - [x] 04-01-PLAN.md — Wave 1: validate_clusters.py (9 invariant checks, PEP 723 stdlib-only, CLI exit 0/1/2/3, all 9 tests GREEN)
 
@@ -110,7 +110,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 1. Skill Scaffold and Brief Intake | 6/6 | Complete    | 2026-05-08 |
 | 2. Signal Collection | 6/6 | Complete    | 2026-05-08 |
 | 3. Ranking and Scoring | 3/3 | Complete    | 2026-05-08 |
-| 4. Clustering | 2/? | In progress | - |
+| 4. Clustering | 3/3 | Complete   | 2026-05-08 |
 | 5. Competitor Ad Copy and LP Extraction | 0/0 | Not started | - |
 | 6. Negatives, Report Assembly, and Persistence | 0/0 | Not started | - |
 
