@@ -62,7 +62,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **RPRT-02**: `report.json` twin written with stable canonical schema (enables future run-diff in v2)
 - [x] **RPRT-03**: Report includes "How to read this" section explaining `signal_count` is not search volume and ranking is signal-source-diversity-driven
 - [x] **RPRT-04**: Markdown sanitization on all table cells (escape pipes, quotes, newlines)
-- [ ] **RPRT-05**: All raw per-stage API responses persisted to `raw/` subfolder for traceability
+- [x] **RPRT-05**: All raw per-stage API responses persisted to `raw/` subfolder for traceability
 
 ### Persistence
 
@@ -147,7 +147,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RPRT-02 | Phase 6 | Complete |
 | RPRT-03 | Phase 6 | Complete |
 | RPRT-04 | Phase 6 | Complete |
-| RPRT-05 | Phase 6 | Pending |
+| RPRT-05 | Phase 6 | Complete |
 | PRST-01 | Phase 6 | Complete |
 | PRST-02 | Phase 6 | Complete |
 

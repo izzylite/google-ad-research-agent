@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-05-08T06:59:05.948Z"
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-05-08T08:01:48Z"
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 27
-  completed_plans: 24
+  completed_plans: 25
 ---
 
 # State: Google Ad Research Agent
@@ -57,6 +57,7 @@ progress:
 | Phase 06-negatives-report-assembly-and-persistence P00 | 4 | 2 tasks | 12 files |
 | Phase 06-negatives-report-assembly-and-persistence P01 | 12 | 1 tasks | 1 files |
 | Phase 06-negatives-report-assembly-and-persistence P02 | 5 | 1 tasks | 1 files |
+| Phase 06-negatives-report-assembly-and-persistence P03 | 8 | 1 tasks | 1 files |
 
 ### Execution History
 
@@ -131,6 +132,9 @@ progress:
 - [Phase 06-negatives-report-assembly-and-persistence]: escape_md_cell guard uses AttributeError in addition to ImportError — lib.io exists but function absent; handles name-not-defined case
 - [Phase 06-negatives-report-assembly-and-persistence]: Exit 1 (not 2) for all operator-warning conditions (enum errors, collisions, missing categories) per CLI contract; raw/ write guarded by dir existence check; dedup comparison is case-insensitive strip
 - [Phase 06-negatives-report-assembly-and-persistence]: escape_md_cell uses module-level _SMART_QUOTE_MAP (str.maketrans) built at import time, O(n) per call with zero map construction overhead
+- [Phase 06-03]: main() accepts optional argv parameter for testability — test_run_folder_complete calls main(["--run-dir", str(run_dir)]) directly without subprocess
+- [Phase 06-03]: cluster_id derived at render time via _build_cluster_index(); null if keyword not in any cluster — ranked.json never mutated
+- [Phase 06-03]: Competitor section prefers advertisers[] over ads[] when both present (advertisers has richer domain + extract_status fields)
 
 ### Open Questions / Todos
 
@@ -147,9 +151,9 @@ None.
 
 **Last session:** 2026-05-08T06:58:56.339Z
 
-**Stopped at:** Completed 06-02-PLAN.md
+**Stopped at:** Completed 06-03-PLAN.md
 
-**Next session:** Phase 4 continuation — 04-02 cluster_keywords skill prompt (SKILL.md Steps 14-16 using validate_clusters.py fix loop).
+**Next session:** Phase 06-04 — update_index.py (appends row to .runs/INDEX.md; SKILL.md Step 24 gate).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
