@@ -1,0 +1,32 @@
+[
+  {
+    "canonical": "order groceries uk",
+    "lemma_hash": "a1b2c3d4e5f6a7b8",
+    "intent": "transactional",
+    "match_type": "exact"
+  },
+  {
+    "canonical": "best grocery delivery uk",
+    "lemma_hash": "b2c3d4e5f6a7b8c9",
+    "intent": "commercial",
+    "match_type": "phrase"
+  },
+  {
+    "canonical": "how does grocery delivery work",
+    "lemma_hash": "c3d4e5f6a7b8c9d0",
+    "intent": "informational",
+    "match_type": "phrase"
+  },
+  {
+    "canonical": "ocado website",
+    "lemma_hash": "d4e5f6a7b8c9d0e1",
+    "intent": "navigational",
+    "match_type": "phrase"
+  },
+  {
+    "canonical": "grocery delivery service",
+    "lemma_hash": "e5f6a7b8c9d0e1f2",
+    "intent": "commercial",
+    "match_type": "phrase"
+  }
+]
