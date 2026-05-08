@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-05-08T04:27:45.232Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-05-08T04:32:15.696Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 12
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # State: Google Ad Research Agent
@@ -41,6 +41,7 @@ progress:
 | v1 requirements complete | 9 / 35 |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
+| Phase 02-signal-collection P02 | 8min | 2 tasks | 2 files |
 
 ### Execution History
 
@@ -82,6 +83,9 @@ progress:
 - [Phase 02-signal-collection]: RetryTransport status_forcelist excludes 401 — auth failures are fatal, not transient; confirmed by test_no_retry_on_401
 - [Phase 02-signal-collection]: Module-level inflect engine (_INF = inflect.engine()) at import scope, not per call — avoids re-instantiation overhead
 - [Phase 02-signal-collection]: canonical_form is lowercased + punctuation-stripped input surface (not sorted lemma form) — merge_signals.py picks shortest surface per hash group as display name
+- [Phase 02-signal-collection]: respx side_effect pattern used to capture outgoing POST body for locale assertion in serp_fetch tests
+- [Phase 02-signal-collection]: 401/403 map to exit 3 (fatal auth); all other HTTPStatusError maps to exit 2 (retryable) in serp_fetch.py
+- [Phase 02-signal-collection]: searchParameters echoed verbatim from Serper response into normalised output for downstream locale lint (Pitfall 4)
 
 ### Open Questions / Todos
 
@@ -96,9 +100,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08T04:27:45.230Z
+**Last session:** 2026-05-08T04:32:15.693Z
 
-**Stopped at:** Completed 02-01-PLAN.md
+**Stopped at:** Completed 02-02-PLAN.md
 
 **Next session:** Plan Phase 2 — Signal Collection (Serper.dev + Tavily + WebSearch). First task: implement `lib/http.py` per RESEARCH.md Open Questions.
 

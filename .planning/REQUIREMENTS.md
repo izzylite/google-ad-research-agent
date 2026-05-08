@@ -24,10 +24,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Signal Collection
 
-- [ ] **SIGL-01**: `serp_fetch.py` calls Serper.dev REST and persists organic + PAA + related + ads block to `raw/serper.json`
+- [x] **SIGL-01**: `serp_fetch.py` calls Serper.dev REST and persists organic + PAA + related + ads block to `raw/serper.json`
 - [ ] **SIGL-02**: `tavily_extract.py` runs Tavily extract on competitor URL list (max 5 competitors, 5 URLs each, `extract_depth='basic'`); per-domain JSON written
 - [ ] **SIGL-03**: WebSearch tool invoked from skill prompt for free baseline signal
-- [ ] **SIGL-04**: Locale parameters (`gl`, `hl`, language hints) passed to all sources from brief fields
+- [x] **SIGL-04**: Locale parameters (`gl`, `hl`, language hints) passed to all sources from brief fields
 - [ ] **SIGL-05**: Each keyword retains source attribution (which source(s) surfaced it) for downstream ranking
 - [x] **SIGL-06**: Keywords lemmatized + canonicalized to merge close variants before scoring
 
@@ -124,10 +124,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INTK-02 | Phase 1 | Complete |
 | INTK-03 | Phase 1 | Complete |
 | INTK-04 | Phase 1 | Complete |
-| SIGL-01 | Phase 2 | Pending |
+| SIGL-01 | Phase 2 | Complete |
 | SIGL-02 | Phase 2 | Pending |
 | SIGL-03 | Phase 2 | Pending |
-| SIGL-04 | Phase 2 | Pending |
+| SIGL-04 | Phase 2 | Complete |
 | SIGL-05 | Phase 2 | Pending |
 | SIGL-06 | Phase 2 | Complete |
 | RANK-01 | Phase 3 | Pending |
