@@ -48,7 +48,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **COMP-01**: Per-cluster Serper requery extracts paid ad headlines + descriptions from ads block
 - [x] **COMP-02**: Ad copy deduplicated by advertiser domain; affiliate / aggregator domains filtered
-- [ ] **COMP-03**: Tavily extracts landing-page value props (headline, primary CTA, offer) for top 3-5 advertisers per cluster
+- [x] **COMP-03**: Tavily extracts landing-page value props (headline, primary CTA, offer) for top 3-5 advertisers per cluster
 
 ### Negatives
 
@@ -139,7 +139,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLST-03 | Phase 4 | Pending |
 | COMP-01 | Phase 5 | Complete |
 | COMP-02 | Phase 5 | Complete |
-| COMP-03 | Phase 5 | Pending |
+| COMP-03 | Phase 5 | Complete |
 | NEGT-01 | Phase 6 | Pending |
 | NEGT-02 | Phase 6 | Pending |
 | NEGT-03 | Phase 6 | Pending |

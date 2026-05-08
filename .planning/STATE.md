@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-05-08T06:15:56.752Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-05-08T06:19:51.096Z"
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 21
-  completed_plans: 20
+  completed_plans: 21
 ---
 
 # State: Google Ad Research Agent
@@ -53,6 +53,7 @@ progress:
 | Phase 04-clustering P02 | 8min | 1 tasks | 1 files |
 | Phase 05-competitor-ad-copy-and-lp-extraction P00 | 8 | 2 tasks | 6 files |
 | Phase 05-competitor-ad-copy-and-lp-extraction P01 | 25 | 2 tasks | 3 files |
+| Phase 05-competitor-ad-copy-and-lp-extraction P02 | 5 | 1 tasks | 2 files |
 
 ### Execution History
 
@@ -120,6 +121,8 @@ progress:
 - [Phase 05-competitor-ad-copy-and-lp-extraction]: [Phase 05-competitor]: MODULE_MISSING guard for Wave 0 RED stubs in test_competitor_intel.py — consistent with Phases 2-4 pattern; keeps collection clean and makes RED-to-GREEN transition explicit
 - [Phase 05-competitor-ad-copy-and-lp-extraction]: extract_domain prepends '//' to schemeless URLs before urlparse — handles displayUrl values like 'awin1.com/grocery' that have no scheme, making affiliate domain checks reliable
 - [Phase 05-competitor-ad-copy-and-lp-extraction]: scripts/pyproject.toml added to declare httpx-retries + tavily-python as project deps — enables uv run --with pytest --with respx to resolve transitive imports via --project flag
+- [Phase 05-competitor-ad-copy-and-lp-extraction]: Phase 5 section body extracted to references/phase5-competitor-intel.md — SKILL.md was 551 lines with full inline content; extraction reduced to 473 lines (within 500-line limit)
+- [Phase 05-competitor-ad-copy-and-lp-extraction]: SKILL.md Phase 5 pointer uses 'Load it with the Read tool when entering Phase 5' — explicit instruction rather than silent pointer ensures operator loads rubric before proceeding
 
 ### Open Questions / Todos
 
@@ -134,9 +137,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08T06:15:56.749Z
+**Last session:** 2026-05-08T06:19:51.093Z
 
-**Stopped at:** Completed 05-01-PLAN.md
+**Stopped at:** Completed 05-02-PLAN.md
 
 **Next session:** Phase 4 continuation — 04-02 cluster_keywords skill prompt (SKILL.md Steps 14-16 using validate_clusters.py fix loop).
 
