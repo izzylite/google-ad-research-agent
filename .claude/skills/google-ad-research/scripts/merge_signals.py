@@ -228,6 +228,12 @@ def merge_raw_files(raw_dir: Path) -> dict[str, dict]:
 
     def _add(text: str, attr: dict) -> None:
         """Canonicalise text and add attribution to the appropriate group."""
+        # Drop keywords containing Unicode replacement chars (mojibake from
+        # mis-decoded API responses). Such keywords are unusable as Google Ads
+        # match terms anyway.
+        if text and "�" in text:
+            return
+
         try:
             canonical_form, lemma_hash = canonicalise(text)
         except ValueError:

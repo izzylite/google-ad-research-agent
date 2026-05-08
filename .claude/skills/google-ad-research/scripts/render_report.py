@@ -243,6 +243,340 @@ def render_full_report(
     return "".join(sections)
 
 
+def render_html_report(report_json: dict) -> str:
+    """Return self-contained HTML report (no external CDN/network deps).
+
+    Embeds report_json as a JS object so the page can offer CSV export of
+    every section without round-tripping back to disk.
+    """
+    payload = json.dumps(report_json, ensure_ascii=False)
+    meta = report_json.get("meta", {})
+    brief = report_json.get("brief", {})
+    title = f"Keyword Research — {meta.get('brief_slug', '')}"
+
+    return _HTML_TEMPLATE.format(
+        title=_html_escape(title),
+        run_id=_html_escape(meta.get("run_id", "")),
+        generated_at=_html_escape(meta.get("generated_at", "")),
+        brief_slug=_html_escape(meta.get("brief_slug", "")),
+        industry=_html_escape(brief.get("industry", "")),
+        product=_html_escape(brief.get("product", "")),
+        location=_html_escape(brief.get("location", "")),
+        language=_html_escape(brief.get("language", "")),
+        audience=_html_escape(brief.get("audience", "")),
+        version=_html_escape(meta.get("version", "v1")),
+        payload_json=payload,
+    )
+
+
+def _html_escape(s: str) -> str:
+    """Minimal HTML escape for text content + attribute values."""
+    return (
+        str(s)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
+_HTML_TEMPLATE = r"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{title}</title>
+<style>
+* {{ box-sizing: border-box; }}
+body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+       margin: 0; padding: 0; background: #f7f7f9; color: #1a1a1a; line-height: 1.5; }}
+header {{ background: #1f2937; color: #fff; padding: 24px 32px; }}
+header h1 {{ margin: 0 0 4px; font-size: 22px; }}
+header .meta {{ font-size: 13px; opacity: 0.85; }}
+main {{ max-width: 1280px; margin: 0 auto; padding: 24px 32px 64px; }}
+.brief-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+              gap: 12px; background: #fff; padding: 16px; border-radius: 8px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 24px; }}
+.brief-grid div {{ font-size: 13px; }}
+.brief-grid label {{ font-weight: 600; color: #555; display: block; font-size: 11px;
+                   text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }}
+section {{ background: #fff; padding: 20px; border-radius: 8px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 20px; }}
+section h2 {{ margin: 0 0 12px; font-size: 18px; border-bottom: 2px solid #e5e7eb;
+             padding-bottom: 8px; }}
+.disclaimer {{ background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px;
+              font-size: 13px; margin-bottom: 16px; border-radius: 4px; }}
+.toolbar {{ display: flex; gap: 8px; align-items: center; margin-bottom: 12px;
+           flex-wrap: wrap; }}
+.toolbar input {{ flex: 1; min-width: 220px; padding: 6px 10px; border: 1px solid #d1d5db;
+                 border-radius: 4px; font-size: 13px; }}
+.toolbar button {{ padding: 6px 12px; background: #2563eb; color: #fff; border: none;
+                  border-radius: 4px; font-size: 13px; cursor: pointer; }}
+.toolbar button:hover {{ background: #1d4ed8; }}
+.toolbar .count {{ font-size: 12px; color: #666; margin-left: auto; }}
+table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
+th, td {{ padding: 6px 10px; text-align: left; border-bottom: 1px solid #eee; }}
+th {{ background: #f3f4f6; cursor: pointer; user-select: none; position: sticky; top: 0; }}
+th:hover {{ background: #e5e7eb; }}
+th.sort-asc::after {{ content: " ▲"; }}
+th.sort-desc::after {{ content: " ▼"; }}
+tbody tr:hover {{ background: #f9fafb; }}
+.intent-tag {{ display: inline-block; padding: 1px 8px; border-radius: 10px;
+              font-size: 11px; font-weight: 600; }}
+.intent-transactional {{ background: #d1fae5; color: #065f46; }}
+.intent-commercial    {{ background: #dbeafe; color: #1e40af; }}
+.intent-informational {{ background: #fef3c7; color: #92400e; }}
+.intent-navigational  {{ background: #f3e8ff; color: #6b21a8; }}
+.tier-Strong      {{ background: #fee2e2; color: #991b1b; padding: 1px 8px;
+                    border-radius: 10px; font-size: 11px; font-weight: 600; }}
+.tier-Considered  {{ background: #fef3c7; color: #92400e; padding: 1px 8px;
+                    border-radius: 10px; font-size: 11px; font-weight: 600; }}
+.tier-Investigate {{ background: #e0e7ff; color: #3730a3; padding: 1px 8px;
+                    border-radius: 10px; font-size: 11px; font-weight: 600; }}
+details {{ margin: 8px 0; }}
+details summary {{ cursor: pointer; font-weight: 600; padding: 8px;
+                  background: #f3f4f6; border-radius: 4px; }}
+details summary:hover {{ background: #e5e7eb; }}
+details ul {{ margin: 8px 16px; padding-left: 16px; }}
+details li {{ font-size: 13px; padding: 2px 0; }}
+.cluster-meta {{ font-size: 11px; color: #666; font-weight: normal; margin-left: 8px; }}
+code {{ background: #f3f4f6; padding: 1px 4px; border-radius: 3px;
+       font-size: 12px; font-family: ui-monospace, SFMono-Regular, monospace; }}
+</style>
+</head>
+<body>
+<header>
+  <h1>Keyword Research Report</h1>
+  <div class="meta">{run_id} · Generated {generated_at} · Schema {version}</div>
+</header>
+<main>
+
+<div class="brief-grid">
+  <div><label>Industry</label>{industry}</div>
+  <div><label>Product</label>{product}</div>
+  <div><label>Location</label>{location}</div>
+  <div><label>Language</label>{language}</div>
+  <div><label>Audience</label>{audience}</div>
+  <div><label>Brief Slug</label><code>{brief_slug}</code></div>
+</div>
+
+<div class="disclaimer">
+<strong>How to read this:</strong> <code>signal_count</code> is NOT search volume —
+it counts how many source fragments mentioned the keyword.
+<code>source_diversity</code> is the number of distinct signal sources (WebSearch,
+Serper organic / PAA / related / ads, Tavily) that surfaced it. The ranking is
+primarily sorted by <code>source_diversity</code>. Paste keywords into Google
+Keyword Planner for actual volume + CPC.
+</div>
+
+<section>
+  <h2>Ranked Keywords</h2>
+  <div class="toolbar">
+    <input id="kwFilter" placeholder="Filter keywords (case-insensitive)…">
+    <select id="intentFilter">
+      <option value="">All intents</option>
+      <option value="transactional">transactional</option>
+      <option value="commercial">commercial</option>
+      <option value="informational">informational</option>
+      <option value="navigational">navigational</option>
+    </select>
+    <button onclick="exportCSV('keywords')">Export CSV</button>
+    <span class="count" id="kwCount"></span>
+  </div>
+  <table id="kwTable">
+    <thead>
+      <tr>
+        <th data-sort="string">Keyword</th>
+        <th data-sort="string">Intent</th>
+        <th data-sort="string">Match Type</th>
+        <th data-sort="string">Cluster</th>
+        <th data-sort="number">Signals</th>
+        <th data-sort="number">Src Div</th>
+        <th data-sort="number">Score</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Ad Group Clusters</h2>
+  <div class="toolbar">
+    <button onclick="exportCSV('clusters')">Export CSV</button>
+    <span class="count" id="clusterCount"></span>
+  </div>
+  <div id="clustersList"></div>
+</section>
+
+<section>
+  <h2>Competitor Ad Copy</h2>
+  <div id="competitorList"></div>
+</section>
+
+<section>
+  <h2>Negative Keywords</h2>
+  <div class="toolbar">
+    <input id="negFilter" placeholder="Filter negatives…">
+    <select id="negTierFilter">
+      <option value="">All tiers</option>
+      <option value="Strong">Strong</option>
+      <option value="Considered">Considered</option>
+      <option value="Investigate">Investigate</option>
+    </select>
+    <button onclick="exportCSV('negatives')">Export CSV</button>
+    <span class="count" id="negCount"></span>
+  </div>
+  <table id="negTable">
+    <thead>
+      <tr>
+        <th data-sort="string">Keyword</th>
+        <th data-sort="string">Tier</th>
+        <th data-sort="string">Category</th>
+        <th data-sort="string">Justification</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+</main>
+
+<script>
+const REPORT = {payload_json};
+
+function htmlEscape(s) {{
+  return String(s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}}
+
+function renderKeywords() {{
+  const tbody = document.querySelector("#kwTable tbody");
+  const filter = document.getElementById("kwFilter").value.toLowerCase();
+  const intent = document.getElementById("intentFilter").value;
+  let rows = REPORT.keywords || [];
+  if (filter)  rows = rows.filter(r => (r.keyword||"").toLowerCase().includes(filter));
+  if (intent)  rows = rows.filter(r => r.intent === intent);
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${{htmlEscape(r.keyword)}}</td>
+      <td><span class="intent-tag intent-${{r.intent}}">${{r.intent}}</span></td>
+      <td>${{r.match_type}}</td>
+      <td>${{r.cluster_id ? `<code>${{r.cluster_id}}</code>` : ""}}</td>
+      <td>${{r.signal_count}}</td>
+      <td>${{r.source_diversity}}</td>
+      <td>${{r.score}}</td>
+    </tr>`).join("");
+  document.getElementById("kwCount").textContent = `${{rows.length}} of ${{(REPORT.keywords||[]).length}} keywords`;
+}}
+
+function renderClusters() {{
+  const target = document.getElementById("clustersList");
+  const clusters = REPORT.clusters || [];
+  target.innerHTML = clusters.map(c => `
+    <details>
+      <summary>${{htmlEscape(c.name)}}<span class="cluster-meta">${{(c.keywords||[]).length}} keywords · ${{c.intent}}</span></summary>
+      <ul>${{(c.keywords||[]).map(k => `<li>${{htmlEscape(k.keyword)}} <span class="cluster-meta">score ${{k.score}}</span></li>`).join("")}}</ul>
+    </details>`).join("");
+  document.getElementById("clusterCount").textContent = `${{clusters.length}} clusters`;
+}}
+
+function renderCompetitors() {{
+  const target = document.getElementById("competitorList");
+  const ci = (REPORT.competitor_intel || {{}}).clusters || {{}};
+  const entries = Object.entries(ci);
+  if (!entries.length) {{
+    target.innerHTML = "<p style='color:#666;font-size:13px;'>No competitor ad copy extracted for this run.</p>";
+    return;
+  }}
+  target.innerHTML = entries.map(([name, data]) => {{
+    const ads = data.ads || [];
+    const advs = data.advertisers || [];
+    if (!ads.length && !advs.length) return "";
+    const items = (advs.length ? advs : ads).map(a => `
+      <li><strong>${{htmlEscape(a.ad_title || a.title || a.domain || "")}}</strong>
+          ${{a.ad_description || a.description ? "<br><span>"+htmlEscape(a.ad_description||a.description)+"</span>" : ""}}
+          ${{a.domain ? "<br><code>"+htmlEscape(a.domain)+"</code>" : ""}}
+      </li>`).join("");
+    return `<details><summary>${{htmlEscape(name)}}<span class="cluster-meta">${{ads.length}} ads · ${{advs.length}} advertisers</span></summary><ul>${{items}}</ul></details>`;
+  }}).join("");
+}}
+
+function renderNegatives() {{
+  const tbody = document.querySelector("#negTable tbody");
+  const filter = document.getElementById("negFilter").value.toLowerCase();
+  const tier = document.getElementById("negTierFilter").value;
+  let rows = REPORT.negatives || [];
+  if (filter) rows = rows.filter(r => (r.keyword||"").toLowerCase().includes(filter)
+                                   || (r.justification||"").toLowerCase().includes(filter));
+  if (tier)   rows = rows.filter(r => r.tier === tier);
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td><code>${{htmlEscape(r.keyword)}}</code></td>
+      <td><span class="tier-${{r.tier}}">${{r.tier}}</span></td>
+      <td>${{r.category}}</td>
+      <td>${{htmlEscape(r.justification||"")}}</td>
+    </tr>`).join("");
+  document.getElementById("negCount").textContent = `${{rows.length}} of ${{(REPORT.negatives||[]).length}} negatives`;
+}}
+
+function exportCSV(kind) {{
+  let rows, header;
+  if (kind === "keywords") {{
+    header = ["keyword","intent","match_type","cluster_id","signal_count","source_diversity","score"];
+    rows = REPORT.keywords || [];
+  }} else if (kind === "negatives") {{
+    header = ["keyword","tier","category","justification"];
+    rows = REPORT.negatives || [];
+  }} else if (kind === "clusters") {{
+    header = ["cluster_name","intent","keyword","score"];
+    rows = [];
+    (REPORT.clusters||[]).forEach(c => (c.keywords||[]).forEach(k =>
+      rows.push({{cluster_name:c.name, intent:c.intent, keyword:k.keyword, score:k.score}})
+    ));
+  }} else return;
+  const esc = v => {{ const s = String(v ?? ""); return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }};
+  const csv = [header.join(",")].concat(rows.map(r => header.map(h => esc(r[h])).join(","))).join("\n");
+  const blob = new Blob([csv], {{type:"text/csv;charset=utf-8"}});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `${{REPORT.meta.brief_slug}}_${{kind}}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}}
+
+function makeSortable(tableId) {{
+  const table = document.getElementById(tableId);
+  table.querySelectorAll("th").forEach((th, idx) => {{
+    th.addEventListener("click", () => {{
+      const tbody = table.querySelector("tbody");
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      const isNum = th.dataset.sort === "number";
+      const asc = !th.classList.contains("sort-asc");
+      table.querySelectorAll("th").forEach(h => h.classList.remove("sort-asc","sort-desc"));
+      th.classList.add(asc ? "sort-asc" : "sort-desc");
+      rows.sort((a,b) => {{
+        const av = a.cells[idx].textContent.trim();
+        const bv = b.cells[idx].textContent.trim();
+        if (isNum) return (asc?1:-1)*(parseFloat(av)-parseFloat(bv));
+        return (asc?1:-1)*av.localeCompare(bv);
+      }});
+      rows.forEach(r => tbody.appendChild(r));
+    }});
+  }});
+}}
+
+document.getElementById("kwFilter").addEventListener("input", renderKeywords);
+document.getElementById("intentFilter").addEventListener("change", renderKeywords);
+document.getElementById("negFilter").addEventListener("input", renderNegatives);
+document.getElementById("negTierFilter").addEventListener("change", renderNegatives);
+
+renderKeywords(); renderClusters(); renderCompetitors(); renderNegatives();
+makeSortable("kwTable"); makeSortable("negTable");
+</script>
+</body>
+</html>
+"""
+
+
 def build_report_json(
     ranked: list[dict],
     clusters_data: dict,
@@ -340,15 +674,20 @@ def main(argv: list[str] | None = None) -> int:
         brief_text, run_dir,
     )
 
+    report_html = render_html_report(report_json)
+
     # Write outputs (LF newlines, utf-8)
     (run_dir / "report.md").write_text(report_md, encoding="utf-8", newline="\n")
     (run_dir / "report.json").write_text(
-        json.dumps(report_json, indent=2), encoding="utf-8", newline="\n"
+        json.dumps(report_json, indent=2, ensure_ascii=False),
+        encoding="utf-8", newline="\n",
     )
+    (run_dir / "report.html").write_text(report_html, encoding="utf-8", newline="\n")
 
     print(json.dumps({
         "report_md": str(run_dir / "report.md"),
         "report_json": str(run_dir / "report.json"),
+        "report_html": str(run_dir / "report.html"),
         "keywords_in_report": len(ranked),
     }))
     return 0

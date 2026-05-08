@@ -57,8 +57,15 @@ def append_run_to_index(
         status:    Run status string, default "complete".
     """
     name = run_dir.name
-    date = name[:10]                               # "2026-05-08"
-    slug = name[18:] if len(name) > 18 else name   # "grocery-delivery-uk"
+    # Folder name format: "YYYY-MM-DDTHHMMSSZ-<slug>" (18-char timestamp + dash + slug).
+    # Use regex so optional collision suffix is preserved as part of slug.
+    m = re.match(r"^(\d{4}-\d{2}-\d{2})T\d{6}Z-(.+)$", name)
+    if m:
+        date = m.group(1)
+        slug = m.group(2)
+    else:  # fallback: raw name
+        date = name[:10] if len(name) >= 10 else name
+        slug = name
 
     row = f"| {date} | {slug} | {escape_md_cell(industry)} | {status} |\n"
 
@@ -123,7 +130,8 @@ def main() -> int:
     append_run_to_index(runs_root, run_dir, industry)
 
     name = run_dir.name
-    run_slug = name[18:] if len(name) > 18 else name
+    m = re.match(r"^\d{4}-\d{2}-\d{2}T\d{6}Z-(.+)$", name)
+    run_slug = m.group(1) if m else name
 
     print(json.dumps({
         "index_path": str(runs_root / "INDEX.md"),

@@ -161,13 +161,17 @@ if __name__ == "__main__":
 
     orphan_count = len(clusters_json.get("orphans", []))
     cluster_count = len(clusters_json.get("clusters", []))
-    is_valid = len(hard) == 0 and len(all_warnings) == 0
+    # `valid` reflects hard-violation status only; warnings still allow downstream use.
+    is_valid = len(hard) == 0
+    has_warnings = len(all_warnings) > 0
 
     result = {
         "valid": is_valid,
+        "warnings": has_warnings,
         "cluster_count": cluster_count,
         "orphan_count": orphan_count,
-        "violations": all_violations,
+        "hard_violations": hard,
+        "warnings_list": all_warnings,
     }
     print(json.dumps(result))
 

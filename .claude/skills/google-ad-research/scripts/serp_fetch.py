@@ -50,16 +50,23 @@ def fetch_seed(
     gl: str,
     hl: str,
     num: int = 20,
+    location: str | None = None,
     api_key: str,
 ) -> dict:
     """One Serper call; returns parsed JSON. Raises httpx.HTTPStatusError after retries."""
+    payload = {"q": seed, "gl": gl, "hl": hl, "num": num}
+    if location:
+        payload["location"] = location
     response = client.post(
         SERPER_URL,
         headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
-        json={"q": seed, "gl": gl, "hl": hl, "num": num},
+        json=payload,
     )
     response.raise_for_status()
-    return response.json()
+    # Force UTF-8 decode regardless of Content-Type charset declaration
+    # (Serper sometimes omits charset, which makes httpx fall back wrong and
+    # produce mojibake on non-ASCII results).
+    return json.loads(response.content.decode("utf-8", errors="replace"))
 
 
 def normalise_response(raw: dict, *, seed: str, gl: str, hl: str) -> dict:
@@ -130,6 +137,9 @@ def main_with_args(argv: list[str]) -> int:
                         help="Google locale language code (e.g. en-GB, en-US).")
     parser.add_argument("--num", type=int, default=20,
                         help="Results per Serper call (default 20).")
+    parser.add_argument("--location", default=None,
+                        help="Optional Serper location string for finer geo targeting "
+                             "(e.g. 'Lake Worth, Florida, United States').")
     args = parser.parse_args(argv)
 
     # Validate run-dir up front (exit 3 — fatal IO/config error).
@@ -160,7 +170,7 @@ def main_with_args(argv: list[str]) -> int:
                 raw = fetch_seed(
                     client, seed,
                     gl=args.gl, hl=args.hl,
-                    num=args.num, api_key=api_key,
+                    num=args.num, location=args.location, api_key=api_key,
                 )
             except httpx.HTTPStatusError as exc:
                 status = exc.response.status_code
