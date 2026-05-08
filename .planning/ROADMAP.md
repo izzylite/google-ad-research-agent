@@ -96,7 +96,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Skill Scaffold and Brief Intake | 6/6 | Complete   | 2026-05-08 |
+| 1. Skill Scaffold and Brief Intake | 6/6 | Complete    | 2026-05-08 |
 | 2. Signal Collection | 0/0 | Not started | - |
 | 3. Ranking and Scoring | 0/0 | Not started | - |
 | 4. Clustering | 0/0 | Not started | - |

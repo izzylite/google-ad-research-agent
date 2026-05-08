@@ -116,14 +116,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | SCFD-01 | Phase 1 | Complete |
-| SCFD-02 | Phase 1 | Pending |
+| SCFD-02 | Phase 1 | Complete |
 | SCFD-03 | Phase 1 | Complete |
 | SCFD-04 | Phase 1 | Complete |
-| SCFD-05 | Phase 1 | Pending |
+| SCFD-05 | Phase 1 | Complete |
 | INTK-01 | Phase 1 | Complete |
 | INTK-02 | Phase 1 | Complete |
 | INTK-03 | Phase 1 | Complete |
-| INTK-04 | Phase 1 | Pending |
+| INTK-04 | Phase 1 | Complete |
 | SIGL-01 | Phase 2 | Pending |
 | SIGL-02 | Phase 2 | Pending |
 | SIGL-03 | Phase 2 | Pending |
