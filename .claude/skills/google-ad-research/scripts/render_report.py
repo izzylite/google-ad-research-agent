@@ -158,36 +158,54 @@ def render_clusters_section(clusters_data: dict) -> str:
 
 
 def render_competitor_section(competitor_intel: dict) -> str:
-    """Render the Competitor Ad Copy section."""
+    """Render the Competitor Ad Copy section.
+
+    When advertiser titles/descriptions are missing (LLM extraction not yet
+    populated, or competitor LP yielded no extractable headlines), fall back
+    to the domain + URL so the operator at least sees WHO is competing.
+    """
     parts = ["## Competitor Ad Copy\n\n", USAGE_COMPETITORS, "\n"]
     clusters = competitor_intel.get("clusters", {})
     if not clusters:
-        parts.append("\nNo competitor ad copy extracted for this run.\n")
+        parts.append("\n_No competitor ad copy extracted for this run._\n")
         return "".join(parts)
 
     for cluster_name, cluster_data in clusters.items():
         escaped_name = escape_md_cell(cluster_name)
-        parts.append(f"\n### {escaped_name}\n")
+        source_label = cluster_data.get("advertiser_source", "ads")
+        parts.append(f"\n### {escaped_name}  \n_(source: {source_label})_\n")
         ads = cluster_data.get("ads", [])
         advertisers = cluster_data.get("advertisers", [])
-        # Prefer advertisers (richer data) if available, else fall back to ads
+
+        # Prefer advertisers (richer data — has Tavily-extracted LP content)
         if advertisers:
             for adv in advertisers:
-                title = escape_md_cell(adv.get("ad_title", ""))
-                desc = escape_md_cell(adv.get("ad_description", ""))
-                domain = escape_md_cell(adv.get("domain", ""))
-                parts.append(f"- **{title}**\n")
+                title = (adv.get("ad_title") or adv.get("title") or "").strip()
+                desc = (adv.get("ad_description") or adv.get("description") or "").strip()
+                domain = adv.get("domain", "") or ""
+                url = adv.get("url", "") or ""
+                # Headline fallback chain: ad_title → domain → "(no headline)"
+                headline = title if title else (domain if domain else "(no headline extracted)")
+                parts.append(f"- **{escape_md_cell(headline)}**\n")
                 if desc:
-                    parts.append(f"  - {desc}\n")
-                if domain:
-                    parts.append(f"  - Domain: {domain}\n")
+                    parts.append(f"  - {escape_md_cell(desc)}\n")
+                if domain and title:  # only show domain separately if title was real
+                    parts.append(f"  - Domain: `{escape_md_cell(domain)}`\n")
+                if url:
+                    parts.append(f"  - URL: <{escape_md_cell(url)}>\n")
         elif ads:
             for ad in ads:
-                title = escape_md_cell(ad.get("title", ""))
-                desc = escape_md_cell(ad.get("description", ""))
-                parts.append(f"- **{title}**\n")
+                title = (ad.get("title") or "").strip()
+                desc = (ad.get("description") or "").strip()
+                domain = ad.get("domain", "") or ""
+                headline = title if title else (domain or "(no ad title)")
+                parts.append(f"- **{escape_md_cell(headline)}**\n")
                 if desc:
-                    parts.append(f"  - {desc}\n")
+                    parts.append(f"  - {escape_md_cell(desc)}\n")
+                if domain and title:
+                    parts.append(f"  - Domain: `{escape_md_cell(domain)}`\n")
+        else:
+            parts.append("- _No ads or advertisers captured for this cluster._\n")
     return "".join(parts)
 
 
@@ -374,23 +392,30 @@ def render_full_report(
         f"**Brief slug:** {brief_slug}  \n\n"
     )
 
+    # Section order: action items first (pulse highlights, clusters,
+    # negatives), reference data last (full ranked keyword table, full pulse
+    # tables, competitor LP details). Operator scrolls less to find what to
+    # do this week.
     sections = [
         header,
         HOW_TO_READ,
-        "\n## Ranked Keywords\n\n",
-        USAGE_KEYWORDS, "\n\n",
-        render_keyword_table(ranked, top_n=top_n),
-        "\n\n",
-        render_clusters_section(clusters_data),
-        "\n",
-        render_competitor_section(competitor_intel),
-        "\n",
-        render_negatives_section(negatives),
     ]
     pulse_md = render_niche_pulse_section(niche_pulse or {})
     if pulse_md:
         sections.append("\n")
         sections.append(pulse_md)
+    sections.extend([
+        "\n",
+        render_clusters_section(clusters_data),
+        "\n",
+        render_negatives_section(negatives),
+        "\n",
+        render_competitor_section(competitor_intel),
+        "\n## Ranked Keywords\n\n",
+        USAGE_KEYWORDS, "\n\n",
+        render_keyword_table(ranked, top_n=top_n),
+        "\n\n",
+    ])
     return "".join(sections)
 
 
@@ -399,8 +424,21 @@ def render_html_report(report_json: dict) -> str:
 
     Embeds report_json as a JS object so the page can offer CSV export of
     every section without round-tripping back to disk.
+
+    Security: API responses (Tavily/Serper) may contain arbitrary remote
+    content including `</script>` strings. Escape so the embedded JSON
+    cannot break out of the script tag (XSS hardening).
     """
     payload = json.dumps(report_json, ensure_ascii=False)
+    # Prevent </script> in any field from terminating the inline script tag.
+    # Also escape <!-- and U+2028/U+2029 line separators that some browsers
+    # treat as JS line terminators.
+    payload = (
+        payload.replace("</", "<\\/")
+        .replace("<!--", "<\\!--")
+        .replace(" ", "\\u2028")
+        .replace(" ", "\\u2029")
+    )
     meta = report_json.get("meta", {})
     brief = report_json.get("brief", {})
     title = f"Keyword Research — {meta.get('brief_slug', '')}"
@@ -528,6 +566,57 @@ primarily sorted by <code>source_diversity</code>. Paste keywords into Google
 Keyword Planner for actual volume + CPC.
 </div>
 
+<section id="niche-pulse">
+  <h2>Niche Pulse <span class="cluster-meta" id="pulseMeta"></span></h2>
+  <div class="usage"><strong>What this is:</strong> news-derived signals from the last 7 days. Time-sensitive (1-4 week shelf life). NOT merged into the main keyword ranking. The four sub-sections below each have their own action — start with <strong>Highlights</strong>.</div>
+  <div id="pulseContent">
+    <p style="color:#666;font-size:13px;">No niche-pulse.json found in this run — run Phase 7 (pulse_fetch + pulse_synth) to populate.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Ad Group Clusters</h2>
+  <div class="usage"><strong>How to use:</strong> each cluster is a ready-to-paste Google Ads ad group. Cluster name follows <code>theme_intent</code> — copy directly as the ad group label. Bid on transactional + commercial clusters; informational clusters belong in a separate awareness campaign with lower CPC ceilings.</div>
+  <div class="toolbar">
+    <button onclick="exportCSV('clusters')">Export CSV</button>
+    <span class="count" id="clusterCount"></span>
+  </div>
+  <div id="clustersList"></div>
+</section>
+
+<section>
+  <h2>Negative Keywords</h2>
+  <div class="usage"><strong>How to use:</strong> add <span class="tier-Strong">Strong</span> negatives to all campaigns immediately (high-confidence noise filters). Review <span class="tier-Considered">Considered</span> negatives against your brand positioning before adding. Skip <span class="tier-Investigate">Investigate</span> until they show up eating budget in search-term reports.</div>
+  <div class="toolbar">
+    <input id="negFilter" placeholder="Filter negatives…">
+    <select id="negTierFilter">
+      <option value="">All tiers</option>
+      <option value="Strong">Strong</option>
+      <option value="Considered">Considered</option>
+      <option value="Investigate">Investigate</option>
+    </select>
+    <button onclick="exportCSV('negatives')">Export CSV</button>
+    <span class="count" id="negCount"></span>
+  </div>
+  <table id="negTable">
+    <thead>
+      <tr>
+        <th data-sort="string">Keyword</th>
+        <th data-sort="string">Tier</th>
+        <th data-sort="string">Category</th>
+        <th data-sort="string">Justification</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Competitor Ad Copy</h2>
+  <div class="usage"><strong>How to use:</strong> scan competitor headlines and value props for angles to differentiate against (or copy if working). Repeated CTAs (<em>"book online"</em>, <em>"walk-in welcome"</em>, <em>"PIP accepted"</em>) are validated by competitor spend — use them in your responsive search ad headlines.</div>
+  <div id="competitorList"></div>
+</section>
+
 <section>
   <h2>Ranked Keywords</h2>
   <div class="usage"><strong>How to use:</strong> export to CSV, paste into Google Keyword Planner for monthly volume + CPC, then build ad groups around the transactional + commercial keywords with <code>source_diversity ≥ 2</code>. Skip navigational keywords unless conquesting competitor brand terms.</div>
@@ -553,57 +642,6 @@ Keyword Planner for actual volume + CPC.
         <th data-sort="number">Signals</th>
         <th data-sort="number">Src Div</th>
         <th data-sort="number">Score</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
-
-<section>
-  <h2>Ad Group Clusters</h2>
-  <div class="usage"><strong>How to use:</strong> each cluster is a ready-to-paste Google Ads ad group. Cluster name follows <code>theme_intent</code> — copy directly as the ad group label. Bid on transactional + commercial clusters; informational clusters belong in a separate awareness campaign with lower CPC ceilings.</div>
-  <div class="toolbar">
-    <button onclick="exportCSV('clusters')">Export CSV</button>
-    <span class="count" id="clusterCount"></span>
-  </div>
-  <div id="clustersList"></div>
-</section>
-
-<section>
-  <h2>Competitor Ad Copy</h2>
-  <div class="usage"><strong>How to use:</strong> scan competitor headlines and value props for angles to differentiate against (or copy if working). Repeated CTAs (<em>"book online"</em>, <em>"walk-in welcome"</em>, <em>"PIP accepted"</em>) are validated by competitor spend — use them in your responsive search ad headlines.</div>
-  <div id="competitorList"></div>
-</section>
-
-<section id="niche-pulse">
-  <h2>Niche Pulse <span class="cluster-meta" id="pulseMeta"></span></h2>
-  <div class="usage"><strong>What this is:</strong> news-derived signals from the last 7 days. Time-sensitive (1-4 week shelf life). NOT merged into the main keyword ranking. The four sub-sections below each have their own action — start with <strong>Highlights</strong>.</div>
-  <div id="pulseContent">
-    <p style="color:#666;font-size:13px;">No niche-pulse.json found in this run — run Phase 7 (pulse_fetch + pulse_synth) to populate.</p>
-  </div>
-</section>
-
-<section>
-  <h2>Negative Keywords</h2>
-  <div class="usage"><strong>How to use:</strong> add <span class="tier-Strong">Strong</span> negatives to all campaigns immediately (high-confidence noise filters). Review <span class="tier-Considered">Considered</span> negatives against your brand positioning before adding. Skip <span class="tier-Investigate">Investigate</span> until they show up eating budget in search-term reports.</div>
-  <div class="toolbar">
-    <input id="negFilter" placeholder="Filter negatives…">
-    <select id="negTierFilter">
-      <option value="">All tiers</option>
-      <option value="Strong">Strong</option>
-      <option value="Considered">Considered</option>
-      <option value="Investigate">Investigate</option>
-    </select>
-    <button onclick="exportCSV('negatives')">Export CSV</button>
-    <span class="count" id="negCount"></span>
-  </div>
-  <table id="negTable">
-    <thead>
-      <tr>
-        <th data-sort="string">Keyword</th>
-        <th data-sort="string">Tier</th>
-        <th data-sort="string">Category</th>
-        <th data-sort="string">Justification</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -663,13 +701,22 @@ function renderCompetitors() {{
   target.innerHTML = entries.map(([name, data]) => {{
     const ads = data.ads || [];
     const advs = data.advertisers || [];
+    const sourceLabel = data.advertiser_source || "ads";
     if (!ads.length && !advs.length) return "";
-    const items = (advs.length ? advs : ads).map(a => `
-      <li><strong>${{htmlEscape(a.ad_title || a.title || a.domain || "")}}</strong>
-          ${{a.ad_description || a.description ? "<br><span>"+htmlEscape(a.ad_description||a.description)+"</span>" : ""}}
-          ${{a.domain ? "<br><code>"+htmlEscape(a.domain)+"</code>" : ""}}
-      </li>`).join("");
-    return `<details><summary>${{htmlEscape(name)}}<span class="cluster-meta">${{ads.length}} ads · ${{advs.length}} advertisers</span></summary><ul>${{items}}</ul></details>`;
+    const items = (advs.length ? advs : ads).map(a => {{
+      const title = (a.ad_title || a.title || "").trim();
+      const desc = (a.ad_description || a.description || "").trim();
+      const domain = a.domain || "";
+      const url = a.url || a.link || "";
+      // Fallback chain — never show empty bullet
+      const headline = title || domain || "(no headline extracted)";
+      return `<li><strong>${{htmlEscape(headline)}}</strong>
+          ${{desc ? "<br><span>"+htmlEscape(desc)+"</span>" : ""}}
+          ${{domain && title ? "<br><code>"+htmlEscape(domain)+"</code>" : ""}}
+          ${{url ? `<br><a href="${{htmlEscape(url)}}" target="_blank" style="font-size:11px;color:#2563eb;">${{htmlEscape(url)}}</a>` : ""}}
+      </li>`;
+    }}).join("");
+    return `<details><summary>${{htmlEscape(name)}}<span class="cluster-meta">${{ads.length}} ads · ${{advs.length}} advertisers · source: ${{sourceLabel}}</span></summary><ul>${{items}}</ul></details>`;
   }}).join("");
 }}
 

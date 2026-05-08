@@ -58,6 +58,43 @@ from typing import Iterator
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from lib.canon import canonicalise  # noqa: E402
+
+# US state ambiguity — when brief location names a state, drop keywords
+# containing other state's tokens. Prevents "Lake Worth, FL" → Texas drift.
+US_STATE_TOKENS = {
+    "al", "alabama", "ak", "alaska", "az", "arizona", "ar", "arkansas",
+    "ca", "california", "co", "colorado", "ct", "connecticut",
+    "de", "delaware", "fl", "florida", "ga", "georgia", "hi", "hawaii",
+    "id", "idaho", "il", "illinois", "in", "indiana", "ia", "iowa",
+    "ks", "kansas", "ky", "kentucky", "la", "louisiana", "me", "maine",
+    "md", "maryland", "ma", "massachusetts", "mi", "michigan",
+    "mn", "minnesota", "ms", "mississippi", "mo", "missouri",
+    "mt", "montana", "ne", "nebraska", "nv", "nevada",
+    "nh", "new hampshire", "nj", "new jersey", "nm", "new mexico",
+    "ny", "new york", "nc", "north carolina", "nd", "north dakota",
+    "oh", "ohio", "ok", "oklahoma", "or", "oregon",
+    "pa", "pennsylvania", "ri", "rhode island", "sc", "south carolina",
+    "sd", "south dakota", "tn", "tennessee", "tx", "texas",
+    "ut", "utah", "vt", "vermont", "va", "virginia", "wa", "washington",
+    "wv", "west virginia", "wi", "wisconsin", "wy", "wyoming",
+}
+
+# Common place-name disambiguation hints — cities that exist in multiple
+# states. Maps city → set of states where the city is well-known. When a
+# brief mentions "Lake Worth, FL", the merge filter rejects keywords whose
+# only US-state token is one OTHER than FL.
+AMBIGUOUS_CITIES = {
+    "lake worth": {"fl", "florida", "tx", "texas"},
+    "springfield": {"il", "ma", "mo", "or"},
+    "kansas city": {"ks", "mo"},
+    "portland": {"or", "me"},
+    "columbus": {"oh", "ga"},
+    "rochester": {"ny", "mn"},
+    "richmond": {"va", "ca"},
+    "memphis": {"tn", "ny"},
+    "fort worth": {"tx"},
+    "dallas": {"tx"},
+}
 from lib.log import configure_logger  # noqa: E402
 
 log = configure_logger()
@@ -218,13 +255,69 @@ def read_websearch(path: Path) -> Iterator[tuple[str, dict]]:
 # Core merge logic
 # ---------------------------------------------------------------------------
 
-def merge_raw_files(raw_dir: Path) -> dict[str, dict]:
+def _build_state_filter(brief_text: str) -> set[str]:
+    """Detect target US state(s) in brief.md and return states to KEEP.
+
+    Returns empty set when brief has no detectable US state — no filtering
+    applied. Returns {"fl", "florida"} for a brief mentioning Lake Worth, FL.
+
+    Used downstream to drop keywords containing OTHER state tokens.
+    """
+    if not brief_text:
+        return set()
+    matched = set()
+    # 2-letter codes — require UPPERCASE in original brief to avoid false
+    # positives on common words ("mi" = miles, "or" = or, "in" = in,
+    # "ok" = ok, "hi" = hi, "ma" = ma, etc).
+    for token in US_STATE_TOKENS:
+        if len(token) == 2:
+            if re.search(rf"\b{token.upper()}\b", brief_text):
+                matched.add(token)
+        else:
+            if token in brief_text.lower():
+                matched.add(token)
+    # Coalesce — if both "fl" and "florida" matched, keep both
+    return matched
+
+
+def _keyword_drifts_geo(text: str, allowed_states: set[str]) -> bool:
+    """Return True when the keyword references a US state NOT in allowed_states.
+
+    Used to drop keywords like "accident clinic dallas" when brief targets FL.
+    """
+    if not allowed_states or not text:
+        return False
+    lower_tokens = re.findall(r"\b[a-z]+\b", text.lower())
+    multi_word = " ".join(lower_tokens)
+
+    # Check 2-letter codes
+    found_states = {t for t in lower_tokens if t in US_STATE_TOKENS and len(t) == 2}
+    # Check multi-word state names
+    for full in {s for s in US_STATE_TOKENS if len(s) > 2}:
+        if full in multi_word:
+            found_states.add(full)
+
+    if not found_states:
+        return False
+
+    # Drift if NONE of the found states are allowed
+    return found_states.isdisjoint(allowed_states)
+
+
+def merge_raw_files(raw_dir: Path,
+                    *, allowed_states: set[str] | None = None) -> dict[str, dict]:
     """Read all raw/*.json files and merge signals into a dict keyed by lemma_hash.
+
+    Args:
+        raw_dir: directory containing serper.json, tavily-*.json, websearch-baseline.json.
+        allowed_states: when non-empty, drop keywords containing US state
+            tokens not in this set (geo-drift filter).
 
     Returns:
         {lemma_hash: {"canonical": str, "lemma_hash": str, "variants": set, "sources": list}}
     """
     groups: dict[str, dict] = {}
+    allowed_states = allowed_states or set()
 
     def _add(text: str, attr: dict) -> None:
         """Canonicalise text and add attribution to the appropriate group."""
@@ -232,6 +325,10 @@ def merge_raw_files(raw_dir: Path) -> dict[str, dict]:
         # mis-decoded API responses). Such keywords are unusable as Google Ads
         # match terms anyway.
         if text and "�" in text:
+            return
+
+        # Drop keywords whose only US-state reference is wrong-geo
+        if _keyword_drifts_geo(text, allowed_states):
             return
 
         try:
@@ -333,7 +430,18 @@ def main_with_args(argv: list[str]) -> int:
         log.error(f"raw/ subdirectory not found in {run_dir}")
         return 3
 
-    groups = merge_raw_files(raw_dir)
+    # Detect target US state(s) from brief.md to filter wrong-geo drift.
+    brief_path = run_dir / "brief.md"
+    allowed_states: set[str] = set()
+    if brief_path.exists():
+        try:
+            allowed_states = _build_state_filter(brief_path.read_text(encoding="utf-8"))
+        except OSError:
+            pass
+    if allowed_states:
+        log.info(f"Geo-drift filter active: keep states {sorted(allowed_states)}")
+
+    groups = merge_raw_files(raw_dir, allowed_states=allowed_states)
     if not groups:
         log.warning("No keywords extracted — keywords.json will be empty")
 

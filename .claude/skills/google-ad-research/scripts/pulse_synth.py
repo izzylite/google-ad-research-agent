@@ -418,7 +418,9 @@ def find_trending_negatives(items: list[dict]) -> list[dict]:
                 "date": item.get("date"),
                 "source": item.get("source"),
                 "trigger_keywords": sorted(hits),
-                "suggested_negative": list(hits)[0],
+                # sorted() instead of list(set)[0] — set ordering is
+                # hash-randomized; this kept the same value across runs.
+                "suggested_negative": sorted(hits)[0],
                 "from_seed": item.get("from_seed"),
             })
     return negs

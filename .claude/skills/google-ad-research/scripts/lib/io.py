@@ -81,18 +81,20 @@ _SMART_QUOTE_MAP = str.maketrans({
 def escape_md_cell(s: str, *, max_len: int = 120) -> str:
     """Sanitize a string for safe use in a GFM markdown table cell.
 
+    Truncation runs BEFORE escaping so we never split a `\\|` pair.
+
     Operations (in order):
     1. Coerce non-strings to str.
     2. Normalize smart quotes and dashes to ASCII equivalents.
     3. Replace literal newlines/carriage returns with a single space.
-    4. Escape pipe characters as \\|.
-    5. Truncate to max_len with ellipsis if needed.
+    4. Truncate to max_len with ellipsis (uses pre-escape length).
+    5. Escape pipe characters as \\|.
     """
     if not isinstance(s, str):
         s = str(s)
     s = s.translate(_SMART_QUOTE_MAP)
     s = re.sub(r"[\r\n]+", " ", s)
-    s = s.replace("|", r"\|")
     if len(s) > max_len:
         s = s[:max_len - 1] + "…"
+    s = s.replace("|", r"\|")
     return s
