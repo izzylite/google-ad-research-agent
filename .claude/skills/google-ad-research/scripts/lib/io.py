@@ -1,6 +1,7 @@
 """lib/io.py — filesystem + naming helpers."""
 from __future__ import annotations
 
+import re
 import secrets
 from datetime import datetime, timezone
 from pathlib import Path
@@ -61,3 +62,37 @@ def write_brief(run_dir: Path, brief_text: str) -> Path:
     brief_path = run_dir / "brief.md"
     brief_path.write_text(brief_text, encoding="utf-8", newline="\n")
     return brief_path
+
+
+# ---------------------------------------------------------------------------
+# Markdown table cell sanitizer
+# ---------------------------------------------------------------------------
+
+_SMART_QUOTE_MAP = str.maketrans({
+    "‘": "'",  # left single quotation mark
+    "’": "'",  # right single quotation mark
+    "“": '"',  # left double quotation mark
+    "”": '"',  # right double quotation mark
+    "–": "-",  # en dash
+    "—": "-",  # em dash
+})
+
+
+def escape_md_cell(s: str, *, max_len: int = 120) -> str:
+    """Sanitize a string for safe use in a GFM markdown table cell.
+
+    Operations (in order):
+    1. Coerce non-strings to str.
+    2. Normalize smart quotes and dashes to ASCII equivalents.
+    3. Replace literal newlines/carriage returns with a single space.
+    4. Escape pipe characters as \\|.
+    5. Truncate to max_len with ellipsis if needed.
+    """
+    if not isinstance(s, str):
+        s = str(s)
+    s = s.translate(_SMART_QUOTE_MAP)
+    s = re.sub(r"[\r\n]+", " ", s)
+    s = s.replace("|", r"\|")
+    if len(s) > max_len:
+        s = s[:max_len - 1] + "…"
+    return s
