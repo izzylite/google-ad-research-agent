@@ -82,6 +82,7 @@ NEGATIVE_TRIGGER_KEYWORDS = frozenset({
 
 # Stop tokens that produce useless n-grams
 STOP_TOKENS = frozenset({
+    # Function words / determiners
     "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
     "of", "with", "by", "from", "is", "was", "are", "were", "be", "been",
     "being", "have", "has", "had", "do", "does", "did", "will", "would",
@@ -94,9 +95,36 @@ STOP_TOKENS = frozenset({
     "new", "more", "most", "less", "least", "very", "just", "also",
     "now", "then", "here", "there", "when", "where", "why", "how",
     "what", "which", "who", "whom", "whose",
-    "reuters", "bloomberg", "associated", "press", "ap", "today",
-    "yesterday", "week", "month", "year", "report", "reports",
-    "reported", "says", "said", "saying", "according", "amid",
+    "absolutely", "really", "actually", "still", "yet", "even",
+    # Media/news brand tokens — filter byline noise
+    "reuters", "bloomberg", "associated", "press", "ap", "afp",
+    "cbs", "nbc", "abc", "fox", "cnn", "msnbc", "pbs", "npr", "bbc",
+    "nyt", "wsj", "wapo", "guardian", "telegraph", "newsweek",
+    "huffpost", "yahoo", "buzzfeed", "vox", "axios", "politico",
+    "tmz", "people", "variety", "deadline", "salon",
+    # Reporter/anchor common first names that recur in bylines
+    "jim", "bob", "joe", "john", "tom", "ted", "tim", "dan", "jeff",
+    "jane", "kate", "mary", "anne", "lisa", "sarah", "amy", "amanda",
+    "berry", "berry's", "smith", "jones", "brown", "miller", "davis",
+    # Time / date words
+    "today", "yesterday", "tomorrow",
+    "monday", "tuesday", "wednesday", "thursday", "friday",
+    "saturday", "sunday",
+    "morning", "afternoon", "evening", "night", "tonight",
+    "january", "february", "march", "april", "may", "june",
+    "july", "august", "september", "october", "november", "december",
+    "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
+    "week", "month", "year", "weeks", "months", "years",
+    "ago", "earlier", "later", "soon", "recently", "lately",
+    # Verbose news verbs
+    "report", "reports", "reported", "reporting",
+    "says", "said", "saying", "tells", "told", "telling",
+    "according", "according-to", "claim", "claims", "claimed",
+    "announce", "announced", "announces", "announcement",
+    "confirm", "confirmed", "confirms", "deny", "denied",
+    # Generic count modifiers
+    "one", "two", "three", "four", "five", "six", "seven", "eight",
+    "nine", "ten", "first", "second", "third",
 })
 
 # Minimum mentions to surface a theme (auto-scaled per harvest size below)
@@ -226,9 +254,98 @@ def find_themes(items: list[dict]) -> list[dict]:
             "suggested_keywords": suggested,
         })
 
+    # Filter low-quality themes: must have ≥1 substantive token (4+ chars,
+    # not just connecting words). Drops "in florida" / "with new" patterns.
+    themes = [t for t in themes if _theme_has_substance(t["theme"])]
+
     # Sort by mention_count desc, cap to MAX_THEMES
     themes.sort(key=lambda t: -t["mention_count"])
     return themes[:MAX_THEMES]
+
+
+def _theme_has_substance(theme: str) -> bool:
+    """A theme is substantive when it carries at least one 4+ char token that
+    isn't a stop-token or pure number."""
+    for tok in theme.split():
+        if len(tok) >= 4 and tok not in STOP_TOKENS and not tok.isdigit():
+            return True
+    return False
+
+
+def find_highlights(themes: list[dict],
+                    regulatory: list[dict],
+                    competitor_news: list[dict],
+                    trending_negatives: list[dict]) -> list[dict]:
+    """Surface the most actionable items across all four sections.
+
+    Returns a small ranked list (max 5) — each entry has a `kind`, a
+    one-line summary, and the underlying record. Used by the report's
+    "Highlights" callout so operator sees the punchline before scrolling.
+    """
+    highlights: list[dict] = []
+    seen_summaries: set[str] = set()
+
+    def _add(item: dict) -> None:
+        # Dedup by lowercased title — news APIs often return same headline
+        # via multiple seeds.
+        key = (item.get("summary") or "").strip().lower()
+        if key and key in seen_summaries:
+            return
+        seen_summaries.add(key)
+        highlights.append(item)
+
+    # 1. Regulatory alerts naming PIP / law / repeal / amendment / court
+    #    are highest priority — affect bidding strategy directly.
+    high_value_regs = ["repeal", "amendment", "ruling", "verdict", "lawsuit",
+                       "settlement", "new law", "passed", "signed"]
+    for r in regulatory:
+        title_lower = (r.get("title") or "").lower()
+        if any(kw in title_lower for kw in high_value_regs):
+            _add({
+                "kind": "regulatory",
+                "summary": r.get("title", ""),
+                "date": r.get("date"),
+                "link": r.get("link"),
+                "matched_keywords": r.get("matched_keywords", []),
+                "why_it_matters": "Regulatory shift can invalidate ad copy "
+                                  "claims and change PIP/insurance bidding.",
+            })
+        if len(highlights) >= 3:
+            break
+
+    # 2. Competitor news (any mention is news to the operator)
+    for c in competitor_news[:2]:
+        _add({
+            "kind": "competitor",
+            "summary": c.get("title", ""),
+            "date": c.get("date"),
+            "link": c.get("link"),
+            "matched_brand": c.get("matched_brand"),
+            "why_it_matters": "Competitor activity — informs conquesting and "
+                              "differentiation messaging.",
+        })
+
+    # 3. Top trending theme — prefer multi-token, multi-source themes
+    #    (more substantive than 2-word noise like "vehicle crash").
+    for t in themes:
+        word_count = len(t.get("theme", "").split())
+        source_count = len(t.get("sources", []))
+        # Prefer themes with 3+ tokens OR multi-source coverage
+        if word_count >= 3 or source_count >= 2:
+            _add({
+                "kind": "trend",
+                "summary": f"Trending: \"{t['theme']}\" "
+                           f"({t['mention_count']} mentions across "
+                           f"{source_count} sources)",
+                "first_seen": t.get("first_seen"),
+                "headlines": t.get("headlines", [])[:2],
+                "why_it_matters": "Spike in news mentions — early opportunity "
+                                  "for matching keyword bids before "
+                                  "competitors react.",
+            })
+            break
+
+    return highlights[:5]
 
 
 def find_regulatory_alerts(items: list[dict]) -> list[dict]:
@@ -347,10 +464,13 @@ def main_with_args(argv: list[str]) -> int:
     competitor = find_competitor_news(items, args.brand)
     negatives = find_trending_negatives(items)
 
+    highlights = find_highlights(themes, regulatory, competitor, negatives)
+
     pulse = {
         "captured_at": _now_iso(),
         "horizon_days": horizon_days,
         "total_news_items": len(items),
+        "highlights": highlights,
         "trending_themes": themes,
         "regulatory_alerts": regulatory,
         "competitor_news": competitor,
@@ -363,6 +483,7 @@ def main_with_args(argv: list[str]) -> int:
 
     print(json.dumps({
         "niche_pulse_path": str(out_path),
+        "highlights_count": len(highlights),
         "trending_themes_count": len(themes),
         "regulatory_alerts_count": len(regulatory),
         "competitor_news_count": len(competitor),

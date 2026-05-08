@@ -50,6 +50,69 @@ reliable signal. The ranking is primarily sorted by source_diversity.
 To estimate actual search volume, paste the keyword list into Google Keyword Planner.
 """
 
+# Per-section usage descriptions — surfaced inline so the operator knows what
+# to DO with each section, not just what it contains.
+USAGE_KEYWORDS = (
+    "**How to use:** export this list to CSV, paste into Google Keyword "
+    "Planner to get monthly volume + CPC, then build ad groups around the "
+    "transactional + commercial keywords with `source_diversity` ≥ 2. "
+    "Skip navigational keywords unless you're conquesting competitor brand "
+    "terms — they're brand searches, not category demand."
+)
+USAGE_CLUSTERS = (
+    "**How to use:** each cluster is a ready-to-paste Google Ads ad group. "
+    "Cluster name follows `theme_intent` so you can copy it directly as the "
+    "ad group label. Only bid on transactional and commercial clusters; "
+    "informational clusters belong in a separate awareness campaign with "
+    "lower CPC ceilings."
+)
+USAGE_COMPETITORS = (
+    "**How to use:** scan competitor headlines and value props for angles "
+    "to differentiate against (or copy if they're working). Pay attention "
+    "to repeated CTAs (\"book online\", \"walk-in welcome\", \"PIP "
+    "accepted\") — those are validated by competitor spend. Use them in "
+    "your responsive search ad headlines and descriptions."
+)
+USAGE_NEGATIVES = (
+    "**How to use:** add Strong-tier negatives to all campaigns immediately "
+    "(they're high-confidence noise filters). Review Considered-tier "
+    "negatives against your specific brand positioning before adding — some "
+    "may be valid traffic for your tier. Skip Investigate-tier until you "
+    "see them eat budget in search-term reports."
+)
+USAGE_PULSE_HIGHLIGHTS = (
+    "**How to use:** the operator's punchline. Every item is a time-sensitive "
+    "action — regulatory shifts mean ad copy claims need review, competitor "
+    "news means messaging adjustments, trending themes mean early-mover "
+    "keyword opportunities. Address these THIS WEEK; they age out fast."
+)
+USAGE_PULSE_THEMES = (
+    "**How to use:** treat as opportunity candidates with a 1-4 week shelf "
+    "life. Themes with high mention counts across both sources are real; "
+    "single-source themes are noisier. For each one worth pursuing, add a "
+    "phrase-match keyword to a dedicated 'trending' ad group with its own "
+    "budget cap so the spike doesn't blow up your CPA."
+)
+USAGE_PULSE_REGULATORY = (
+    "**How to use:** every alert here can affect what claims you're allowed "
+    "to make in ad copy and what the audience is searching for. Read titles "
+    "now; if anything mentions PIP, your state's no-fault law, or your "
+    "service category specifically, pause affected ad groups and review "
+    "creative before resuming."
+)
+USAGE_PULSE_COMPETITOR_NEWS = (
+    "**How to use:** competitor moves are signals. Acquisitions or "
+    "expansions mean their bid pressure rises in your geo. Lawsuits or "
+    "scandals are conquesting opportunities — increase bids on their brand "
+    "terms with comparison ad copy."
+)
+USAGE_PULSE_NEGATIVES = (
+    "**How to use:** quick-add candidates for your negative keyword list. "
+    "Unlike the main negatives section, these are reactive — driven by news "
+    "events you'd want to avoid being associated with. Review and either "
+    "promote to Strong negatives or dismiss as transient noise."
+)
+
 TIER_ORDER = ["Strong", "Considered", "Investigate"]
 
 TIER_DESCRIPTIONS = {
@@ -83,7 +146,7 @@ def render_keyword_table(ranked: list[dict], top_n: int = 100) -> str:
 
 def render_clusters_section(clusters_data: dict) -> str:
     """Render the Ad Group Clusters section."""
-    parts = ["## Ad Group Clusters\n"]
+    parts = ["## Ad Group Clusters\n\n", USAGE_CLUSTERS, "\n"]
     clusters = clusters_data.get("clusters", [])
     for cluster in clusters:
         name = escape_md_cell(cluster.get("name", ""))
@@ -96,7 +159,7 @@ def render_clusters_section(clusters_data: dict) -> str:
 
 def render_competitor_section(competitor_intel: dict) -> str:
     """Render the Competitor Ad Copy section."""
-    parts = ["## Competitor Ad Copy\n"]
+    parts = ["## Competitor Ad Copy\n\n", USAGE_COMPETITORS, "\n"]
     clusters = competitor_intel.get("clusters", {})
     if not clusters:
         parts.append("\nNo competitor ad copy extracted for this run.\n")
@@ -146,8 +209,21 @@ def render_niche_pulse_section(pulse: dict) -> str:
         f"main keyword ranking._\n"
     )
 
+    # --- Highlights (top of section, action-first) ---
+    highlights = pulse.get("highlights", [])
+    parts.append(f"\n### Highlights — Action This Week ({len(highlights)})\n\n"
+                 f"{USAGE_PULSE_HIGHLIGHTS}\n")
+    if not highlights:
+        parts.append("\n_No high-priority items in this harvest._\n")
+    else:
+        for h in highlights:
+            kind = h.get("kind", "?")
+            summary = escape_md_cell(h.get("summary", ""))
+            why = h.get("why_it_matters", "")
+            parts.append(f"\n- **[{kind.upper()}]** {summary}  \n  _Why it matters:_ {why}\n")
+
     themes = pulse.get("trending_themes", [])
-    parts.append(f"\n### Trending Themes ({len(themes)})\n")
+    parts.append(f"\n### Trending Themes ({len(themes)})\n\n{USAGE_PULSE_THEMES}\n")
     if not themes:
         parts.append("\n_No repeated themes surfaced in the harvest window._\n")
     else:
@@ -163,7 +239,7 @@ def render_niche_pulse_section(pulse: dict) -> str:
                 parts.append(f"    - _{date}_ {title}\n")
 
     reg = pulse.get("regulatory_alerts", [])
-    parts.append(f"\n### Regulatory Alerts ({len(reg)})\n")
+    parts.append(f"\n### Regulatory Alerts ({len(reg)})\n\n{USAGE_PULSE_REGULATORY}\n")
     if not reg:
         parts.append("\n_No regulatory keywords detected._\n")
     else:
@@ -174,7 +250,7 @@ def render_niche_pulse_section(pulse: dict) -> str:
             parts.append(f"\n- _{date}_ **{title}** — matched: `{kws}`\n")
 
     comp = pulse.get("competitor_news", [])
-    parts.append(f"\n### Competitor News ({len(comp)})\n")
+    parts.append(f"\n### Competitor News ({len(comp)})\n\n{USAGE_PULSE_COMPETITOR_NEWS}\n")
     if not comp:
         parts.append("\n_No competitor brand mentions in the news harvest._\n")
     else:
@@ -185,7 +261,7 @@ def render_niche_pulse_section(pulse: dict) -> str:
             parts.append(f"\n- _{date}_ **{title}** — brand: `{brand}`\n")
 
     negs = pulse.get("trending_negatives", [])
-    parts.append(f"\n### Trending Negative Candidates ({len(negs)})\n")
+    parts.append(f"\n### Trending Negative Candidates ({len(negs)})\n\n{USAGE_PULSE_NEGATIVES}\n")
     if not negs:
         parts.append("\n_No scam/fraud/lawsuit triggers in the news window._\n")
     else:
@@ -205,7 +281,7 @@ def render_negatives_section(negatives: list[dict]) -> str:
         if tier in by_tier:
             by_tier[tier].append(neg)
 
-    parts = ["## Negative Keywords\n"]
+    parts = ["## Negative Keywords\n\n", USAGE_NEGATIVES, "\n"]
     for tier in TIER_ORDER:
         items = by_tier[tier]
         parts.append(f"\n### {tier} Negatives\n_{TIER_DESCRIPTIONS[tier]}_\n")
@@ -302,6 +378,7 @@ def render_full_report(
         header,
         HOW_TO_READ,
         "\n## Ranked Keywords\n\n",
+        USAGE_KEYWORDS, "\n\n",
         render_keyword_table(ranked, top_n=top_n),
         "\n\n",
         render_clusters_section(clusters_data),
@@ -379,6 +456,15 @@ section h2 {{ margin: 0 0 12px; font-size: 18px; border-bottom: 2px solid #e5e7e
              padding-bottom: 8px; }}
 .disclaimer {{ background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px;
               font-size: 13px; margin-bottom: 16px; border-radius: 4px; }}
+.usage {{ background: #ecfeff; border-left: 4px solid #0891b2; padding: 10px 14px;
+         font-size: 13px; margin: 0 0 14px; border-radius: 4px; color: #0c4a6e; }}
+.usage strong {{ color: #155e75; }}
+.highlight-card {{ background: #fff7ed; border-left: 4px solid #ea580c; padding: 10px 14px;
+                  margin: 8px 0; border-radius: 4px; font-size: 13px; }}
+.highlight-card .kind {{ display: inline-block; padding: 1px 8px; border-radius: 10px;
+                        font-size: 10px; font-weight: 700; margin-right: 6px;
+                        background: #ea580c; color: #fff; text-transform: uppercase; }}
+.highlight-card .why {{ color: #6b7280; font-size: 12px; margin-top: 4px; font-style: italic; }}
 .toolbar {{ display: flex; gap: 8px; align-items: center; margin-bottom: 12px;
            flex-wrap: wrap; }}
 .toolbar input {{ flex: 1; min-width: 220px; padding: 6px 10px; border: 1px solid #d1d5db;
@@ -444,6 +530,7 @@ Keyword Planner for actual volume + CPC.
 
 <section>
   <h2>Ranked Keywords</h2>
+  <div class="usage"><strong>How to use:</strong> export to CSV, paste into Google Keyword Planner for monthly volume + CPC, then build ad groups around the transactional + commercial keywords with <code>source_diversity ≥ 2</code>. Skip navigational keywords unless conquesting competitor brand terms.</div>
   <div class="toolbar">
     <input id="kwFilter" placeholder="Filter keywords (case-insensitive)…">
     <select id="intentFilter">
@@ -474,6 +561,7 @@ Keyword Planner for actual volume + CPC.
 
 <section>
   <h2>Ad Group Clusters</h2>
+  <div class="usage"><strong>How to use:</strong> each cluster is a ready-to-paste Google Ads ad group. Cluster name follows <code>theme_intent</code> — copy directly as the ad group label. Bid on transactional + commercial clusters; informational clusters belong in a separate awareness campaign with lower CPC ceilings.</div>
   <div class="toolbar">
     <button onclick="exportCSV('clusters')">Export CSV</button>
     <span class="count" id="clusterCount"></span>
@@ -483,11 +571,13 @@ Keyword Planner for actual volume + CPC.
 
 <section>
   <h2>Competitor Ad Copy</h2>
+  <div class="usage"><strong>How to use:</strong> scan competitor headlines and value props for angles to differentiate against (or copy if working). Repeated CTAs (<em>"book online"</em>, <em>"walk-in welcome"</em>, <em>"PIP accepted"</em>) are validated by competitor spend — use them in your responsive search ad headlines.</div>
   <div id="competitorList"></div>
 </section>
 
 <section id="niche-pulse">
   <h2>Niche Pulse <span class="cluster-meta" id="pulseMeta"></span></h2>
+  <div class="usage"><strong>What this is:</strong> news-derived signals from the last 7 days. Time-sensitive (1-4 week shelf life). NOT merged into the main keyword ranking. The four sub-sections below each have their own action — start with <strong>Highlights</strong>.</div>
   <div id="pulseContent">
     <p style="color:#666;font-size:13px;">No niche-pulse.json found in this run — run Phase 7 (pulse_fetch + pulse_synth) to populate.</p>
   </div>
@@ -495,6 +585,7 @@ Keyword Planner for actual volume + CPC.
 
 <section>
   <h2>Negative Keywords</h2>
+  <div class="usage"><strong>How to use:</strong> add <span class="tier-Strong">Strong</span> negatives to all campaigns immediately (high-confidence noise filters). Review <span class="tier-Considered">Considered</span> negatives against your brand positioning before adding. Skip <span class="tier-Investigate">Investigate</span> until they show up eating budget in search-term reports.</div>
   <div class="toolbar">
     <input id="negFilter" placeholder="Filter negatives…">
     <select id="negTierFilter">
@@ -590,14 +681,34 @@ function renderNichePulse() {{
     return;  // keep stub message
   }}
   meta.textContent = `last ${{pulse.horizon_days||7}} days · ${{pulse.total_news_items||0}} headlines · captured ${{pulse.captured_at}}`;
+  const highlights = pulse.highlights || [];
   const themes = pulse.trending_themes || [];
   const reg = pulse.regulatory_alerts || [];
   const comp = pulse.competitor_news || [];
   const negs = pulse.trending_negatives || [];
 
   let html = "";
+
+  // Highlights — top of section
+  html += `<details open><summary>Highlights — Action This Week <span class="cluster-meta">${{highlights.length}}</span></summary>`;
+  html += `<div class="usage" style="margin-top:8px"><strong>How to use:</strong> the operator's punchline. Every item below is a time-sensitive action — regulatory shifts mean ad copy claims need review, competitor news means messaging adjustments, trending themes mean early-mover keyword opportunities. Address these THIS WEEK; they age out fast.</div>`;
+  if (!highlights.length) {{
+    html += `<p style="color:#666;font-size:13px;padding:8px 0">No high-priority items in this harvest window. Re-run Phase 7 next week.</p>`;
+  }} else {{
+    highlights.forEach(h => {{
+      html += `<div class="highlight-card"><span class="kind">${{htmlEscape(h.kind||'')}}</span> ${{h.link?`<a href="${{htmlEscape(h.link)}}" target="_blank">${{htmlEscape(h.summary||'')}}</a>`:`<strong>${{htmlEscape(h.summary||'')}}</strong>`}}`;
+      if (h.date) html += ` <span class="cluster-meta">${{htmlEscape(h.date)}}</span>`;
+      if (h.matched_brand) html += ` <span class="cluster-meta">brand: <code>${{htmlEscape(h.matched_brand)}}</code></span>`;
+      if (h.matched_keywords && h.matched_keywords.length) html += ` <span class="cluster-meta">matched: ${{h.matched_keywords.map(k=>`<code>${{k}}</code>`).join(" ")}}</span>`;
+      if (h.why_it_matters) html += `<div class="why">Why it matters: ${{htmlEscape(h.why_it_matters)}}</div>`;
+      html += `</div>`;
+    }});
+  }}
+  html += `</details>`;
+
   // Trending themes
-  html += `<details open><summary>Trending Themes <span class="cluster-meta">${{themes.length}}</span></summary>`;
+  html += `<details><summary>Trending Themes <span class="cluster-meta">${{themes.length}}</span></summary>`;
+  html += `<div class="usage" style="margin-top:8px"><strong>How to use:</strong> opportunity candidates with 1-4 week shelf life. High mention counts across BOTH sources (serper-news + tavily-news) are real; single-source themes are noisier. For each one worth pursuing, add a phrase-match keyword to a dedicated 'trending' ad group with its own budget cap so the spike doesn't blow up your CPA.</div>`;
   if (!themes.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No repeated themes in window.</p>";
   else {{
     html += "<ul>";
@@ -618,6 +729,7 @@ function renderNichePulse() {{
 
   // Regulatory alerts
   html += `<details><summary>Regulatory Alerts <span class="cluster-meta">${{reg.length}}</span></summary>`;
+  html += `<div class="usage" style="margin-top:8px"><strong>How to use:</strong> every alert here can affect what claims you're allowed to make in ad copy and what the audience is searching for. Read titles now; if anything mentions PIP, your state's no-fault law, or your service category specifically, pause affected ad groups and review creative before resuming.</div>`;
   if (!reg.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No regulatory keywords detected.</p>";
   else {{
     html += "<ul>";
@@ -630,6 +742,7 @@ function renderNichePulse() {{
 
   // Competitor news
   html += `<details><summary>Competitor News <span class="cluster-meta">${{comp.length}}</span></summary>`;
+  html += `<div class="usage" style="margin-top:8px"><strong>How to use:</strong> competitor moves are signals. Acquisitions or expansions mean their bid pressure rises in your geo. Lawsuits or scandals are conquesting opportunities — increase bids on their brand terms with comparison ad copy.</div>`;
   if (!comp.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No competitor brand mentions in window.</p>";
   else {{
     html += "<ul>";
@@ -642,6 +755,7 @@ function renderNichePulse() {{
 
   // Trending negatives
   html += `<details><summary>Trending Negative Candidates <span class="cluster-meta">${{negs.length}}</span></summary>`;
+  html += `<div class="usage" style="margin-top:8px"><strong>How to use:</strong> quick-add candidates for your negative keyword list. Unlike the main Negatives section, these are reactive — driven by news events you'd want to avoid being associated with. Review and either promote to Strong negatives or dismiss as transient noise.</div>`;
   if (!negs.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No scam/fraud/lawsuit triggers in window.</p>";
   else {{
     html += "<ul>";
