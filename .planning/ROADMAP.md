@@ -10,7 +10,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 
 ## Phases
 
-- [ ] **Phase 1: Skill Scaffold and Brief Intake** — Project structure, env contract, run folder layout, conversational brief capture; nothing paid runs without a validated brief on disk.
+- [x] **Phase 1: Skill Scaffold and Brief Intake** — Project structure, env contract, run folder layout, conversational brief capture; nothing paid runs without a validated brief on disk. (completed 2026-05-08)
 - [ ] **Phase 2: Signal Collection** — Three-source harvest (Serper, Tavily, WebSearch) with locale plumbing, source attribution, and lemmatized canonicalization before any scoring.
 - [ ] **Phase 3: Ranking and Scoring** — LLM 4-class intent classification + composite ranking (signal_count + source_diversity + intent weight) producing the canonical keyword table schema.
 - [ ] **Phase 4: Clustering** — Intent-homogeneous LLM clusters of 5-15 keywords with descriptive theme + intent names, ad-group-paste-ready.
@@ -29,7 +29,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. The skill solicits optional fields (budget, geo/language exclusions, brand terms, competitor URLs) only when relevant, never burying mandatory intake in noise.
   4. After intake, a dated run folder `.runs/<ISO-timestamp>-<slug>/` exists on disk containing the verbatim `brief.md` plus an empty `raw/` subfolder, before any paid API call has fired.
   5. `uv run` invocations of helper scripts succeed with PEP 723 metadata; secrets load only from `.env` (never CLI args), and `.env.example` is committed while `.env` is git-ignored.
-**Plans:** 4/6 plans executed
+**Plans:** 6/6 plans complete
 - [x] 01-00-PLAN.md — Wave 0: pytest scaffolding (test stubs for lib/ and run_init.py, RED state)
 - [x] 01-01-PLAN.md — Wave 1: scripts/lib/ package (config.py, io.py, log.py — env + slug + timestamp + folder primitives)
 - [x] 01-02-PLAN.md — Wave 1: root CLAUDE.md + .gitignore/.env.example secrets-contract audit (parallel with 01-01)
@@ -96,7 +96,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Skill Scaffold and Brief Intake | 4/6 | In Progress|  |
+| 1. Skill Scaffold and Brief Intake | 6/6 | Complete   | 2026-05-08 |
 | 2. Signal Collection | 0/0 | Not started | - |
 | 3. Ranking and Scoring | 0/0 | Not started | - |
 | 4. Clustering | 0/0 | Not started | - |
