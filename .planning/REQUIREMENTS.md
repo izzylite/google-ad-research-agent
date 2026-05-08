@@ -52,22 +52,22 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Negatives
 
-- [ ] **NEGT-01**: Negatives generated in three tiers — Strong, Considered, Investigate
-- [ ] **NEGT-02**: Each negative tagged with category (jobs-careers / free-DIY-tutorial / used-refurb-wholesale / competitor-brand / wrong-geo / wrong-audience) and per-keyword justification
-- [ ] **NEGT-03**: Negatives deduplicated against the final positive keyword pool
+- [x] **NEGT-01**: Negatives generated in three tiers — Strong, Considered, Investigate
+- [x] **NEGT-02**: Each negative tagged with category (jobs-careers / free-DIY-tutorial / used-refurb-wholesale / competitor-brand / wrong-geo / wrong-audience) and per-keyword justification
+- [x] **NEGT-03**: Negatives deduplicated against the final positive keyword pool
 
 ### Report Output
 
-- [ ] **RPRT-01**: `render_report.py` writes `report.md` to run folder containing four sections — ranked keyword table, ad group clusters, competitor ad copy, tiered negatives
-- [ ] **RPRT-02**: `report.json` twin written with stable canonical schema (enables future run-diff in v2)
-- [ ] **RPRT-03**: Report includes "How to read this" section explaining `signal_count` is not search volume and ranking is signal-source-diversity-driven
-- [ ] **RPRT-04**: Markdown sanitization on all table cells (escape pipes, quotes, newlines)
+- [x] **RPRT-01**: `render_report.py` writes `report.md` to run folder containing four sections — ranked keyword table, ad group clusters, competitor ad copy, tiered negatives
+- [x] **RPRT-02**: `report.json` twin written with stable canonical schema (enables future run-diff in v2)
+- [x] **RPRT-03**: Report includes "How to read this" section explaining `signal_count` is not search volume and ranking is signal-source-diversity-driven
+- [x] **RPRT-04**: Markdown sanitization on all table cells (escape pipes, quotes, newlines)
 - [ ] **RPRT-05**: All raw per-stage API responses persisted to `raw/` subfolder for traceability
 
 ### Persistence
 
-- [ ] **PRST-01**: Each run is an isolated dated folder containing `brief.md`, `report.md`, `report.json`, `raw/`
-- [ ] **PRST-02**: `.runs/INDEX.md` lists past runs (date, brief slug, status) for operator browsing
+- [x] **PRST-01**: Each run is an isolated dated folder containing `brief.md`, `report.md`, `report.json`, `raw/`
+- [x] **PRST-02**: `.runs/INDEX.md` lists past runs (date, brief slug, status) for operator browsing
 
 ## v2 Requirements
 
@@ -140,16 +140,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COMP-01 | Phase 5 | Complete |
 | COMP-02 | Phase 5 | Complete |
 | COMP-03 | Phase 5 | Complete |
-| NEGT-01 | Phase 6 | Pending |
-| NEGT-02 | Phase 6 | Pending |
-| NEGT-03 | Phase 6 | Pending |
-| RPRT-01 | Phase 6 | Pending |
-| RPRT-02 | Phase 6 | Pending |
-| RPRT-03 | Phase 6 | Pending |
-| RPRT-04 | Phase 6 | Pending |
+| NEGT-01 | Phase 6 | Complete |
+| NEGT-02 | Phase 6 | Complete |
+| NEGT-03 | Phase 6 | Complete |
+| RPRT-01 | Phase 6 | Complete |
+| RPRT-02 | Phase 6 | Complete |
+| RPRT-03 | Phase 6 | Complete |
+| RPRT-04 | Phase 6 | Complete |
 | RPRT-05 | Phase 6 | Pending |
-| PRST-01 | Phase 6 | Pending |
-| PRST-02 | Phase 6 | Pending |
+| PRST-01 | Phase 6 | Complete |
+| PRST-02 | Phase 6 | Complete |
 
 **Coverage:**
 - v1 requirements: 35 total
