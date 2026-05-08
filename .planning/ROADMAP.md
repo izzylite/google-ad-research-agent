@@ -12,7 +12,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 
 - [x] **Phase 1: Skill Scaffold and Brief Intake** — Project structure, env contract, run folder layout, conversational brief capture; nothing paid runs without a validated brief on disk. (completed 2026-05-08)
 - [x] **Phase 2: Signal Collection** — Three-source harvest (Serper, Tavily, WebSearch) with locale plumbing, source attribution, and lemmatized canonicalization before any scoring. (completed 2026-05-08)
-- [ ] **Phase 3: Ranking and Scoring** — LLM 4-class intent classification + composite ranking (signal_count + source_diversity + intent weight) producing the canonical keyword table schema.
+- [x] **Phase 3: Ranking and Scoring** — LLM 4-class intent classification + composite ranking (signal_count + source_diversity + intent weight) producing the canonical keyword table schema. (completed 2026-05-08)
 - [ ] **Phase 4: Clustering** — Intent-homogeneous LLM clusters of 5-15 keywords with descriptive theme + intent names, ad-group-paste-ready.
 - [ ] **Phase 5: Competitor Ad Copy and LP Extraction** — Per-cluster Serper requery for ad block (domain-deduped, affiliate-filtered) plus Tavily LP value-prop extraction for top advertisers.
 - [ ] **Phase 6: Negatives, Report Assembly, and Persistence** — Tiered negatives (Strong / Considered / Investigate), four-section markdown report, JSON twin, run history index, raw API persistence.
@@ -64,7 +64,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   2. The composite score visibly weighs `source_diversity` as primary (a 4-source keyword outranks a single-source keyword regardless of signal_count); ties break on signal_count then intent weight.
   3. Each keyword has a match-type recommendation (broad / phrase / exact) with a conservative default — phrase by default, exact only for high-confidence transactional or brand terms, broad rare and justified.
   4. The keyword table schema renders the canonical columns `keyword | intent | match_type | theme | signal_count | source_diversity | sources | score` and `signal_count` is never labelled "volume".
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 - [ ] 03-00-PLAN.md — Wave 0: RED test stubs (test_rank_keywords.py, 16 tests) + keywords_phase2.json + intent_labels.json fixtures
 - [ ] 03-01-PLAN.md — Wave 1: rank_keywords.py (compute_score, build_ranked, validate_labels, CLI → ranked.json)
 - [ ] 03-02-PLAN.md — Wave 2: SKILL.md Steps 11-13 (4-class rubric + intent-labels.json write + rank_keywords.py invocation)
@@ -107,7 +107,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 |-------|----------------|--------|-----------|
 | 1. Skill Scaffold and Brief Intake | 6/6 | Complete    | 2026-05-08 |
 | 2. Signal Collection | 6/6 | Complete    | 2026-05-08 |
-| 3. Ranking and Scoring | 2/3 | In Progress|  |
+| 3. Ranking and Scoring | 3/3 | Complete   | 2026-05-08 |
 | 4. Clustering | 0/0 | Not started | - |
 | 5. Competitor Ad Copy and LP Extraction | 0/0 | Not started | - |
 | 6. Negatives, Report Assembly, and Persistence | 0/0 | Not started | - |

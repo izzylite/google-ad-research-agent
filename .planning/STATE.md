@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-05-08T05:17:07.369Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-05-08T05:19:47.563Z"
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # State: Google Ad Research Agent
@@ -47,6 +47,7 @@ progress:
 | Phase 02-signal-collection P05 | 12min | 2 tasks | 2 files |
 | Phase 03-ranking-and-scoring P00 | 6min | 2 tasks | 3 files |
 | Phase 03-ranking-and-scoring P01 | 1min | 1 tasks | 1 files |
+| Phase 03-ranking-and-scoring P02 | 5min | 1 tasks | 1 files |
 
 ### Execution History
 
@@ -102,6 +103,8 @@ progress:
 - [Phase 03-ranking-and-scoring]: MODULE_MISSING guard (try/except ImportError + pytest.skip) for Wave 0 RED stubs — consistent with Phase 2 pattern; keeps collection clean without xfail noise
 - [Phase 03-ranking-and-scoring]: Inline ocado login row fabricated in test_match_type_exact_navigational (diversity=3) to cover exact-navigational branch not present in fixture (ocado website is diversity=1)
 - [Phase 03-ranking-and-scoring]: match_type passthrough from intent-labels.json — rank_keywords.py reads but never recalculates match_type; heuristic belongs to skill prompt Step 11
+- [Phase 03-ranking-and-scoring]: 4-class intent rubric embedded inline in SKILL.md (not references/) — 365 lines total under 500-line limit; extraction deferred unless budget needed
+- [Phase 03-ranking-and-scoring]: Phase 2 STOP replaced with forward gate enabling progressive Phase 3 appending without breaking Phase 2 behaviour
 
 ### Open Questions / Todos
 
@@ -116,9 +119,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08T05:17:07.366Z
+**Last session:** 2026-05-08T05:19:47.560Z
 
-**Stopped at:** Completed 03-01-PLAN.md
+**Stopped at:** Completed 03-02-PLAN.md
 
 **Next session:** Phase 3 planning — ranking and scoring (intent classification, source_diversity ranking, keyword tier assignment).
 
