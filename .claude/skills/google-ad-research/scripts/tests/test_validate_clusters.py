@@ -256,9 +256,16 @@ def test_duplicate_keyword_exit3():
 
 
 def test_orphans_warn():
-    """clusters.json with orphans triggers orphan warning or check_clusters exposes the surface."""
+    """clusters.json with orphans triggers orphan warning via check_orphans."""
     if VC_MISSING:
         pytest.skip("validate_clusters not yet implemented")
-    # Wave 1: validate_clusters must expose orphan checking
-    # Exact call TBD based on implementation surface
-    assert hasattr(validate_clusters, "check_clusters"), "check_clusters must be importable"
+    data = {
+        "clusters": [],
+        "orphans": ["orphan keyword one", "orphan keyword two"],
+    }
+    _hard, warn = validate_clusters.check_clusters([], {})
+    orphan_warnings = validate_clusters.check_orphans(data)
+    warn_list = warn + orphan_warnings
+    assert any(w["type"] == "orphans" for w in warn_list), (
+        f"Expected orphans warning, warnings were: {warn_list}"
+    )
