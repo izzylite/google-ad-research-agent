@@ -1,0 +1,53 @@
+{
+  "searchParameters": {
+    "q": "order same day grocery delivery",
+    "gl": "uk",
+    "hl": "en-GB",
+    "num": 10,
+    "type": "search"
+  },
+  "ads": [
+    {
+      "position": 1,
+      "title": "Same Day Grocery Delivery",
+      "link": "https://www.ocado.com/landing/same-day",
+      "displayUrl": "ocado.com/same-day",
+      "snippet": "Order before 11am for delivery today. Free delivery on orders over £40."
+    },
+    {
+      "position": 2,
+      "title": "Grocery Deals & Cashback",
+      "link": "https://www.quidco.com/grocery?ref=abc123",
+      "displayUrl": "quidco.com/grocery",
+      "snippet": "Get cashback on your grocery delivery orders. Join free today."
+    },
+    {
+      "position": 3,
+      "title": "Compare Grocery Delivery",
+      "link": "https://www.awin1.com/cread.php?awinmid=123",
+      "displayUrl": "awin1.com/grocery",
+      "snippet": "Compare grocery delivery services and find the best deal."
+    },
+    {
+      "position": 4,
+      "title": "Tesco Grocery Delivery",
+      "link": "https://www.tesco.com/groceries/delivery-promo",
+      "displayUrl": "tesco.com/groceries",
+      "snippet": "Book a delivery slot at Tesco. Fresh food delivered to your door."
+    },
+    {
+      "position": 5,
+      "title": "Tesco Same Day Offer",
+      "link": "https://www.tesco.com/same-day-offer",
+      "displayUrl": "tesco.com/same-day",
+      "snippet": "Same day delivery from Tesco. Order now for delivery today."
+    },
+    {
+      "position": 6,
+      "title": "Sainsbury's Delivery",
+      "link": "https://www.sainsburys.co.uk/shop/gb/groceries/delivery",
+      "displayUrl": "sainsburys.co.uk/delivery",
+      "snippet": "Fresh groceries delivered by Sainsbury's. Book a slot online."
+    }
+  ]
+}

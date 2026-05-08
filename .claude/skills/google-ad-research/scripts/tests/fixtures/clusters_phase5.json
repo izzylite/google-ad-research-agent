@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "clustered_at": "2026-05-08T10:00:00Z",
+    "total_clusters": 3,
+    "total_keywords": 8
+  },
+  "clusters": [
+    {
+      "name": "same_day_delivery_transactional",
+      "intent": "transactional",
+      "keywords": [
+        {"keyword": "order same day grocery delivery", "score": 95},
+        {"keyword": "same day grocery delivery uk", "score": 88},
+        {"keyword": "get groceries delivered today", "score": 82}
+      ]
+    },
+    {
+      "name": "grocery_brand_comparison_commercial",
+      "intent": "commercial",
+      "keywords": [
+        {"keyword": "best grocery delivery uk", "score": 75},
+        {"keyword": "ocado vs tesco delivery", "score": 70},
+        {"keyword": "grocery delivery comparison", "score": 65}
+      ]
+    },
+    {
+      "name": "delivery_how_informational",
+      "intent": "informational",
+      "keywords": [
+        {"keyword": "how does grocery delivery work", "score": 40},
+        {"keyword": "what is same day delivery", "score": 35}
+      ]
+    }
+  ],
+  "orphans": []
+}
