@@ -6,15 +6,15 @@
 
 **Core value:** From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session.
 
-**Current focus:** Phase 1 — Skill Scaffold and Brief Intake (Plan 01-01 complete; next: Plan 01-02).
+**Current focus:** Phase 1 — Skill Scaffold and Brief Intake (Plans 01-01 and 01-02 complete; next: Plan 01-03).
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
 | Phase | 1 — Skill Scaffold and Brief Intake |
-| Plan | 01-02 (Plan B: run_init.py) |
-| Status | Plan 01-01 complete — lib/ package implemented, test_config.py + test_lib_io.py GREEN |
+| Plan | 01-03 (run_init.py) |
+| Status | Plan 01-02 complete — CLAUDE.md written, secrets contract audited clean |
 | Progress | `[░░░░░░░░░░] 0/6 phases complete` |
 
 ## Performance Metrics
@@ -23,7 +23,7 @@
 |--------|-------|
 | Phases planned | 1 / 6 |
 | Phases complete | 0 / 6 |
-| Plans complete | 2 |
+| Plans complete | 3 |
 | v1 requirements complete | 2 / 35 |
 
 ### Execution History
@@ -32,6 +32,7 @@
 |-------|------|----------|-------|-------|
 | 01 | 00 | ~3 min | 3/3 | 5 created |
 | 01 | 01 | ~6 min | 2/2 | 4 created |
+| 01 | 02 | ~5 min | 2/2 | 1 created |
 
 ## Accumulated Context
 
@@ -49,6 +50,7 @@
 - `report.json` ships in v1 alongside `report.md` — stable canonical schema enables future run-diff without breaking changes.
 - Generic engine v1 (no vertical presets) — defer to v2 once real usage reveals which verticals matter.
 - Run-folder isolation, no caching, no cross-run mutable state — reproducibility over efficiency in v1.
+- CLAUDE.md capped at 56 lines — directive not exhaustive; each section is a pointer so future executors stay on-rails without re-debating conventions.
 
 ### Open Questions / Todos
 
@@ -63,11 +65,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08 — Completed Plan 01-01 (lib/ package). 4 files created: lib/__init__.py, lib/config.py, lib/io.py, lib/log.py. 12 tests GREEN (test_config.py 4/4, test_lib_io.py 8/8). Wave 0 RED->GREEN flip confirmed.
+**Last session:** 2026-05-08 — Completed Plan 01-02 (CLAUDE.md + secrets audit). 1 file created: CLAUDE.md (56 lines). All 5 SCFD-03 audit checks passed clean (no fixups). Secrets contract verified.
 
-**Stopped at:** Completed 01-01-PLAN.md
+**Stopped at:** Completed 01-02-PLAN.md
 
-**Next session:** Execute Plan 01-02 (Plan B — run_init.py brief intake script).
+**Next session:** Execute Plan 01-03 (run_init.py — sealed run folder + verbatim brief.md).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`

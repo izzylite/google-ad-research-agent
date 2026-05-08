@@ -29,10 +29,10 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. The skill solicits optional fields (budget, geo/language exclusions, brand terms, competitor URLs) only when relevant, never burying mandatory intake in noise.
   4. After intake, a dated run folder `.runs/<ISO-timestamp>-<slug>/` exists on disk containing the verbatim `brief.md` plus an empty `raw/` subfolder, before any paid API call has fired.
   5. `uv run` invocations of helper scripts succeed with PEP 723 metadata; secrets load only from `.env` (never CLI args), and `.env.example` is committed while `.env` is git-ignored.
-**Plans:** 2/6 plans executed
+**Plans:** 3/6 plans executed
 - [x] 01-00-PLAN.md — Wave 0: pytest scaffolding (test stubs for lib/ and run_init.py, RED state)
 - [x] 01-01-PLAN.md — Wave 1: scripts/lib/ package (config.py, io.py, log.py — env + slug + timestamp + folder primitives)
-- [ ] 01-02-PLAN.md — Wave 1: root CLAUDE.md + .gitignore/.env.example secrets-contract audit (parallel with 01-01)
+- [x] 01-02-PLAN.md — Wave 1: root CLAUDE.md + .gitignore/.env.example secrets-contract audit (parallel with 01-01)
 - [ ] 01-03-PLAN.md — Wave 2: run_init.py with PEP 723 metadata (sealed run folder + verbatim brief.md)
 - [ ] 01-04-PLAN.md — Wave 3: SKILL.md (frontmatter + 5-step intake workflow with per-step gates)
 - [ ] 01-05-PLAN.md — Wave 4: VALIDATION.md sign-off (automated rows + 4 manual smokes; checkpoint plan)
@@ -96,7 +96,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Skill Scaffold and Brief Intake | 2/6 | In Progress|  |
+| 1. Skill Scaffold and Brief Intake | 3/6 | In Progress|  |
 | 2. Signal Collection | 0/0 | Not started | - |
 | 3. Ranking and Scoring | 0/0 | Not started | - |
 | 4. Clustering | 0/0 | Not started | - |
