@@ -22,9 +22,9 @@ venv/
 # Claude Code local settings (commit .claude/skills/, ignore local machine state)
 .claude/settings.local.json
 
-# Run outputs (raw API dumps cleaned periodically; reports kept)
-.runs/*/raw/
-.runs/*/.tmp/
+# Run outputs — entire .runs/ folder kept local by default. Users generate
+# their own. Remove this rule if you want to commit demo runs to the repo.
+.runs/
 
 # OS
 .DS_Store

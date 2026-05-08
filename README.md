@@ -97,7 +97,7 @@ The skill is split into two layers that communicate only through files in a seal
 ### Setup
 
 ```bash
-git clone https://github.com/<your-org>/google-ad-research-agent.git
+git clone https://github.com/izzylite/google-ad-research-agent.git
 cd google-ad-research-agent
 cp .env.example .env
 ```
