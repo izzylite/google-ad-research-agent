@@ -15,7 +15,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - [x] **Phase 3: Ranking and Scoring** — LLM 4-class intent classification + composite ranking (signal_count + source_diversity + intent weight) producing the canonical keyword table schema. (completed 2026-05-08)
 - [x] **Phase 4: Clustering** — Intent-homogeneous LLM clusters of 5-15 keywords with descriptive theme + intent names, ad-group-paste-ready. (completed 2026-05-08)
 - [x] **Phase 5: Competitor Ad Copy and LP Extraction** — Per-cluster Serper requery for ad block (domain-deduped, affiliate-filtered) plus Tavily LP value-prop extraction for top advertisers. (completed 2026-05-08)
-- [ ] **Phase 6: Negatives, Report Assembly, and Persistence** — Tiered negatives (Strong / Considered / Investigate), four-section markdown report, JSON twin, run history index, raw API persistence.
+- [x] **Phase 6: Negatives, Report Assembly, and Persistence** — Tiered negatives (Strong / Considered / Investigate), four-section markdown report, JSON twin, run history index, raw API persistence. (completed 2026-05-08)
 
 ## Phase Details
 
@@ -104,13 +104,13 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. `report.json` exists alongside `report.md` with the same canonical keyword and cluster keys (stable from v1 so future run-diff works); markdown table cells are sanitized (pipes escaped, smart quotes normalized, newlines stripped).
   4. Each run is a sealed dated folder containing `brief.md`, `report.md`, `report.json`, and a `raw/` subfolder with every per-stage API response — no cross-run mutation.
   5. `.runs/INDEX.md` lists every past run (date, brief slug, status) so the operator can browse historical work without `ls`-ing dated folders.
-**Plans:** 4/6 plans executed
+**Plans:** 6/6 plans complete
 - [x] 06-00-PLAN.md — Wave 0: RED test stubs (14 functions) + 2 fixtures + tabulate>=0.9.0 in pyproject.toml
 - [x] 06-01-PLAN.md — Wave 1: generate_negatives.py (enum validator + dedup) — NEGT-01, NEGT-02, NEGT-03
 - [x] 06-02-PLAN.md — Wave 1: lib/io.py escape_md_cell() — RPRT-04
 - [x] 06-03-PLAN.md — Wave 2: render_report.py (report.md + report.json) — RPRT-01, RPRT-02, RPRT-03, RPRT-05, PRST-01
 - [x] 06-04-PLAN.md — Wave 2: update_index.py (.runs/INDEX.md append) — PRST-02
-- [ ] 06-05-PLAN.md — Wave 3: SKILL.md Steps 21-26 (negatives gen → validate → render → index → final STOP)
+- [x] 06-05-PLAN.md — Wave 3: SKILL.md Steps 21-26 (negatives gen → validate → render → index → final STOP)
 
 ## Progress
 
@@ -121,7 +121,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 3. Ranking and Scoring | 3/3 | Complete    | 2026-05-08 |
 | 4. Clustering | 3/3 | Complete    | 2026-05-08 |
 | 5. Competitor Ad Copy and LP Extraction | 3/3 | Complete    | 2026-05-08 |
-| 6. Negatives, Report Assembly, and Persistence | 5/6 | In Progress|  |
+| 6. Negatives, Report Assembly, and Persistence | 6/6 | Complete    | 2026-05-08 |
 
 ## Coverage Map
 

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 06-04-PLAN.md
-last_updated: "2026-05-08T07:25:00Z"
+stopped_at: Completed 06-05-PLAN.md
+last_updated: "2026-05-08T07:20:09Z"
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 27
-  completed_plans: 26
+  completed_plans: 27
 ---
 
 # State: Google Ad Research Agent
@@ -26,10 +26,10 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | 2 — Signal Collection |
-| Plan | 04-01 COMPLETE (validate_clusters.py — 9 invariant checks, PEP 723 stdlib-only, CLI exit 0/1/2/3) |
-| Status | Phase 4 in progress: 04-00 and 04-01 done |
-| Progress | `[████░░░░░░] 2/6 phases complete (Phase 4 in progress)` |
+| Phase | 6 — Negatives, Report Assembly, and Persistence |
+| Plan | 06-05 COMPLETE (SKILL.md Phase 6 wiring — Steps 21-26 reference + Phase 5 stop gate removed) |
+| Status | Phase 6 complete — all 27 plans complete; v1 skill end-to-end runnable |
+| Progress | `[██████████] 6/6 phases complete` |
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ progress:
 | Phase 06-negatives-report-assembly-and-persistence P02 | 5 | 1 tasks | 1 files |
 | Phase 06-negatives-report-assembly-and-persistence P03 | 8 | 1 tasks | 1 files |
 | Phase 06-negatives-report-assembly-and-persistence P04 | 10 | 1 tasks | 1 files |
+| Phase 06-negatives-report-assembly-and-persistence P05 | 87s | 2 tasks | 3 files |
 
 ### Execution History
 
@@ -139,6 +140,8 @@ progress:
 - [Phase 06-04]: Open "a" mode for existing INDEX.md, write_text(HEADER+row) only on creation — avoids read-modify-write race and duplicate headers
 - [Phase 06-04]: --runs-root optional CLI flag added (default run_dir.parent) for non-standard directory layouts
 - [Phase 06-04]: Missing brief.md returns industry="unknown" with exit 0 — INDEX.md audit trail priority over completeness
+- [Phase 06-05]: Step 21 instructs LLM to write negatives.json to {run_dir}/negatives.json (not raw/); generate_negatives.py copies validated output to raw/negatives.json — clean operator-writes / script-validates boundary
+- [Phase 06-05]: Step 26 is a hard STOP with no continuation prompts — workflow complete signal is unambiguous
 
 ### Open Questions / Todos
 
@@ -153,11 +156,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08T06:58:56.339Z
+**Last session:** 2026-05-08T07:20:09Z
 
-**Stopped at:** Completed 06-04-PLAN.md
+**Stopped at:** Completed 06-05-PLAN.md
 
-**Next session:** Phase 06-05 — final integration (SKILL.md Steps 21-26 wiring).
+**Next session:** All 27 plans complete. v1 skill is end-to-end runnable. Run `/gsd:verify-work` for final sign-off.
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
