@@ -110,7 +110,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 1. Skill Scaffold and Brief Intake | 6/6 | Complete    | 2026-05-08 |
 | 2. Signal Collection | 6/6 | Complete    | 2026-05-08 |
 | 3. Ranking and Scoring | 3/3 | Complete    | 2026-05-08 |
-| 4. Clustering | 3/3 | Complete   | 2026-05-08 |
+| 4. Clustering | 3/3 | Complete    | 2026-05-08 |
 | 5. Competitor Ad Copy and LP Extraction | 0/0 | Not started | - |
 | 6. Negatives, Report Assembly, and Persistence | 0/0 | Not started | - |
 
