@@ -47,12 +47,12 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. WebSearch is invoked from the skill prompt (not wrapped in a script), and its digested findings land in `raw/websearch-baseline.json` via the Write tool.
   4. Every keyword that survives harvest carries a `sources` array recording which source(s) surfaced it; single-source and multi-source keywords are distinguishable downstream.
   5. Close variants ("grocery delivery" / "groceries delivery" / "grocery deliveries") merge into a single canonical surface form via lemmatized + token-sorted hashing before scoring sees them.
-**Plans:** 4/6 plans executed
-- [ ] 02-00-PLAN.md — Wave 0: test scaffolding (5 RED test files + 3 fixture JSONs + conftest extension)
-- [ ] 02-01-PLAN.md — Wave 1: lib/http.py (httpx RetryTransport) + lib/canon.py (inflect + token-sort hash)
-- [ ] 02-02-PLAN.md — Wave 2: serp_fetch.py (Serper REST, locale plumbing, all signal blocks)
-- [ ] 02-03-PLAN.md — Wave 2: tavily_extract.py (Tavily SDK extract, caps, failed_results persistence)
-- [ ] 02-04-PLAN.md — Wave 3: merge_signals.py (sources array, variant merge, 6-source taxonomy → keywords.json)
+**Plans:** 5/6 plans executed
+- [x] 02-00-PLAN.md — Wave 0: test scaffolding (5 RED test files + 3 fixture JSONs + conftest extension)
+- [x] 02-01-PLAN.md — Wave 1: lib/http.py (httpx RetryTransport) + lib/canon.py (inflect + token-sort hash)
+- [x] 02-02-PLAN.md — Wave 2: serp_fetch.py (Serper REST, locale plumbing, all signal blocks)
+- [x] 02-03-PLAN.md — Wave 2: tavily_extract.py (Tavily SDK extract, caps, failed_results persistence)
+- [x] 02-04-PLAN.md — Wave 3: merge_signals.py (sources array, variant merge, 6-source taxonomy → keywords.json)
 - [ ] 02-05-PLAN.md — Wave 4: SKILL.md update (Steps 6-10: seed gen + WebSearch + script invocations + stop)
 
 ### Phase 3: Ranking and Scoring
@@ -103,7 +103,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Skill Scaffold and Brief Intake | 6/6 | Complete    | 2026-05-08 |
-| 2. Signal Collection | 4/6 | In Progress|  |
+| 2. Signal Collection | 5/6 | In Progress|  |
 | 3. Ranking and Scoring | 0/0 | Not started | - |
 | 4. Clustering | 0/0 | Not started | - |
 | 5. Competitor Ad Copy and LP Extraction | 0/0 | Not started | - |

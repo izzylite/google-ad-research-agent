@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-05-08T04:42:39.748Z"
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-05-08T04:48:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # State: Google Ad Research Agent
@@ -26,10 +26,10 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | 1 — Skill Scaffold and Brief Intake |
-| Plan | 01-05 COMPLETE (Validation / Sign-off) |
-| Status | Phase 1 signed-off-by-inspection — all 18 tests green, SKILL.md prompt logic verified; fresh CC session smoke TODO before production |
-| Progress | `[██░░░░░░░░] 1/6 phases complete` |
+| Phase | 2 — Signal Collection |
+| Plan | 02-04 COMPLETE (merge_signals.py — sources array + variant merge + 6-source taxonomy) |
+| Status | Phase 2 in-progress: plans 00-04 complete; 02-05 (SKILL.md update) remaining |
+| Progress | `[██░░░░░░░░] 1/6 phases complete (Phase 2 in-progress: 5/6 plans done)` |
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ progress:
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
 | Phase 02-signal-collection P02 | 8min | 2 tasks | 2 files |
 | Phase 02-signal-collection P03 | 15min | 1 tasks | 1 files |
+| Phase 02-signal-collection P04 | 4min | 2 tasks | 2 files |
 
 ### Execution History
 
@@ -88,6 +89,10 @@ progress:
 - [Phase 02-signal-collection]: 401/403 map to exit 3 (fatal auth); all other HTTPStatusError maps to exit 2 (retryable) in serp_fetch.py
 - [Phase 02-signal-collection]: searchParameters echoed verbatim from Serper response into normalised output for downstream locale lint (Pitfall 4)
 - [Phase 02-signal-collection]: argv[0] skip heuristic in main_with_args: strips script name if first element does not start with '-' — supports both full sys.argv and args-only list without requiring callers to slice
+- [Phase 02-04]: Tavily raw_content: extract first 7-word phrase from first sentence (v1 intentionally simple — Phase 3 applies intent classification)
+- [Phase 02-04]: source_diversity = distinct source strings not occurrence count (serper-paa + serper-organic = 2, not 1)
+- [Phase 02-04]: websearch-baseline.json treated as optional — merge proceeds without it (exit 3 only if run_dir or raw_dir missing)
+- [Phase 02-04]: keywords.json written to run_dir root (not raw/) to match Phase 3 consumption contract
 
 ### Open Questions / Todos
 
@@ -102,11 +107,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08T04:42:39.745Z
+**Last session:** 2026-05-08T04:48:00Z
 
-**Stopped at:** Completed 02-03-PLAN.md
+**Stopped at:** Completed 02-04-PLAN.md
 
-**Next session:** Plan Phase 2 — Signal Collection (Serper.dev + Tavily + WebSearch). First task: implement `lib/http.py` per RESEARCH.md Open Questions.
+**Next session:** Plan 02-05 — SKILL.md update (Steps 6-10: seed gen + WebSearch invocation + script invocations + stop gate). Final Phase 2 plan.
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
