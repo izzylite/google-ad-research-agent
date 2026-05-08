@@ -40,9 +40,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Clustering
 
-- [ ] **CLST-01**: Keywords cluster within intent class only — no intent-mixed clusters allowed
-- [ ] **CLST-02**: LLM produces clusters of 5-15 keywords (min size 3) with descriptive names combining theme + intent
-- [ ] **CLST-03**: Any cluster spanning more than one intent label is rejected and re-split
+- [x] **CLST-01**: Keywords cluster within intent class only — no intent-mixed clusters allowed
+- [x] **CLST-02**: LLM produces clusters of 5-15 keywords (min size 3) with descriptive names combining theme + intent
+- [x] **CLST-03**: Any cluster spanning more than one intent label is rejected and re-split
 
 ### Competitor Intel
 

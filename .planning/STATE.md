@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 04-00-PLAN.md
-last_updated: "2026-05-08T05:33:00.172Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-05-08T00:15:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 18
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 2 — Signal Collection |
-| Plan | 02-05 COMPLETE (SKILL.md Phase 2 Steps 6-10 — seed gen + WebSearch + serp_fetch + tavily + merge_signals) |
-| Status | Phase 2 COMPLETE: all 6 plans (02-00 through 02-05) done |
-| Progress | `[████░░░░░░] 2/6 phases complete (Phase 2 complete)` |
+| Plan | 04-01 COMPLETE (validate_clusters.py — 9 invariant checks, PEP 723 stdlib-only, CLI exit 0/1/2/3) |
+| Status | Phase 4 in progress: 04-00 and 04-01 done |
+| Progress | `[████░░░░░░] 2/6 phases complete (Phase 4 in progress)` |
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ progress:
 | Phase 03-ranking-and-scoring P01 | 1min | 1 tasks | 1 files |
 | Phase 03-ranking-and-scoring P02 | 5min | 1 tasks | 1 files |
 | Phase 04-clustering P00 | 2min | 2 tasks | 5 files |
+| Phase 04-clustering P01 | 15min | 2 tasks | 2 files |
 
 ### Execution History
 
@@ -108,6 +109,9 @@ progress:
 - [Phase 03-ranking-and-scoring]: Phase 2 STOP replaced with forward gate enabling progressive Phase 3 appending without breaking Phase 2 behaviour
 - [Phase 04-clustering]: VC_MISSING guard (try/except ImportError + pytest.skip) for Wave 0 RED stubs — consistent with Phase 3 MODULE_MISSING pattern; keeps collection clean and makes RED-to-GREEN transition explicit when validate_clusters.py is implemented in Wave 1
 - [Phase 04-clustering]: clusters_oversize.json uses 4 real ranked_phase3 keywords + 22 synthetic fillers — test_oversize_exit3 builds ranked_index covering all 26 as transactional so only oversize violation fires
+- [Phase 04-clustering]: check_clusters() accepts small_run=False param to suppress target_undersize warnings for narrow verticals (< 15 keywords) — aligns with CLI --small-run flag
+- [Phase 04-clustering]: validate_clusters.py CLI computes orphans from ranked_index diff clustered_keywords set in addition to clusters_json orphans field — ensures all unassigned keywords surface
+- [Phase 04-clustering]: check_avg_size() is a separate helper (not inside check_clusters) — CLI calls it independently to evaluate aggregate stats across all clusters
 
 ### Open Questions / Todos
 
@@ -122,11 +126,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08T05:33:00.169Z
+**Last session:** 2026-05-08T00:15:00.000Z
 
-**Stopped at:** Completed 04-00-PLAN.md
+**Stopped at:** Completed 04-01-PLAN.md
 
-**Next session:** Phase 3 planning — ranking and scoring (intent classification, source_diversity ranking, keyword tier assignment).
+**Next session:** Phase 4 continuation — 04-02 cluster_keywords skill prompt (SKILL.md Steps 14-16 using validate_clusters.py fix loop).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
