@@ -76,6 +76,4 @@ Tell the operator:
 >
 > Competitor-intel raw data: `{run_dir}/raw/competitor-intel.json`
 >
-> Phase 6 (report assembly) is not yet available in this skill."
-
-**STOP. Do not proceed to any Phase 6+ activity.**
+> Phase 6 (report assembly) begins at Step 21. Load `.claude/skills/google-ad-research/references/phase6-negatives-report.md` with the Read tool when entering Phase 6."

@@ -471,3 +471,9 @@ Phase 5 (competitor intel) begins at Step 18 below.
 ## Phase 5: Competitor Ad Copy and Landing Page Extraction
 
 > See `.claude/skills/google-ad-research/references/phase5-competitor-intel.md` for full step instructions (Steps 18-20). Load it with the Read tool when entering Phase 5.
+
+---
+
+## Phase 6: Negatives, Report Assembly, and Persistence
+
+> See `.claude/skills/google-ad-research/references/phase6-negatives-report.md` for full step instructions (Steps 21-26). Load it with the Read tool when entering Phase 6.
