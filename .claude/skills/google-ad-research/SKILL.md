@@ -276,4 +276,90 @@ Tell the operator:
 >
 > Phase 3 (ranking and scoring) is not yet available in this skill."
 
-**STOP. Do not proceed to ranking, clustering, or any Phase 3+ activity.**
+Phase 3 (ranking and scoring) begins at Step 11 below.
+
+---
+
+## Phase 3: Ranking and Scoring
+
+> Prerequisites: Phase 2 complete — `{run_dir}/keywords.json` exists and `keywords_count > 0`.
+
+### Step 11: Intent labeling (RANK-01)
+
+Read `{run_dir}/keywords.json`. Process keywords in batches of ≤ 30.
+
+**Temperature: 0. Use the categorical rubric — do NOT score 0-1 or use any scale.**
+
+For EVERY batch, include these calibration anchors at the top of your prompt:
+
+> Anchor examples (do not change these labels):
+> - "order grocery delivery" → transactional
+> - "best grocery delivery uk" → commercial
+> - "how does grocery delivery work" → informational
+> - "ocado website" → navigational
+
+For each keyword, assign:
+- `intent`: EXACTLY one of: `informational` | `commercial` | `transactional` | `navigational`
+- `match_type`: EXACTLY one of: `phrase` | `exact` | `broad`
+
+**4-Class Intent Rubric:**
+
+| Class | Definition | Anchor Examples | Borderline Guidance |
+|-------|-----------|-----------------|---------------------|
+| **transactional** | Intent to complete an action NOW: buy, order, subscribe, book, sign up, get a quote. Contains: buy / order / cheap / price / cost / near me / delivery + brand / [brand] vs [competitor]. | "order grocery delivery", "cheap same-day delivery uk", "grocery delivery near me", "get groceries delivered today" | "grocery delivery service" without action modifier → commercial. "Same-day delivery" alone without action word → commercial (intent is uncertain). |
+| **commercial** | Active product research or comparison before purchase: best, top, review, vs, compare, alternative to, worth it, [brand] pricing, is X good. User is evaluating options. | "best grocery delivery uk", "ocado vs tesco delivery", "grocery delivery comparison", "is same-day delivery worth it", "grocery delivery review" | "best grocery delivery" → commercial (not transactional; no buy signal). "Grocery delivery app" → commercial unless "download" present. Comparison and review terms always commercial, not informational. |
+| **informational** | Desire to learn or understand a topic without immediate purchase intent. Contains: how, what, why, does, can, which, guide, tips, history, meaning, definition. | "how does grocery delivery work", "what is same-day delivery", "grocery delivery tips for beginners", "why is grocery delivery expensive" | "how to order groceries online" — action in the how-to → transactional. "What is the best grocery delivery" → commercial (comparison framing). When unsure between informational and commercial, prefer commercial if any evaluation language is present. |
+| **navigational** | Targets a specific brand, website, or destination. Contains: brand name alone, brand + login / website / app / account. User knows where they want to go. | "mcgrocer login", "ocado website", "tesco groceries app", "sainsburys food delivery", "[brand] sign in" | Brand + generic modifier (e.g., "tesco grocery delivery") — use transactional if action word present, commercial if comparison framing, navigational only if the keyword is purely brand + destination (login, website, app). |
+
+**Match-type rules:**
+- `exact`: navigational with `source_diversity ≥ 3`, OR transactional with `source_diversity ≥ 3`
+- `phrase`: all other cases (default)
+- `broad`: do not assign in v1
+
+After all batches, write `{run_dir}/intent-labels.json` via the Write tool:
+
+```json
+[
+  {"canonical": "<keyword>", "lemma_hash": "<hash>", "intent": "<class>", "match_type": "<type>"},
+  ...
+]
+```
+
+**Len-check gate:** Verify `len(intent-labels.json) == len(keywords.json)` (match on `lemma_hash`) before advancing. If short, re-run the missing batch only — do NOT re-run all batches.
+
+Then write `{run_dir}/intent-meta.json` via the Write tool:
+
+```json
+{"model": "<model name>", "rubric_version": "v1.0", "batches": N, "keywords_labeled": N, "scored_at": "<ISO timestamp>"}
+```
+
+**Do not advance to Step 12 until `intent-labels.json` exists and every keyword in `keywords.json` has a matching entry.**
+
+### Step 12: Run rank_keywords.py (RANK-02, RANK-03, RANK-04)
+
+```bash
+uv run "${CLAUDE_SKILL_DIR}/scripts/rank_keywords.py" --run-dir "{run_dir}"
+```
+
+Parse stdout JSON. Surface `ranked_count`, `avg_score`, `intent_distribution` to operator.
+
+Exit code handling:
+- **Exit 0:** continue to Step 13.
+- **Exit 3:** surface the error message from stderr; do NOT proceed; tell the operator which file is missing or which keyword has no label.
+
+**Do not advance to Step 13 until `{run_dir}/ranked.json` exists.**
+
+### Step 13: Confirm Phase 3 complete and stop
+
+Tell the operator:
+
+> "Phase 3 complete. Ranking summary:
+> - {ranked_count} keywords ranked
+> - Avg score: {avg_score:.1f}
+> - Intent distribution: {intent_distribution}
+>
+> Ranked keyword file: `{run_dir}/ranked.json`
+>
+> Phase 4 (clustering) is not yet available in this skill."
+
+**STOP. Do not proceed to any Phase 4+ activity.**
