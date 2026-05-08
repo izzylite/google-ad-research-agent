@@ -115,47 +115,47 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCFD-01 | TBD | Pending |
-| SCFD-02 | TBD | Pending |
-| SCFD-03 | TBD | Pending |
-| SCFD-04 | TBD | Pending |
-| SCFD-05 | TBD | Pending |
-| INTK-01 | TBD | Pending |
-| INTK-02 | TBD | Pending |
-| INTK-03 | TBD | Pending |
-| INTK-04 | TBD | Pending |
-| SIGL-01 | TBD | Pending |
-| SIGL-02 | TBD | Pending |
-| SIGL-03 | TBD | Pending |
-| SIGL-04 | TBD | Pending |
-| SIGL-05 | TBD | Pending |
-| SIGL-06 | TBD | Pending |
-| RANK-01 | TBD | Pending |
-| RANK-02 | TBD | Pending |
-| RANK-03 | TBD | Pending |
-| RANK-04 | TBD | Pending |
-| CLST-01 | TBD | Pending |
-| CLST-02 | TBD | Pending |
-| CLST-03 | TBD | Pending |
-| COMP-01 | TBD | Pending |
-| COMP-02 | TBD | Pending |
-| COMP-03 | TBD | Pending |
-| NEGT-01 | TBD | Pending |
-| NEGT-02 | TBD | Pending |
-| NEGT-03 | TBD | Pending |
-| RPRT-01 | TBD | Pending |
-| RPRT-02 | TBD | Pending |
-| RPRT-03 | TBD | Pending |
-| RPRT-04 | TBD | Pending |
-| RPRT-05 | TBD | Pending |
-| PRST-01 | TBD | Pending |
-| PRST-02 | TBD | Pending |
+| SCFD-01 | Phase 1 | Pending |
+| SCFD-02 | Phase 1 | Pending |
+| SCFD-03 | Phase 1 | Pending |
+| SCFD-04 | Phase 1 | Pending |
+| SCFD-05 | Phase 1 | Pending |
+| INTK-01 | Phase 1 | Pending |
+| INTK-02 | Phase 1 | Pending |
+| INTK-03 | Phase 1 | Pending |
+| INTK-04 | Phase 1 | Pending |
+| SIGL-01 | Phase 2 | Pending |
+| SIGL-02 | Phase 2 | Pending |
+| SIGL-03 | Phase 2 | Pending |
+| SIGL-04 | Phase 2 | Pending |
+| SIGL-05 | Phase 2 | Pending |
+| SIGL-06 | Phase 2 | Pending |
+| RANK-01 | Phase 3 | Pending |
+| RANK-02 | Phase 3 | Pending |
+| RANK-03 | Phase 3 | Pending |
+| RANK-04 | Phase 3 | Pending |
+| CLST-01 | Phase 4 | Pending |
+| CLST-02 | Phase 4 | Pending |
+| CLST-03 | Phase 4 | Pending |
+| COMP-01 | Phase 5 | Pending |
+| COMP-02 | Phase 5 | Pending |
+| COMP-03 | Phase 5 | Pending |
+| NEGT-01 | Phase 6 | Pending |
+| NEGT-02 | Phase 6 | Pending |
+| NEGT-03 | Phase 6 | Pending |
+| RPRT-01 | Phase 6 | Pending |
+| RPRT-02 | Phase 6 | Pending |
+| RPRT-03 | Phase 6 | Pending |
+| RPRT-04 | Phase 6 | Pending |
+| RPRT-05 | Phase 6 | Pending |
+| PRST-01 | Phase 6 | Pending |
+| PRST-02 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 35 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 35 ⚠️
+- Mapped to phases: 35
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-08*
-*Last updated: 2026-05-08 after initial definition*
+*Last updated: 2026-05-08 — traceability mapped to roadmap*
