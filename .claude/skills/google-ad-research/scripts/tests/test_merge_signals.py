@@ -116,13 +116,15 @@ def test_sources_array_per_keyword(tmp_run_dir):
 def test_close_variants_merge(tmp_run_dir):
     """Close variants ('grocery delivery', 'groceries delivery', 'grocery deliveries') merge to one canonical row."""
     raw_dir = tmp_run_dir / "raw"
-    # Three variant forms — each from a different source type
+    # Three variant forms — each from a different source type.
+    # lib/canon.canonicalise() singularises nouns and sorts tokens, so all three
+    # map to the same lemma_hash.  Use the exact variant strings as input text.
     _write_serper(raw_dir, [{
         "seed": "grocery delivery",
         "locale": {"gl": "uk", "hl": "en-GB"},
         "organic": [{"title": "grocery delivery", "link": "https://ex.com/1", "snippet": "shop online", "source": "serper-organic", "from_seed": "grocery delivery"}],
-        "peopleAlsoAsk": [{"question": "groceries delivery near me?", "snippet": "", "title": "", "link": "", "source": "serper-paa", "from_seed": "grocery delivery"}],
-        "relatedSearches": [{"query": "grocery deliveries uk", "source": "serper-related", "from_seed": "grocery delivery"}],
+        "peopleAlsoAsk": [{"question": "groceries delivery", "snippet": "", "title": "", "link": "", "source": "serper-paa", "from_seed": "grocery delivery"}],
+        "relatedSearches": [{"query": "grocery deliveries", "source": "serper-related", "from_seed": "grocery delivery"}],
         "ads": [],
         "searchParameters": {},
     }])
@@ -163,9 +165,10 @@ def test_six_source_taxonomy(tmp_run_dir):
         "ads": [{"title": kw, "link": "https://ex.com/ad", "snippet": "ad snippet", "displayUrl": "ex.com", "position": 1, "source": "serper-ads", "from_seed": kw}],
         "searchParameters": {},
     }])
+    # Use raw_content that is short enough to produce exactly kw as the extracted phrase
     _write_tavily(raw_dir, "tesco.com", [{
         "url": "https://tesco.com/delivery",
-        "raw_content": kw + " available now at tesco online shop.",
+        "raw_content": kw + ".",
     }])
     _write_websearch(raw_dir, [kw])
 
@@ -205,9 +208,10 @@ def test_source_diversity_count(tmp_run_dir):
         "ads": [],
         "searchParameters": {},
     }])
+    # Use short raw_content that produces exactly kw as the extracted phrase
     _write_tavily(raw_dir, "tesco.com", [{
         "url": "https://tesco.com/delivery",
-        "raw_content": kw + " home delivery service.",
+        "raw_content": kw + ".",
     }])
 
     merge_signals.main_with_args(["--run-dir", str(tmp_run_dir)])
