@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "clustered_at": "2026-05-08T14:30:00Z",
+    "method": "llm-driven",
+    "model": "claude-sonnet-4-6",
+    "ranked_input": "ranked.json",
+    "total_keywords": 26,
+    "total_clusters": 1
+  },
+  "clusters": [
+    {
+      "name": "oversize_delivery_transactional",
+      "intent": "transactional",
+      "keywords": [
+        {"keyword": "order groceries uk", "score": 325},
+        {"keyword": "get groceries delivered today", "score": 310},
+        {"keyword": "same day grocery delivery", "score": 290},
+        {"keyword": "grocery delivery near me", "score": 275},
+        {"keyword": "filler keyword 05", "score": 100},
+        {"keyword": "filler keyword 06", "score": 100},
+        {"keyword": "filler keyword 07", "score": 100},
+        {"keyword": "filler keyword 08", "score": 100},
+        {"keyword": "filler keyword 09", "score": 100},
+        {"keyword": "filler keyword 10", "score": 100},
+        {"keyword": "filler keyword 11", "score": 100},
+        {"keyword": "filler keyword 12", "score": 100},
+        {"keyword": "filler keyword 13", "score": 100},
+        {"keyword": "filler keyword 14", "score": 100},
+        {"keyword": "filler keyword 15", "score": 100},
+        {"keyword": "filler keyword 16", "score": 100},
+        {"keyword": "filler keyword 17", "score": 100},
+        {"keyword": "filler keyword 18", "score": 100},
+        {"keyword": "filler keyword 19", "score": 100},
+        {"keyword": "filler keyword 20", "score": 100},
+        {"keyword": "filler keyword 21", "score": 100},
+        {"keyword": "filler keyword 22", "score": 100},
+        {"keyword": "filler keyword 23", "score": 100},
+        {"keyword": "filler keyword 24", "score": 100},
+        {"keyword": "filler keyword 25", "score": 100},
+        {"keyword": "filler keyword 26", "score": 100}
+      ]
+    }
+  ],
+  "orphans": []
+}

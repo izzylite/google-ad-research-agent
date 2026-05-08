@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "clustered_at": "2026-05-08T14:30:00Z",
+    "method": "llm-driven",
+    "model": "claude-sonnet-4-6",
+    "ranked_input": "ranked.json",
+    "total_keywords": 8,
+    "total_clusters": 2
+  },
+  "clusters": [
+    {
+      "name": "same_day_delivery_transactional",
+      "intent": "transactional",
+      "keywords": [
+        {"keyword": "order groceries uk", "score": 325},
+        {"keyword": "get groceries delivered today", "score": 310},
+        {"keyword": "same day grocery delivery", "score": 290},
+        {"keyword": "grocery delivery near me", "score": 275}
+      ]
+    },
+    {
+      "name": "grocery_brand_comparison_commercial",
+      "intent": "commercial",
+      "keywords": [
+        {"keyword": "best grocery delivery uk", "score": 220},
+        {"keyword": "grocery delivery comparison", "score": 195},
+        {"keyword": "ocado vs tesco delivery", "score": 180}
+      ]
+    }
+  ],
+  "orphans": []
+}

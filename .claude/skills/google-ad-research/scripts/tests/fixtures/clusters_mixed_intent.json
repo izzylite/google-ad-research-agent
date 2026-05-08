@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "clustered_at": "2026-05-08T14:30:00Z",
+    "method": "llm-driven",
+    "model": "claude-sonnet-4-6",
+    "ranked_input": "ranked.json",
+    "total_keywords": 4,
+    "total_clusters": 1
+  },
+  "clusters": [
+    {
+      "name": "mixed_delivery_transactional",
+      "intent": "transactional",
+      "keywords": [
+        {"keyword": "order groceries uk", "score": 325},
+        {"keyword": "get groceries delivered today", "score": 310},
+        {"keyword": "same day grocery delivery", "score": 290},
+        {"keyword": "best grocery delivery uk", "score": 220}
+      ]
+    }
+  ],
+  "orphans": []
+}

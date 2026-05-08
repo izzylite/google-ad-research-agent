@@ -1,0 +1,82 @@
+[
+  {
+    "keyword": "order groceries uk",
+    "intent": "transactional",
+    "match_type": "exact",
+    "theme": "",
+    "signal_count": 3,
+    "source_diversity": 4,
+    "sources": ["serper-organic", "serper-paa", "tavily", "serper-related"],
+    "score": 325
+  },
+  {
+    "keyword": "get groceries delivered today",
+    "intent": "transactional",
+    "match_type": "exact",
+    "theme": "",
+    "signal_count": 3,
+    "source_diversity": 3,
+    "sources": ["serper-organic", "serper-paa", "tavily"],
+    "score": 310
+  },
+  {
+    "keyword": "same day grocery delivery",
+    "intent": "transactional",
+    "match_type": "exact",
+    "theme": "",
+    "signal_count": 3,
+    "source_diversity": 3,
+    "sources": ["serper-organic", "serper-paa", "tavily"],
+    "score": 290
+  },
+  {
+    "keyword": "grocery delivery near me",
+    "intent": "transactional",
+    "match_type": "exact",
+    "theme": "",
+    "signal_count": 3,
+    "source_diversity": 3,
+    "sources": ["serper-organic", "serper-paa", "tavily"],
+    "score": 275
+  },
+  {
+    "keyword": "best grocery delivery uk",
+    "intent": "commercial",
+    "match_type": "phrase",
+    "theme": "",
+    "signal_count": 3,
+    "source_diversity": 3,
+    "sources": ["serper-organic", "serper-paa", "tavily"],
+    "score": 220
+  },
+  {
+    "keyword": "grocery delivery comparison",
+    "intent": "commercial",
+    "match_type": "phrase",
+    "theme": "",
+    "signal_count": 3,
+    "source_diversity": 2,
+    "sources": ["serper-organic", "serper-paa"],
+    "score": 195
+  },
+  {
+    "keyword": "ocado vs tesco delivery",
+    "intent": "commercial",
+    "match_type": "phrase",
+    "theme": "",
+    "signal_count": 3,
+    "source_diversity": 2,
+    "sources": ["serper-organic", "serper-paa"],
+    "score": 180
+  },
+  {
+    "keyword": "how does grocery delivery work",
+    "intent": "informational",
+    "match_type": "phrase",
+    "theme": "",
+    "signal_count": 3,
+    "source_diversity": 2,
+    "sources": ["serper-organic", "serper-paa"],
+    "score": 150
+  }
+]
