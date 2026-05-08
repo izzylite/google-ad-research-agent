@@ -462,8 +462,12 @@ Tell the operator:
 > - Orphans: {orphan_count}
 > - Validator: {valid status}
 >
-> Clusters file: `{run_dir}/clusters.json`
->
-> Phase 5 (competitor intel) is not yet available in this skill."
+> Clusters file: `{run_dir}/clusters.json`"
 
-**STOP. Do not proceed to any Phase 5+ activity.**
+Phase 5 (competitor intel) begins at Step 18 below.
+
+---
+
+## Phase 5: Competitor Ad Copy and Landing Page Extraction
+
+> See `.claude/skills/google-ad-research/references/phase5-competitor-intel.md` for full step instructions (Steps 18-20). Load it with the Read tool when entering Phase 5.
