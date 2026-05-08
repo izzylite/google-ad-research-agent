@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-05-08T04:32:15.696Z"
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-05-08T04:42:39.748Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # State: Google Ad Research Agent
@@ -42,6 +42,7 @@ progress:
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
 | Phase 02-signal-collection P02 | 8min | 2 tasks | 2 files |
+| Phase 02-signal-collection P03 | 15min | 1 tasks | 1 files |
 
 ### Execution History
 
@@ -86,6 +87,7 @@ progress:
 - [Phase 02-signal-collection]: respx side_effect pattern used to capture outgoing POST body for locale assertion in serp_fetch tests
 - [Phase 02-signal-collection]: 401/403 map to exit 3 (fatal auth); all other HTTPStatusError maps to exit 2 (retryable) in serp_fetch.py
 - [Phase 02-signal-collection]: searchParameters echoed verbatim from Serper response into normalised output for downstream locale lint (Pitfall 4)
+- [Phase 02-signal-collection]: argv[0] skip heuristic in main_with_args: strips script name if first element does not start with '-' — supports both full sys.argv and args-only list without requiring callers to slice
 
 ### Open Questions / Todos
 
@@ -100,9 +102,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08T04:32:15.693Z
+**Last session:** 2026-05-08T04:42:39.745Z
 
-**Stopped at:** Completed 02-02-PLAN.md
+**Stopped at:** Completed 02-03-PLAN.md
 
 **Next session:** Plan Phase 2 — Signal Collection (Serper.dev + Tavily + WebSearch). First task: implement `lib/http.py` per RESEARCH.md Open Questions.
 
