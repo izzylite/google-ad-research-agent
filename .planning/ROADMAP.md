@@ -148,7 +148,13 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. When the brief or top keywords match a regulated vertical (medical, legal, finance, gambling, crypto), a "⚠ Compliance Required" warning block renders above the Ranked Keywords table naming the matched vertical, the evidence tokens, and a verification-path URL — invisible on non-regulated runs.
   4. The bid multipliers live in a single config block (one place to tune transactional/commercial/informational/navigational ratios) and the compliance token lists live in `references/compliance-verticals.json` (data, not code) so the operator can extend either without editing Python.
   5. The downstream JSON contract is stable: `ranked-enriched.json` gains a `suggested_max_cpc_micros` field, a new `forecast.json` sidecar carries per-cluster + campaign-level click/spend bands, and a new `compliance-flags.json` sidecar lists matched verticals; `report.json` gains a `compliance[]` array.
-**Plans:** TBD
+**Plans:** 6 plans
+- [ ] 09-00-PLAN.md — Wave 0: test scaffolding (3 RED test files + 6 fixtures + compliance-verticals.json reference data)
+- [ ] 09-01-PLAN.md — Wave 1: bid_suggest.py (BIDS-01, BIDS-02, BIDS-04 — Suggested Max CPC + cluster-median fallback + INTENT_MULTIPLIERS config block)
+- [ ] 09-02-PLAN.md — Wave 1: forecast_budget.py (FRCS-01, FRCS-02, FRCS-03, FRCS-05 — per-cluster + campaign-level click/spend bands + methodology block)
+- [ ] 09-03-PLAN.md — Wave 1: compliance_check.py (CMPL-01, CMPL-02 — token scan + compliance-flags.json sidecar)
+- [ ] 09-04-PLAN.md — Wave 2: render_report.py extension (BIDS-03 column + FRCS-04 section + CMPL-03 warning block + CMPL-04 report.json keys)
+- [ ] 09-05-PLAN.md — Wave 3: SKILL.md pointer + references/phase9-economics-compliance.md (Steps 36-40 rubric + human-verify smoke)
 
 ### Phase 10: Operator Launch Kit
 **Goal:** A junior PPC manager finishing `report.md` has three CSVs to paste into Google Ads Editor and an ordered, run-specific checklist that names the campaign location, budget, ad groups, compliance verification (if any), and step order — zero hand-copying, zero boilerplate.
@@ -174,7 +180,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 6. Negatives, Report Assembly, and Persistence | 6/6 | Complete    | 2026-05-08 |
 | 7. Niche Pulse | 2/2 | Complete    | 2026-05-08 |
 | 8. Account Data + Volume Enrichment | 8/8 | Complete    | 2026-05-08 |
-| 9. Campaign Economics and Compliance | 0/0 | Not started | — |
+| 9. Campaign Economics and Compliance | 0/6 | Planned     | — |
 | 10. Operator Launch Kit | 0/0 | Not started | — |
 
 ## Coverage Map
