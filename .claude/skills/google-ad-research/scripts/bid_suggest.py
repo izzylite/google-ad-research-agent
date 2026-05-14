@@ -23,15 +23,41 @@ This module exposes:
     compute_suggested_cpc       (per-keyword bid math)
     cluster_median_cpc          (BIDS-02 fallback helper)
     enrich_with_bids            (top-level: ranked + clusters → enriched list)
+    main_with_args              (CLI entrypoint — argv → exit code)
 
-The CLI entrypoint `main_with_args` is added in Task 2 (same module).
+Reads:
+    {run_dir}/ranked-enriched.json   (output of volume_enrich.py)
+    {run_dir}/clusters.json          (output of validate_clusters.py)
+
+Writes:
+    {run_dir}/ranked-enriched.json   (additive: adds suggested_max_cpc_micros
+                                      per row, plus no_cpc_data flag where
+                                      neither row nor cluster has CPC data;
+                                      all original keys preserved)
+
+CLI:
+    uv run bid_suggest.py --run-dir <abs>
+
+Stdout (one JSON line):
+    {"rows_enriched": N,
+     "rows_with_cpc": N,
+     "rows_using_fallback": N,
+     "rows_no_cpc_data": N}
+
+Exit codes:
+    0  ok
+    2  retryable (transient disk error)
+    3  fatal (missing input, schema violation, malformed JSON)
 """
 from __future__ import annotations
 
+import argparse
 import copy
+import json
 import statistics
 import sys
 from pathlib import Path
+from typing import Any
 
 # Make sibling lib/ importable (mirror volume_enrich.py)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -218,11 +244,101 @@ def enrich_with_bids(
 
 
 # ---------------------------------------------------------------------------
-# CLI entrypoint stub — full implementation lands in Task 2.
-# Exporting the symbol now keeps `from bid_suggest import main_with_args`
-# (test_bid_suggest.py line 23) importable so the MODULE_MISSING guard
-# lifts for the core-function tests.
+# CLI entrypoint
 # ---------------------------------------------------------------------------
 
-def main_with_args(argv: list[str]) -> int:  # pragma: no cover (Task 2)
-    raise NotImplementedError("main_with_args is implemented in Task 2")
+def main_with_args(argv: list[str]) -> int:
+    """CLI: bid_suggest --run-dir <path>.
+
+    Reads {run_dir}/ranked-enriched.json + {run_dir}/clusters.json,
+    enriches each row with suggested_max_cpc_micros (additive — original
+    keys preserved), writes the result back to ranked-enriched.json.
+
+    Exit codes:
+        0  ok
+        2  retryable (transient disk error)
+        3  fatal (missing input, malformed JSON, schema violation)
+    """
+    parser = argparse.ArgumentParser(
+        prog="bid_suggest",
+        description=(
+            "Add suggested_max_cpc_micros to ranked-enriched.json "
+            "using BIDS-01/02/04."
+        ),
+    )
+    parser.add_argument("--run-dir", required=True, type=Path)
+
+    # argv[0]-skip heuristic — matches serp_fetch.py / volume_enrich.py.
+    # Accept either full sys.argv (e.g., ["bid_suggest.py", "--run-dir", ...])
+    # or an args-only list (e.g., ["--run-dir", ...]).
+    args_only = (
+        argv[1:] if argv and not argv[0].startswith("-") else argv
+    )
+    args = parser.parse_args(args_only)
+
+    run_dir: Path = args.run_dir
+    if not run_dir.exists():
+        log.error("--run-dir does not exist: %s", run_dir)
+        return 3
+
+    ranked_path = run_dir / "ranked-enriched.json"
+    clusters_path = run_dir / "clusters.json"
+
+    if not ranked_path.exists():
+        log.error(
+            "ranked-enriched.json not found at %s — "
+            "Phase 9 requires Phase 8 (volume_enrich.py) to have run.",
+            ranked_path,
+        )
+        return 3
+    if not clusters_path.exists():
+        log.error("clusters.json not found at %s", clusters_path)
+        return 3
+
+    try:
+        ranked: list[dict] = json.loads(
+            ranked_path.read_text(encoding="utf-8")
+        )
+        clusters_data: dict[str, Any] = json.loads(
+            clusters_path.read_text(encoding="utf-8")
+        )
+    except json.JSONDecodeError as exc:
+        log.error("Failed to parse input JSON: %s", exc)
+        return 3
+    except OSError as exc:
+        log.error("Failed to read input file: %s", exc)
+        return 2
+
+    enriched = enrich_with_bids(ranked, clusters_data)
+
+    # Atomic-ish write: write to .tmp then rename.
+    try:
+        tmp = ranked_path.with_suffix(".json.tmp")
+        tmp.write_text(
+            json.dumps(enriched, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        tmp.replace(ranked_path)
+    except OSError as exc:
+        log.error("Failed to write ranked-enriched.json: %s", exc)
+        return 2
+
+    summary = {
+        "rows_enriched": len(enriched),
+        "rows_with_cpc": sum(
+            1 for r in enriched if r.get("cpc_micros") is not None
+        ),
+        "rows_using_fallback": sum(
+            1
+            for r in enriched
+            if r.get("suggested_max_cpc_micros") is not None
+            and r.get("cpc_micros") is None
+        ),
+        "rows_no_cpc_data": sum(1 for r in enriched if r.get("no_cpc_data")),
+    }
+    print(json.dumps(summary))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main_with_args(sys.argv))
