@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: account-structure-mapping
-status: in_progress
-stopped_at: "Completed 11-02-PLAN.md (Wave 1 ad_group_match.py core). 3 tasks committed (84ec60c + efaa871 + 479ce22). Suite: 230 passed / 9 skipped (full deps); 14/14 ad_group_match tests GREEN, 0 regressions. Wave 1 complete — Wave 2 plan 11-03 (export_csv + render_report integrations) now unblocked."
-last_updated: "2026-05-15T23:11:00Z"
+milestone: v1.1
+milestone_name: Phases
+status: unknown
+stopped_at: "Completed 11-03-PLAN.md (Wave 2 export_csv + render_report integrations). 2 tasks committed (8bca0f3 + c8514a7). Suite: 239 passed / 0 skipped (full deps); 9 Phase 11 Wave 2 RED stubs flipped GREEN (4 ADGM-05 + 2 GEO-05 + 3 ADGM-06), zero regressions. Wave 2 complete — Wave 3 plan 11-04 (SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify smoke) now unblocked."
+last_updated: "2026-05-14T23:21:13.848Z"
 progress:
-  total_phases: 11
-  completed_phases: 10
-  total_plans: 48
+  total_phases: 10
+  completed_phases: 8
+  total_plans: 43
   completed_plans: 42
 ---
 
@@ -26,10 +26,10 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | 11 — Account-Structure Mapping (Wave 1 complete: 11-00 + 11-01 + 11-02) |
-| Plan | 3 / 5 (11-00 + 11-01 + 11-02 complete; 11-03 next) |
-| Status | Wave 1 complete — ad_group_match.py core shipped; Wave 2 plan 11-03 (export_csv + render_report integrations) unblocked |
-| Last activity | 2026-05-15 — 11-02 committed (Tasks 1-3: 84ec60c / efaa871 / 479ce22); 230 passed / 9 skipped (full deps); 14/14 ad_group_match tests GREEN; 0 regressions |
+| Phase | 11 — Account-Structure Mapping (Wave 2 complete: 11-00 + 11-01 + 11-02 + 11-03) |
+| Plan | 4 / 5 (11-00 + 11-01 + 11-02 + 11-03 complete; 11-04 next) |
+| Status | Wave 2 complete — export_csv + render_report integrations shipped; Wave 3 plan 11-04 (SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify smoke) unblocked |
+| Last activity | 2026-05-15 — 11-03 committed (Tasks 1-2: 8bca0f3 / c8514a7); 239 passed / 0 skipped (full deps); 9 Phase 11 Wave 2 RED stubs flipped GREEN (4 ADGM-05 + 2 GEO-05 + 3 ADGM-06); 0 regressions |
 
 ## Previous Milestone
 
@@ -77,6 +77,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 11 P00 | 7 | 3 tasks | 16 files |
 | Phase 11 P01 | 8 | 4 tasks | 6 files |
 | Phase 11 P02 | 6 | 3 tasks | 2 files |
+| Phase 11 P03 | 9 | 2 tasks | 3 files |
 
 ### Execution History
 
@@ -197,6 +198,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 11]: [Phase 11-02] build_mapping rounds final score to 4 decimals (round(score, 4)) for stable JSON diff in committed mapping fixtures and snapshot tests — eliminates floating-point representation noise across platforms
 - [Phase 11]: [Phase 11-02] test_module_imports rewritten from Wave-0 stub-state assertions (assert not hasattr build_mapping + main raises NotImplementedError) to Wave-1 public-surface assertions (hasattr build_mapping/_tokens/_jaccard/_classify/_intent_match_multiplier/_infer_ad_group_intent/_build_ad_group_index + callable main_with_args) — original assertions were intrinsically incompatible with Wave 1 helpers landing
 - [Phase 11]: [Phase 11-02] test_coverage_pct_high_plus_medium_only rewritten with deterministic-jaccard keywords (6×0.7/2×0.5+0.4/2×0.0 against Accident-Exams–Lake-Worth bag) — original Wave-0 keywords ('hi 0' / 'med 0' / 'low 0') shared zero tokens with every ad-group bag, making asserted 80% coverage literally unachievable. Per-tier sanity counts added for explicit math contract
+- [Phase 11]: [Phase 11-03] Mapped keywords override cluster assignment entirely (not just relabel): _build_positives_rows emits a row for any keyword the mapping resolves to an existing AG, even when the LLM clusterer orphaned it. Without this, mapping could only relabel rows our clusterer already happened to group — partially defeating the ADGM-05 contract.
+- [Phase 11]: [Phase 11-03] ADGM-06 step-3 rewrite applied BEFORE CMPL-05 compliance prepend so it targets the static template index 2 (the 'Create ad groups: ...' slot) regardless of compliance state. Reversing the order would force the rewrite to chase a moving index after compliance shifts steps down by 1.
+- [Phase 11]: [Phase 11-03] _stage_mapping_run test helper augments ranked-enriched + clusters with mapping keywords when a mapping fixture is supplied (Rule-1 deviation). Original Wave-0 fixtures had zero keyword overlap between grocery ranked rows and accident-doctor mapping entries, making the existing-AG assertion structurally unachievable.
 
 ### Open Questions / Todos
 
@@ -214,9 +218,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T23:07:16Z
+**Last session:** 2026-05-14T23:21:03.211Z
 
-**Stopped at:** Completed 11-02-PLAN.md (Wave 1 ad_group_match.py core). 3 tasks committed (84ec60c + efaa871 + 479ce22). Suite: 230 passed / 9 skipped (full deps); 14/14 ad_group_match tests GREEN, 0 regressions. Wave 1 complete — Wave 2 plan 11-03 (export_csv + render_report integrations) now unblocked.
+**Stopped at:** Completed 11-03-PLAN.md (Wave 2 export_csv + render_report integrations). 2 tasks committed (8bca0f3 + c8514a7). Suite: 239 passed / 0 skipped (full deps); 9 Phase 11 Wave 2 RED stubs flipped GREEN (4 ADGM-05 + 2 GEO-05 + 3 ADGM-06), zero regressions. Wave 2 complete — Wave 3 plan 11-04 (SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify smoke) now unblocked.
 
 **Next session:** Execute Phase 11 Wave 2 — plan 11-03 (export_csv reads ad-group-mapping.json for positives Ad Group resolution + ad_groups.csv exclusion of existing — ADGM-05; render_report Next Steps step 3 rewrites when coverage_pct > 50.0 — ADGM-06). Then Wave 3 plan 11-04 (SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify smoke).
 
