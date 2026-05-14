@@ -206,3 +206,188 @@ def test_run_folder_complete(run_dir):
     assert exit_code == 0
     assert (run_dir / "report.md").exists()
     assert (run_dir / "report.json").exists()
+
+
+# ===========================================================================
+# Phase 9 Plan 04 — Task 1 tests
+#   BIDS-03: Suggested CPC column in enriched table
+#   CMPL-04: report.json compliance[] array + forecast{} object
+# ===========================================================================
+
+
+def _ranked_with_suggested_cpc() -> list[dict]:
+    """Minimal enriched-ranked rows carrying suggested_max_cpc_micros."""
+    return [
+        {
+            "keyword": "same day grocery delivery",
+            "intent": "transactional",
+            "match_type": "exact",
+            "theme": "delivery",
+            "signal_count": 4,
+            "source_diversity": 3,
+            "sources": ["serper-organic"],
+            "score": 71,
+            "volume": 2400,
+            "cpc_micros": 320000,
+            "difficulty": 28,
+            "parent_topic": "grocery delivery",
+            "suggested_max_cpc_micros": 300000,
+            "no_cpc_data": False,
+        },
+        {
+            "keyword": "orphan keyword no bid",
+            "intent": "commercial",
+            "match_type": "phrase",
+            "theme": "",
+            "signal_count": 1,
+            "source_diversity": 1,
+            "sources": ["serper-organic"],
+            "score": 10,
+            "volume": 100,
+            "cpc_micros": None,
+            "difficulty": None,
+            "parent_topic": None,
+            "suggested_max_cpc_micros": None,
+            "no_cpc_data": True,
+        },
+    ]
+
+
+def test_enriched_table_has_suggested_cpc_column(run_dir, clusters_data,
+                                                  competitor_intel_data,
+                                                  negatives_data, brief_text):
+    """BIDS-03: Volume-enriched table includes a 'Suggested CPC' header."""
+    from render_report import render_full_report
+
+    ranked = _ranked_with_suggested_cpc()
+    md = render_full_report(
+        ranked, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+    )
+    assert "Suggested CPC" in md
+
+
+def test_enriched_table_renders_usd_format(run_dir, clusters_data,
+                                            competitor_intel_data,
+                                            negatives_data, brief_text):
+    """BIDS-03: suggested_max_cpc_micros=300000 renders as $0.30 (USD with cents)."""
+    from render_report import render_full_report
+
+    ranked = _ranked_with_suggested_cpc()
+    md = render_full_report(
+        ranked, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+    )
+    assert "$0.30" in md
+
+
+def test_enriched_table_renders_dash_for_null_suggested_cpc(run_dir, clusters_data,
+                                                             competitor_intel_data,
+                                                             negatives_data, brief_text):
+    """BIDS-03: rows with suggested_max_cpc_micros=null render '—' (em-dash)."""
+    from render_report import render_full_report
+
+    ranked = _ranked_with_suggested_cpc()
+    md = render_full_report(
+        ranked, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+    )
+    # Find the row for 'orphan keyword no bid' — it must contain an em-dash
+    # in the Suggested CPC cell. We assert presence of em-dash on that row's line.
+    rows = [line for line in md.splitlines()
+            if line.startswith("|") and "orphan keyword no bid" in line]
+    assert rows, "orphan keyword row not found in table"
+    # An em-dash must appear in that row (either CPC or Suggested CPC column)
+    assert "—" in rows[0]
+
+
+def test_report_json_forecast_empty_default(run_dir, ranked_data, clusters_data,
+                                             competitor_intel_data, negatives_data,
+                                             brief_text):
+    """CMPL-04/FRCS: build_report_json defaults forecast={} when kwarg omitted."""
+    from render_report import build_report_json
+
+    report = build_report_json(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+    )
+    assert "forecast" in report
+    assert report["forecast"] == {}
+
+
+def test_report_json_forecast_populated(run_dir, ranked_data, clusters_data,
+                                         competitor_intel_data, negatives_data,
+                                         brief_text):
+    """CMPL-04/FRCS: forecast kwarg passes through verbatim to report.json."""
+    from render_report import build_report_json
+
+    forecast_obj = {
+        "metadata": {"schema_version": "v1"},
+        "clusters": [
+            {"name": "c1", "daily_spend_mid_usd": 5.78, "monthly_spend_mid_usd": 173.4}
+        ],
+        "campaign_totals": {"daily_spend_mid_usd": 7.12, "monthly_spend_mid_usd": 213.6},
+    }
+    report = build_report_json(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+        forecast=forecast_obj,
+    )
+    assert report["forecast"]["campaign_totals"]["daily_spend_mid_usd"] == 7.12
+
+
+def test_report_json_compliance_empty_when_none(run_dir, ranked_data, clusters_data,
+                                                 competitor_intel_data, negatives_data,
+                                                 brief_text):
+    """CMPL-04: when compliance kwarg omitted → report.json['compliance'] == []."""
+    from render_report import build_report_json
+
+    report = build_report_json(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+    )
+    assert "compliance" in report
+    assert report["compliance"] == []
+
+
+def test_report_json_compliance_empty_when_matched_verticals_empty(
+    run_dir, ranked_data, clusters_data, competitor_intel_data,
+    negatives_data, brief_text,
+):
+    """CMPL-04: compliance={'matched_verticals': []} → report.json['compliance'] == []."""
+    from render_report import build_report_json
+
+    report = build_report_json(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+        compliance={"matched_verticals": []},
+    )
+    assert report["compliance"] == []
+
+
+def test_report_json_compliance_array(run_dir, ranked_data, clusters_data,
+                                       competitor_intel_data, negatives_data,
+                                       brief_text):
+    """CMPL-04: compliance dict → report.json['compliance'] is the matched_verticals[] array."""
+    from render_report import build_report_json
+
+    compliance_obj = {
+        "matched_verticals": [
+            {
+                "name": "medical",
+                "verification_url": "https://support.google.com/adspolicy/answer/176031",
+                "policy_note": "Healthcare verification required.",
+                "evidence_tokens": ["clinic", "physician"],
+                "evidence_sources": {"brief": ["clinic"], "keywords": []},
+                "matched_keyword_count": 0,
+            }
+        ]
+    }
+    report = build_report_json(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+        compliance=compliance_obj,
+    )
+    assert isinstance(report["compliance"], list)
+    assert len(report["compliance"]) == 1
+    assert report["compliance"][0]["name"] == "medical"
