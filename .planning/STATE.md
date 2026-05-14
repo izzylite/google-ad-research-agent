@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: Completed 09-04-PLAN.md (render_report extension). 149/149 tests GREEN, 17 new. BIDS-03 + FRCS-04 + FRCS-05 + CMPL-03 + CMPL-04 complete. Plan 09-05 (test fixtures sync / final smoke) is the last Phase 9 plan.
-last_updated: "2026-05-14T18:35:22.021Z"
+stopped_at: Completed 09-05-PLAN.md (SKILL.md Phase 9 pointer + references/phase9-economics-compliance.md rubric + end-to-end smoke approved on real run-folder). Phase 9 plans 6/6 executed; awaiting verifier+commit by orchestrator before Phase 9 marked Complete on ROADMAP.
+last_updated: "2026-05-14T18:43:14Z"
 progress:
   total_phases: 9
   completed_phases: 6
-  total_plans: 33
-  completed_plans: 32
+  total_plans: 34
+  completed_plans: 34
 ---
 
 # State: Google Ad Research Agent
@@ -20,16 +20,16 @@ progress:
 
 **Core value:** From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session.
 
-**Current focus:** Milestone v1.1 — Operator-Ready Output. Phases 9 (Campaign Economics + Compliance) and 10 (Operator Launch Kit) defined. Ready to plan Phase 9.
+**Current focus:** Milestone v1.1 — Operator-Ready Output. Phase 9 (Campaign Economics + Compliance) plans 6/6 executed; awaiting verifier+commit by orchestrator before Phase 9 closes. Phase 10 (Operator Launch Kit) is next.
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
-| Phase | 9 — Campaign Economics and Compliance (in progress) |
-| Plan | 09-04 complete — next: 09-05 final smoke / Phase 9 closeout |
-| Status | Wave 2 closeout — bid_suggest + forecast_budget + compliance_check + render_report extension all shipped; only 09-05 remains before Phase 9 complete |
-| Last activity | 2026-05-14 — 09-04 GREEN (17 new render_report tests pass; full suite 149 passed + 10 skipped); BIDS-03 + FRCS-04 + FRCS-05 + CMPL-03 + CMPL-04 complete |
+| Phase | 9 — Campaign Economics and Compliance (plans 6/6 complete, awaiting verifier) |
+| Plan | 09-05 complete — Phase 9 closeout pending verifier run |
+| Status | Wave 3 closeout — SKILL.md Phase 9 pointer (497 lines) + references/phase9-economics-compliance.md (209 lines) shipped; end-to-end smoke approved on real run-folder; 56/56 Phase 9 tests GREEN, 0 v1.0 regressions |
+| Last activity | 2026-05-14 — 09-05 complete (Tasks 1+2 committed dd94a8b + 24dd777; Task 3 human-verify approved); BIDS-03 + FRCS-04 + FRCS-05 + CMPL-03 marked complete |
 
 ## Previous Milestone
 
@@ -39,11 +39,11 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 
 | Metric | Value |
 |--------|-------|
-| Phases planned | 8 / 10 |
-| Phases complete | 8 / 10 |
-| Plans complete | 27 (v1.0) + 0 (v1.1) |
+| Phases planned | 9 / 10 |
+| Phases complete | 8 / 10 (Phase 9 plans 6/6 done, awaiting verifier) |
+| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) |
 | v1.0 requirements complete | 52 / 52 |
-| v1.1 requirements complete | 0 / 23 |
+| v1.1 requirements complete | 13 / 23 (BIDS 4/4, FRCS 5/5, CMPL 4/5 — CMPL-05 mapped to Phase 10) |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
 | Phase 02-signal-collection P02 | 8min | 2 tasks | 2 files |
@@ -69,6 +69,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 09 P02 | 3min | 2 tasks | 1 files |
 | Phase 09 P03 | 4min | 2 tasks | 1 files |
 | Phase 09 P04 | 9min | 3 tasks | 2 files |
+| Phase 09 P05 | 12min | 3 tasks | 2 files |
 
 ### Execution History
 
@@ -167,6 +168,10 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 09]: [09-04] Task 2/3 bundled RED+GREEN in single feat commit (vs Task 1 split RED-then-GREEN) — keeps per-task atomic commit discipline (one task = one commit) once the failing-first invariant has been demonstrated in Task 1
 - [Phase 09]: [09-04] Compliance block uses markdown blockquote prefix (> ## ⚠ ...) rather than plain heading — natural visual containment in any GFM viewer without inline HTML; matches the warning-panel affordance from CMPL-03 design
 - [Phase 09]: [09-04] render_forecast_section + render_compliance_warning both return empty string on absent data — graceful degrade built into the helper, not the caller; mirrors render_niche_pulse_section's contract
+- [Phase 09]: [09-05] SKILL.md Phase 9 pointer follows Phase 5/7/8 reference-load pattern verbatim — "Load it with the Read tool when entering Phase 9" — keeps SKILL.md under the 500-line cap (497 lines after edit) while documenting the optional-in-v1.0 / mandatory-for-Phase-10 dual contract inline
+- [Phase 09]: [09-05] references/phase9-economics-compliance.md (209 lines) mirrors phase8-account-data.md structure — When-to-run, Prerequisites, Step 36-40, Anti-patterns, Failure modes, Downstream contract — the explicit Phase 10 downstream-contract section is the upstream API spec for the Phase 10 planner (suggested_max_cpc_micros, campaign_totals.daily_spend_mid_usd, matched_verticals[].verification_url)
+- [Phase 09]: [09-05] End-to-end smoke reused real Phase 8 run-folder (.runs/2026-05-08T081041Z-primary-urgent-care-car-accident-lake-worth) — exercises all three bid-suggest paths (direct cpc / cluster-median fallback / no_cpc_data flagged) and triggers compliance block naturally (medical + legal verticals matched). All 6 visual + suite checks green; 56/56 Phase 9 tests GREEN; 0 v1.0 regressions
+- [Phase 09]: [09-05] Daily Clicks column in report.md renders raw Python floats (e.g., 0.44000000000000006) — cosmetic only, JSON contract correct, USD columns format correctly via _micros_to_usd. Deferred to Phase 10 / cleanup plan; not blocking Phase 9 closeout
 
 ### Open Questions / Todos
 
@@ -184,11 +189,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-14T18:34:47.876Z
+**Last session:** 2026-05-14T18:43:14Z
 
-**Stopped at:** Completed 09-04-PLAN.md (render_report extension). 149/149 tests GREEN, 17 new. BIDS-03 + FRCS-04 + FRCS-05 + CMPL-03 + CMPL-04 complete. Plan 09-05 (test fixtures sync / final smoke) is the last Phase 9 plan.
+**Stopped at:** Completed 09-05-PLAN.md (SKILL.md Phase 9 pointer + references/phase9-economics-compliance.md rubric + end-to-end smoke approved on .runs/2026-05-08T081041Z-primary-urgent-care-car-accident-lake-worth/). All 6 visual checks green; 56/56 Phase 9 tests GREEN; 0 v1.0 regressions. Phase 9 plans 6/6 complete — awaiting verifier+commit by orchestrator before Phase 9 marked Complete on ROADMAP. BIDS-03 + FRCS-04 + FRCS-05 + CMPL-03 marked complete.
 
-**Next session:** Run `/gsd:plan-phase 9` to decompose Phase 9 (Campaign Economics and Compliance) into wave plans. Phase 9 covers BIDS + FRCS + CMPL (14 requirements).
+**Next session:** Run `/gsd:verify-phase 9` to close out Phase 9, then `/gsd:plan-phase 10` to decompose Phase 10 (Operator Launch Kit — EXPT + STEP, 9 requirements including the deferred CMPL-05 checklist reorder).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`

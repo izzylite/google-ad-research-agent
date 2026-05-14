@@ -249,4 +249,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-08*
-*Last updated: 2026-05-14 — v1.1 traceability rows added (Phases 9-10)*
+*Last updated: 2026-05-14 — Phase 9 plans 6/6 executed; BIDS + FRCS + CMPL-01..04 marked Complete (CMPL-05 deferred to Phase 10 STEP-01 checklist reorder)*
