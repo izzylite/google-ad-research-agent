@@ -520,6 +520,16 @@ def render_compliance_warning(compliance: dict | None) -> str:
     return "".join(parts)
 
 
+def _fmt_clicks(v) -> str:
+    """Format daily click counts. Integers render as-is; floats round to 1dp
+    and drop trailing `.0` so 6.0 → '6', 0.7333 → '0.7'."""
+    if isinstance(v, int):
+        return str(v)
+    if isinstance(v, float):
+        return f"{v:.1f}".rstrip("0").rstrip(".") or "0"
+    return str(v)
+
+
 def render_forecast_section(forecast: dict | None) -> str:
     """Render the Budget Forecast section (FRCS-04 + FRCS-05) as markdown.
 
@@ -564,7 +574,7 @@ def render_forecast_section(forecast: dict | None) -> str:
             name,
             intent,
             f"{kw_count} ({with_vol} with vol)",
-            f"{clicks_low}/{clicks_mid}/{clicks_high}",
+            f"{_fmt_clicks(clicks_low)}/{_fmt_clicks(clicks_mid)}/{_fmt_clicks(clicks_high)}",
             f"${spend_low:.2f}/${spend_mid:.2f}/${spend_high:.2f}",
             f"${monthly_mid:.2f}",
         ])
@@ -581,9 +591,9 @@ def render_forecast_section(forecast: dict | None) -> str:
     if totals:
         parts.append(
             f"**Campaign Totals:** Daily "
-            f"{totals.get('daily_clicks_low', 0)}/"
-            f"{totals.get('daily_clicks_mid', 0)}/"
-            f"{totals.get('daily_clicks_high', 0)} clicks · "
+            f"{_fmt_clicks(totals.get('daily_clicks_low', 0))}/"
+            f"{_fmt_clicks(totals.get('daily_clicks_mid', 0))}/"
+            f"{_fmt_clicks(totals.get('daily_clicks_high', 0))} clicks · "
             f"${totals.get('daily_spend_low_usd', 0):.2f}/"
             f"${totals.get('daily_spend_mid_usd', 0):.2f}/"
             f"${totals.get('daily_spend_high_usd', 0):.2f} daily spend · "
@@ -941,6 +951,18 @@ primarily sorted by <code>source_diversity</code>. Paste keywords into Google
 Keyword Planner for actual volume + CPC.
 </div>
 
+<section id="compliance" style="display:none">
+  <h2>⚠ Compliance Required <span class="cluster-meta" id="complianceMeta"></span></h2>
+  <div class="usage"><strong>How to use:</strong> this campaign matched a regulated vertical. Complete verification at the URL below <em>before</em> launching. Google may reject ads or suspend the account otherwise.</div>
+  <div id="complianceContent"></div>
+</section>
+
+<section id="forecast" style="display:none">
+  <h2>Budget Forecast <span class="cluster-meta" id="forecastMeta"></span></h2>
+  <div class="usage"><strong>How to use:</strong> directional estimates only. Use the <strong>mid</strong> band for a sane Day 1 budget; bracket with low/high once click-through data lands. NOT Google's official forecast.</div>
+  <div id="forecastContent"></div>
+</section>
+
 <section id="account-perf">
   <h2>Account Performance <span class="cluster-meta" id="perfMeta"></span></h2>
   <div class="usage"><strong>How to use:</strong> what your account actually did. <strong>Converted search terms</strong> are gold — bid harder. <strong>Lossy search terms</strong> (clicks no conv) = negative candidates. <strong>Top by ROAS</strong> = scale candidates.</div>
@@ -1142,6 +1164,75 @@ function renderNegativesSync() {{
     else html += "<ul>" + items.map(n => `<li><code>${{htmlEscape(n.keyword)}}</code> <span class="cluster-meta">${{htmlEscape(n.category||'')}}</span> — ${{htmlEscape(n.justification||'')}}</li>`).join("") + "</ul>";
     html += "</details>";
   }}
+  content.innerHTML = html;
+}}
+
+function renderCompliance() {{
+  const list = REPORT.compliance || [];
+  if (!list.length) return;
+  const section = document.getElementById("compliance");
+  const meta = document.getElementById("complianceMeta");
+  const content = document.getElementById("complianceContent");
+  section.style.display = "block";
+  meta.textContent = `${{list.length}} regulated vertical(s) matched`;
+  let html = `<div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:12px 16px;margin-bottom:12px;border-radius:4px;font-size:14px"><strong>Verify before launching.</strong> Google may reject ads or suspend the account if the regulated-vertical certification path is not completed.</div>`;
+  for (const v of list) {{
+    const name = htmlEscape((v.vertical || "").toUpperCase());
+    const tokens = (v.evidence_tokens || []).map(t => `<code>${{htmlEscape(t)}}</code>`).join(", ") || "—";
+    const url = v.verification_url || "";
+    const note = htmlEscape(v.policy_note || "");
+    const kwCount = v.matched_keyword_count != null ? v.matched_keyword_count : (v.matched_keywords||[]).length;
+    html += `<details open style="margin-bottom:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:8px 12px">
+      <summary><strong>${{name}}</strong> <span class="cluster-meta">${{kwCount}} keyword matches</span></summary>
+      <ul style="margin:8px 0">
+        <li><strong>Evidence tokens:</strong> ${{tokens}}</li>
+        <li><strong>Verification:</strong> ${{url ? `<a href="${{htmlEscape(url)}}" target="_blank" rel="noopener">${{htmlEscape(url)}}</a>` : '—'}}</li>
+        <li><strong>Policy note:</strong> ${{note}}</li>
+      </ul>
+    </details>`;
+  }}
+  content.innerHTML = html;
+}}
+
+function renderForecast() {{
+  const forecast = REPORT.forecast || {{}};
+  const clusters = forecast.clusters || [];
+  if (!clusters.length) return;
+  const section = document.getElementById("forecast");
+  const meta = document.getElementById("forecastMeta");
+  const content = document.getElementById("forecastContent");
+  section.style.display = "block";
+  const totals = forecast.campaign_totals || {{}};
+  const fmtClicks = v => {{
+    if (typeof v === "number" && !Number.isInteger(v)) return v.toFixed(1).replace(/\\.0$/, "");
+    return String(v);
+  }};
+  meta.textContent = `${{clusters.length}} clusters · $${{(totals.daily_spend_mid_usd||0).toFixed(2)}}/day mid · $${{(totals.monthly_spend_mid_usd||0).toFixed(2)}}/mo`;
+  let html = `<div style="background:#ecfdf5;border-left:4px solid #10b981;padding:10px 14px;margin-bottom:12px;border-radius:4px;font-size:13px"><strong>Campaign Totals:</strong> Daily ${{fmtClicks(totals.daily_clicks_low||0)}}/${{fmtClicks(totals.daily_clicks_mid||0)}}/${{fmtClicks(totals.daily_clicks_high||0)}} clicks · $${{(totals.daily_spend_low_usd||0).toFixed(2)}}/$${{(totals.daily_spend_mid_usd||0).toFixed(2)}}/$${{(totals.daily_spend_high_usd||0).toFixed(2)}} daily spend · $${{(totals.monthly_spend_mid_usd||0).toFixed(2)}} monthly (mid)</div>`;
+  html += `<table><thead><tr><th>Cluster</th><th>Intent</th><th>Keywords</th><th>Daily Clicks (lo/mid/hi)</th><th>Daily Spend (lo/mid/hi)</th><th>Monthly Spend Mid</th></tr></thead><tbody>`;
+  for (const c of clusters) {{
+    html += `<tr>
+      <td>${{htmlEscape(c.name||"")}}</td>
+      <td>${{htmlEscape(c.intent||"")}}</td>
+      <td>${{c.keyword_count||0}} (${{c.keywords_with_volume||0}} w/vol)</td>
+      <td>${{fmtClicks(c.daily_clicks_low||0)}}/${{fmtClicks(c.daily_clicks_mid||0)}}/${{fmtClicks(c.daily_clicks_high||0)}}</td>
+      <td>$${{(c.daily_spend_low_usd||0).toFixed(2)}}/$${{(c.daily_spend_mid_usd||0).toFixed(2)}}/$${{(c.daily_spend_high_usd||0).toFixed(2)}}</td>
+      <td>$${{(c.monthly_spend_mid_usd||0).toFixed(2)}}</td>
+    </tr>`;
+  }}
+  html += `</tbody></table>`;
+  const method = forecast.methodology || {{}};
+  const ctrs = method.intent_ctrs || {{}};
+  const ratio = method.avg_cpc_ratio || 0.65;
+  const bands = method.band_multipliers || {{}};
+  html += `<details style="margin-top:12px"><summary><strong>How this is calculated</strong></summary>
+    <ul style="font-size:13px">
+      <li><strong>Clicks</strong> = monthly volume × intent CTR ÷ 30 days. CTRs: T ${{((ctrs.transactional||0)*100).toFixed(0)}}% · C ${{((ctrs.commercial||0)*100).toFixed(0)}}% · I ${{((ctrs.informational||0)*100).toFixed(0)}}% · N ${{((ctrs.navigational||0)*100).toFixed(0)}}%.</li>
+      <li><strong>Spend</strong> = clicks × (suggested max CPC × ${{ratio}}) (avg-CPC ratio).</li>
+      <li><strong>Bands</strong> = mid × ${{bands.low||0.5}} (low) / × ${{bands.mid||1.0}} (mid) / × ${{bands.high||1.5}} (high).</li>
+      <li>Directional estimates only. Not Google's official forecast — use Keyword Planner for that.</li>
+    </ul>
+  </details>`;
   content.innerHTML = html;
 }}
 
@@ -1351,6 +1442,7 @@ document.getElementById("negFilter").addEventListener("input", renderNegatives);
 document.getElementById("negTierFilter").addEventListener("change", renderNegatives);
 
 renderKeywords(); renderClusters(); renderCompetitors(); renderNichePulse();
+renderCompliance(); renderForecast();
 renderAccountPerf(); renderNegativesSync(); renderNegatives();
 makeSortable("kwTable"); makeSortable("negTable");
 </script>
