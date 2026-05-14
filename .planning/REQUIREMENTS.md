@@ -92,6 +92,48 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **PULSE-08**: SKILL.md Steps 27-30 wire the niche pulse phase as optional (skill prompts operator: run pulse?)
 - [x] **PULSE-09**: Niche pulse keywords/themes are NOT merged into the main `keywords.json` ranking (different lifecycle); they live in their own `niche-pulse.json`
 
+## v1.1 Requirements (Operator-Ready Output)
+
+Milestone v1.1 — campaign launch kit additions. Builds on v1.0 artifacts (ranked-enriched.json, clusters.json, negatives.json, report.md).
+
+### Editor CSV Export
+
+- [ ] **EXPT-01**: `export_csv.py` writes `{run_dir}/export/positives.csv` with columns `Campaign, Ad Group, Keyword, Match Type, Max CPC, Final URL` in Google Ads Editor import format (UTF-8, comma-delimited, quoted strings)
+- [ ] **EXPT-02**: `export_csv.py` writes `{run_dir}/export/negatives.csv` with columns `Campaign, Ad Group, Keyword, Match Type, Level` (Level = `campaign` | `ad_group`); Strong tier → campaign level, Considered/Investigate → ad_group level
+- [ ] **EXPT-03**: `export_csv.py` writes `{run_dir}/export/ad_groups.csv` with columns `Campaign, Ad Group, Status, Default Max CPC` for ad group creation
+- [ ] **EXPT-04**: Editor-importable verification — CSV passes `csv.DictReader` round-trip and column headers exactly match Google Ads Editor v2.x spec (no BOM, CRLF line endings)
+- [ ] **EXPT-05**: `render_report.py` adds "Export Files" section linking to each CSV; `report.json` lists export file paths in stable `exports[]` array
+
+### Max-CPC Bid Suggestions
+
+- [ ] **BIDS-01**: `bid_suggest.py` (or extension to volume_enrich.py) adds `suggested_max_cpc_micros` column to `ranked-enriched.json` derived from `cpc_micros × intent_multiplier` (transactional 1.2, commercial 0.8, informational 0.4, navigational 1.0)
+- [ ] **BIDS-02**: Keywords with no Ahrefs `cpc_micros` data fall back to cluster-median CPC × intent_multiplier; if cluster has no CPC data at all, suggested_max_cpc is `null` and flagged `no_cpc_data` in report
+- [ ] **BIDS-03**: Report ranked-enriched table renders `Suggested Max CPC` column (USD with cents); HTML report shows the multiplier in a tooltip on hover
+- [ ] **BIDS-04**: Bid multipliers are loaded from a single config block at top of `bid_suggest.py` (no magic numbers scattered across code) so operator can tune in one place
+
+### Budget Forecast
+
+- [ ] **FRCS-01**: `forecast_budget.py` reads `clusters.json` + `ranked-enriched.json` and emits `{run_dir}/forecast.json` containing per-cluster `est_daily_clicks_low/mid/high`, `est_daily_spend_low/mid/high`, `est_monthly_spend_band`, and a campaign-level rollup
+- [ ] **FRCS-02**: Click estimates use intent-class CTR anchors: transactional 6%, commercial 4%, informational 2%, navigational 8% (documented in script header, configurable)
+- [ ] **FRCS-03**: Spend estimates use suggested_max_cpc × 0.65 (typical avg CPC ratio to max CPC); low band = sum × 0.5, mid = sum × 1.0, high = sum × 1.5 to express forecast uncertainty
+- [ ] **FRCS-04**: Report renders Budget Forecast section per cluster + campaign totals; report.md table shows low/mid/high daily spend per cluster
+- [ ] **FRCS-05**: Forecast section includes a "How this is calculated" subsection explaining assumptions are directional, not Google's official forecast tool — prevents operator over-promising to client
+
+### Operator Next-Steps Checklist
+
+- [ ] **STEP-01**: `render_report.py` appends a `## Next Steps` section to `report.md` containing an ordered ops checklist: (1) create campaign in <location/language>, (2) set daily budget to <mid forecast>, (3) create ad groups <names from clusters>, (4) paste positives.csv via Editor, (5) paste negatives.csv at campaign level for Strong tier, (6) write 3 RSAs per ad group using competitor headline/CTA/offer examples, (7) set max CPC per keyword from suggested values, (8) review compliance flags before enabling
+- [ ] **STEP-02**: Checklist substitutes brief values (location, language, audience, budget) and forecast values (mid spend) into the template so each run reads as bespoke instructions, not boilerplate
+- [ ] **STEP-03**: HTML report renders the checklist with copy-able command snippets and checkboxes that persist via localStorage so operator can track progress within a session
+- [ ] **STEP-04**: report.json `next_steps[]` array carries the ordered step list for downstream tooling
+
+### Compliance Flags
+
+- [ ] **CMPL-01**: `compliance_check.py` scans `ranked-enriched.json` + `brief.md` against regulated-vertical token lists (medical/legal/finance/gambling/crypto) and emits `{run_dir}/compliance-flags.json` with matched verticals, evidence tokens, and verification-path URLs
+- [ ] **CMPL-02**: Token lists are stored in `references/compliance-verticals.json` (data, not code) so operator can extend without code change; each vertical entry has `tokens[]`, `verification_url`, and `policy_note`
+- [ ] **CMPL-03**: Report renders a "⚠ Compliance Required" block above the Ranked Keywords table when any vertical matches; HTML uses warning-yellow background; markdown uses block quote with `⚠` prefix
+- [ ] **CMPL-04**: report.json `compliance[]` array lists matched verticals; build_report_json signature extends with `compliance` kwarg; absent → empty array
+- [ ] **CMPL-05**: Next-Steps checklist (STEP-01) reorders step 8 to step 1 when compliance flags present — "Complete <vertical> verification at <URL> before launching"; the rest of the checklist remains in order
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -124,7 +166,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Cost gate / pre-run spend confirmation | Operator chose to skip — trust operator, faster iteration |
 | Web dashboard / UI | Markdown report sufficient; UI duplicates Claude Code chat |
 | Multi-tenant / auth | Single internal operator model |
-| Auto-push to Google Ads (API or Editor CSV format) | v1 hands operator a markdown report; uploading manually prevents bad data going live |
+| ~~Auto-push to Google Ads (API or Editor CSV format)~~ | **Updated v1.1**: Editor CSV export moved in-scope (EXPT-01..05). Direct API push remains excluded — operator's manual Editor import preserves bad-data gate. |
 | Real-time / scheduled / cron runs | Operator-triggered only |
 | Strict 10-field brief schema | Operator chose looser 5-required + optional model |
 | `sentence-transformers` / embedding-based clustering | ~700MB torch transitive deps make skill non-portable; LLM-driven clustering chosen |
@@ -175,10 +217,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRST-02 | Phase 6 | Complete |
 
 **Coverage:**
-- v1 requirements: 35 total
-- Mapped to phases: 35
-- Unmapped: 0
+- v1.0 requirements: 52 total (35 originally mapped + 9 PULSE + 8 AHRF/GADS added during v1.0)
+- v1.0 mapped to phases: 52 (Phases 1-8)
+- v1.1 requirements: 22 total (EXPT-01..05, BIDS-01..04, FRCS-01..05, STEP-01..04, CMPL-01..05)
+- v1.1 mapped to phases: pending roadmap creation
+- Unmapped: 0 v1.0 / 22 v1.1 (will be mapped by roadmapper in next step)
 
 ---
 *Requirements defined: 2026-05-08*
-*Last updated: 2026-05-08 — traceability mapped to roadmap*
+*Last updated: 2026-05-14 — v1.1 requirements added (EXPT/BIDS/FRCS/STEP/CMPL)*
