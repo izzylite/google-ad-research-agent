@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: Completed 09-03-PLAN.md (compliance_check CMPL-01/02). 10/10 tests GREEN. Plan 09-04 (render_report extension) unblocked.
-last_updated: "2026-05-14T18:19:52.926Z"
+stopped_at: Completed 09-04-PLAN.md (render_report extension). 149/149 tests GREEN, 17 new. BIDS-03 + FRCS-04 + FRCS-05 + CMPL-03 + CMPL-04 complete. Plan 09-05 (test fixtures sync / final smoke) is the last Phase 9 plan.
+last_updated: "2026-05-14T18:35:22.021Z"
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 33
-  completed_plans: 31
+  completed_plans: 32
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 9 — Campaign Economics and Compliance (in progress) |
-| Plan | 09-03 complete — next: 09-04 render_report.py extension |
-| Status | Wave 2 — bid_suggest + forecast_budget + compliance_check shipped; render_report extension (09-04) unblocked |
-| Last activity | 2026-05-14 — 09-03 GREEN (10/10 compliance_check tests pass; full suite 131 passed + 10 skipped) |
+| Plan | 09-04 complete — next: 09-05 final smoke / Phase 9 closeout |
+| Status | Wave 2 closeout — bid_suggest + forecast_budget + compliance_check + render_report extension all shipped; only 09-05 remains before Phase 9 complete |
+| Last activity | 2026-05-14 — 09-04 GREEN (17 new render_report tests pass; full suite 149 passed + 10 skipped); BIDS-03 + FRCS-04 + FRCS-05 + CMPL-03 + CMPL-04 complete |
 
 ## Previous Milestone
 
@@ -68,6 +68,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 09 P01 | 6min | 2 tasks | 1 files |
 | Phase 09 P02 | 3min | 2 tasks | 1 files |
 | Phase 09 P03 | 4min | 2 tasks | 1 files |
+| Phase 09 P04 | 9min | 3 tasks | 2 files |
 
 ### Execution History
 
@@ -161,6 +162,11 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 09]: [09-03] compliance_check: two-commit Task 1 (stub main_with_args) + Task 2 (full CLI) split — mirrors 09-01 bid_suggest pattern; lifts MODULE_MISSING guard immediately while preserving atomic per-task commits
 - [Phase 09]: [09-03] compliance_check: matched_keyword_count reuses find_matches recursively (rather than re-tokenizing) — single source of truth for the word-boundary algorithm; per-keyword cost negligible at default top_n=50
 - [Phase 09]: [09-03] compliance_check: ValueError from load_verticals on missing key maps to exit 3 (fatal, not retryable) — operator-edited references/compliance-verticals.json typos should fail fast, not silently emit empty matched_verticals[]
+- [Phase 09]: [09-04] _micros_to_usd helper centralises Pitfall 8 conversion — both cpc_micros and suggested_max_cpc_micros now route through one place; replaces the inline cpc/10_000/100 formula that risked unit drift
+- [Phase 09]: [09-04] HTML JS extensions (renderForecast / renderCompliance) intentionally deferred — markdown contract is the v1.1 ship path; report.json carries forecast + compliance so Phase 10 reads JSON, not HTML. Avoids regressing v1.0 HTML invariants without operator pain signal
+- [Phase 09]: [09-04] Task 2/3 bundled RED+GREEN in single feat commit (vs Task 1 split RED-then-GREEN) — keeps per-task atomic commit discipline (one task = one commit) once the failing-first invariant has been demonstrated in Task 1
+- [Phase 09]: [09-04] Compliance block uses markdown blockquote prefix (> ## ⚠ ...) rather than plain heading — natural visual containment in any GFM viewer without inline HTML; matches the warning-panel affordance from CMPL-03 design
+- [Phase 09]: [09-04] render_forecast_section + render_compliance_warning both return empty string on absent data — graceful degrade built into the helper, not the caller; mirrors render_niche_pulse_section's contract
 
 ### Open Questions / Todos
 
@@ -178,9 +184,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-14T18:19:43.137Z
+**Last session:** 2026-05-14T18:34:47.876Z
 
-**Stopped at:** Completed 09-03-PLAN.md (compliance_check CMPL-01/02). 10/10 tests GREEN. Plan 09-04 (render_report extension) unblocked.
+**Stopped at:** Completed 09-04-PLAN.md (render_report extension). 149/149 tests GREEN, 17 new. BIDS-03 + FRCS-04 + FRCS-05 + CMPL-03 + CMPL-04 complete. Plan 09-05 (test fixtures sync / final smoke) is the last Phase 9 plan.
 
 **Next session:** Run `/gsd:plan-phase 9` to decompose Phase 9 (Campaign Economics and Compliance) into wave plans. Phase 9 covers BIDS + FRCS + CMPL (14 requirements).
 

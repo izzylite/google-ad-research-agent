@@ -108,7 +108,7 @@ Milestone v1.1 — campaign launch kit additions. Builds on v1.0 artifacts (rank
 
 - [x] **BIDS-01**: `bid_suggest.py` (or extension to volume_enrich.py) adds `suggested_max_cpc_micros` column to `ranked-enriched.json` derived from `cpc_micros × intent_multiplier` (transactional 1.2, commercial 0.8, informational 0.4, navigational 1.0)
 - [x] **BIDS-02**: Keywords with no Ahrefs `cpc_micros` data fall back to cluster-median CPC × intent_multiplier; if cluster has no CPC data at all, suggested_max_cpc is `null` and flagged `no_cpc_data` in report
-- [ ] **BIDS-03**: Report ranked-enriched table renders `Suggested Max CPC` column (USD with cents); HTML report shows the multiplier in a tooltip on hover
+- [x] **BIDS-03**: Report ranked-enriched table renders `Suggested Max CPC` column (USD with cents); HTML report shows the multiplier in a tooltip on hover
 - [x] **BIDS-04**: Bid multipliers are loaded from a single config block at top of `bid_suggest.py` (no magic numbers scattered across code) so operator can tune in one place
 
 ### Budget Forecast
@@ -116,7 +116,7 @@ Milestone v1.1 — campaign launch kit additions. Builds on v1.0 artifacts (rank
 - [x] **FRCS-01**: `forecast_budget.py` reads `clusters.json` + `ranked-enriched.json` and emits `{run_dir}/forecast.json` containing per-cluster `est_daily_clicks_low/mid/high`, `est_daily_spend_low/mid/high`, `est_monthly_spend_band`, and a campaign-level rollup
 - [x] **FRCS-02**: Click estimates use intent-class CTR anchors: transactional 6%, commercial 4%, informational 2%, navigational 8% (documented in script header, configurable)
 - [x] **FRCS-03**: Spend estimates use suggested_max_cpc × 0.65 (typical avg CPC ratio to max CPC); low band = sum × 0.5, mid = sum × 1.0, high = sum × 1.5 to express forecast uncertainty
-- [ ] **FRCS-04**: Report renders Budget Forecast section per cluster + campaign totals; report.md table shows low/mid/high daily spend per cluster
+- [x] **FRCS-04**: Report renders Budget Forecast section per cluster + campaign totals; report.md table shows low/mid/high daily spend per cluster
 - [x] **FRCS-05**: Forecast section includes a "How this is calculated" subsection explaining assumptions are directional, not Google's official forecast tool — prevents operator over-promising to client
 
 ### Operator Next-Steps Checklist
@@ -130,8 +130,8 @@ Milestone v1.1 — campaign launch kit additions. Builds on v1.0 artifacts (rank
 
 - [x] **CMPL-01**: `compliance_check.py` scans `ranked-enriched.json` + `brief.md` against regulated-vertical token lists (medical/legal/finance/gambling/crypto) and emits `{run_dir}/compliance-flags.json` with matched verticals, evidence tokens, and verification-path URLs
 - [x] **CMPL-02**: Token lists are stored in `references/compliance-verticals.json` (data, not code) so operator can extend without code change; each vertical entry has `tokens[]`, `verification_url`, and `policy_note`
-- [ ] **CMPL-03**: Report renders a "⚠ Compliance Required" block above the Ranked Keywords table when any vertical matches; HTML uses warning-yellow background; markdown uses block quote with `⚠` prefix
-- [ ] **CMPL-04**: report.json `compliance[]` array lists matched verticals; build_report_json signature extends with `compliance` kwarg; absent → empty array
+- [x] **CMPL-03**: Report renders a "⚠ Compliance Required" block above the Ranked Keywords table when any vertical matches; HTML uses warning-yellow background; markdown uses block quote with `⚠` prefix
+- [x] **CMPL-04**: report.json `compliance[]` array lists matched verticals; build_report_json signature extends with `compliance` kwarg; absent → empty array
 - [ ] **CMPL-05**: Next-Steps checklist (STEP-01) reorders step 8 to step 1 when compliance flags present — "Complete <vertical> verification at <URL> before launching"; the rest of the checklist remains in order
 
 ## v2 Requirements
@@ -217,17 +217,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRST-02 | Phase 6 | Complete |
 | BIDS-01 | Phase 9 | Complete |
 | BIDS-02 | Phase 9 | Complete |
-| BIDS-03 | Phase 9 | Pending |
+| BIDS-03 | Phase 9 | Complete |
 | BIDS-04 | Phase 9 | Complete |
 | FRCS-01 | Phase 9 | Complete |
 | FRCS-02 | Phase 9 | Complete |
 | FRCS-03 | Phase 9 | Complete |
-| FRCS-04 | Phase 9 | Pending |
+| FRCS-04 | Phase 9 | Complete |
 | FRCS-05 | Phase 9 | Complete |
 | CMPL-01 | Phase 9 | Complete |
 | CMPL-02 | Phase 9 | Complete |
-| CMPL-03 | Phase 9 | Pending |
-| CMPL-04 | Phase 9 | Pending |
+| CMPL-03 | Phase 9 | Complete |
+| CMPL-04 | Phase 9 | Complete |
 | CMPL-05 | Phase 9 | Pending |
 | EXPT-01 | Phase 10 | Pending |
 | EXPT-02 | Phase 10 | Pending |
