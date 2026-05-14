@@ -140,10 +140,10 @@ Milestone v1.2 — Phase 11 only. Team feedback driven: research narrows to spec
 
 ### Geographic Refinement
 
-- [ ] **GEO-01**: Brief intake accepts optional `geo_focus` field — comma-separated list of counties/cities within the top-level location (e.g., "Palm Beach County, Lake Worth, West Palm Beach"). Skill prompts conditionally when location is at state level + operator hints at locality.
-- [ ] **GEO-02**: `serp_fetch.py` includes `geo_focus` tokens in query strings to bias SERP locality (e.g., "car accident doctor Palm Beach County" instead of "car accident doctor"); appended to existing seed phrases when geo_focus present.
-- [ ] **GEO-03**: `merge_signals.py` adds an out-of-scope-city filter — drops keywords containing US-city/county tokens NOT in `geo_focus` (within the same state); scope-aware to avoid false positives (e.g., "Boca Raton" dropped from Lake Worth run, "Tampa" dropped from Palm Beach County run).
-- [ ] **GEO-04**: `references/us-cities.json` reference data file (operator-editable, ~30KB) lists US cities and counties per state for the GEO-03 filter scan. Sourced from US Census place data; subset to top 5000 cities (covers >95% of likely false-positive tokens).
+- [x] **GEO-01**: Brief intake accepts optional `geo_focus` field — comma-separated list of counties/cities within the top-level location (e.g., "Palm Beach County, Lake Worth, West Palm Beach"). Skill prompts conditionally when location is at state level + operator hints at locality.
+- [x] **GEO-02**: `serp_fetch.py` includes `geo_focus` tokens in query strings to bias SERP locality (e.g., "car accident doctor Palm Beach County" instead of "car accident doctor"); appended to existing seed phrases when geo_focus present.
+- [x] **GEO-03**: `merge_signals.py` adds an out-of-scope-city filter — drops keywords containing US-city/county tokens NOT in `geo_focus` (within the same state); scope-aware to avoid false positives (e.g., "Boca Raton" dropped from Lake Worth run, "Tampa" dropped from Palm Beach County run).
+- [x] **GEO-04**: `references/us-cities.json` reference data file (operator-editable, ~30KB) lists US cities and counties per state for the GEO-03 filter scan. Sourced from US Census place data; subset to top 5000 cities (covers >95% of likely false-positive tokens).
 - [ ] **GEO-05**: `render_report.py` adds a "Geographic Focus" callout under the Header section showing top-level location + geo_focus list (e.g., "Florida → Palm Beach County, Lake Worth"). Empty geo_focus → callout omitted gracefully.
 
 ### Ad-Group Mapping (existing client structure)
@@ -259,10 +259,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STEP-02 | Phase 10 | Complete |
 | STEP-03 | Phase 10 | Complete |
 | STEP-04 | Phase 10 | Complete |
-| GEO-01 | Phase 11 | Pending |
-| GEO-02 | Phase 11 | Pending |
-| GEO-03 | Phase 11 | Pending |
-| GEO-04 | Phase 11 | Pending |
+| GEO-01 | Phase 11 | Complete |
+| GEO-02 | Phase 11 | Complete |
+| GEO-03 | Phase 11 | Complete |
+| GEO-04 | Phase 11 | Complete |
 | GEO-05 | Phase 11 | Pending |
 | ADGM-01 | Phase 11 | Pending |
 | ADGM-02 | Phase 11 | Pending |

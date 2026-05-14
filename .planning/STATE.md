@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: account-structure-mapping
 status: in_progress
-stopped_at: "Completed 11-00-PLAN.md (Wave 0 RED scaffold for Phase 11). Tasks 1+2+3 committed (8973f52 + fddbe3f + d026b8b). 239 tests collected (up from 202); 166 GREEN (1 new: test_module_imports), 73 SKIP (37 new Phase 11 RED stubs), 0 collection errors, 0 regressions. Wave 1 (plans 11-01 + 11-02) ready to start in parallel."
-last_updated: "2026-05-14T22:43:41.861Z"
+stopped_at: "Completed 11-01-PLAN.md (Wave 1 geo plumbing). 4 tasks committed (f14b6f5 + c4add00 + 87c9b4d + 7bbe02d). Suite: 217 passed / 22 skipped (was 203 / 36); 14 GEO-* RED stubs flipped GREEN, 0 regressions. Wave 1 plan 11-02 (ad_group_match.py core) can run independently next, or Wave 2 plan 11-03 once 11-02 lands."
+last_updated: "2026-05-14T22:57:50.360Z"
 progress:
   total_phases: 11
   completed_phases: 10
   total_plans: 48
-  completed_plans: 40
+  completed_plans: 41
 ---
 
 # State: Google Ad Research Agent
@@ -26,10 +26,10 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | 11 — Account-Structure Mapping (Wave 0 complete; Wave 1 next) |
-| Plan | 1 / 5 (11-00 complete) |
-| Status | Wave 0 RED scaffold shipped — Wave 1 plans 11-01 + 11-02 ready to start in parallel |
-| Last activity | 2026-05-14 — 11-00 committed (Tasks 1+2+3: 8973f52 / fddbe3f / d026b8b); 166 passed / 73 skipped; 0 regressions |
+| Phase | 11 — Account-Structure Mapping (Wave 1 plan 11-01 complete; 11-02 ready) |
+| Plan | 2 / 5 (11-00 + 11-01 complete) |
+| Status | Wave 1 geo plumbing shipped — Wave 1 plan 11-02 (ad_group_match.py core) ready; Wave 2 plan 11-03 gates on 11-02 |
+| Last activity | 2026-05-14 — 11-01 committed (Tasks 1-4: f14b6f5 / c4add00 / 87c9b4d / 7bbe02d); 217 passed / 22 skipped; 14 GEO-* RED→GREEN; 0 regressions |
 
 ## Previous Milestone
 
@@ -75,6 +75,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 09 P05 | 12min | 3 tasks | 2 files |
 | Phase 11 P00 | 7min | 3 tasks | 11 created + 5 modified |
 | Phase 11 P00 | 7 | 3 tasks | 16 files |
+| Phase 11 P01 | 8 | 4 tasks | 6 files |
 
 ### Execution History
 
@@ -187,6 +188,10 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 11]: ad-group-mapping-*pct.json fixtures encode coverage_pct exactly at 50.0 (boundary - no rewrite), 60.0 (rewrite), 20.0 (negative path) so ADGM-06 strict- math is testable without running build_mapping
 - [Phase 11]: us-cities-subset.json schema: state_code_lower -> city_lower -> county_lower (county as VALUE, no 'county' suffix). Wave 1 plan 11-01 will strip 'county' suffix from geo_focus tokens before lookup
 - [Phase 11]: Wave-1 contract pre-decisions: merge_signals.py grows --us-cities-path CLI flag (tests monkeypatch _US_CITIES_DATA_PATH constant); render_next_steps_section gains ad_group_mapping kwarg in Wave 2 plan 11-03 (tests detect via inspect.signature)
+- [Phase 11]: [Phase 11-01] us-cities.json composed from plotly top-1k (population priority) + millbj92 USCities (county lookup via dominant ZIP-derived county) + 13 manual fixture entries — 51 states (50+DC), ~4800 cities, 103KB minified (well under 200KB budget); territories (PR/VI/GU/AS/MP/FM/MH/PW) excluded since GEO-03 targets US states only
+- [Phase 11]: [Phase 11-01] _build_city_filter normalises geo_focus via _strip_county_suffix once, then matches each state-cities entry on city name OR county value — Pitfall 5 city→county hierarchy verified by test_keyword_kept_when_city_county_in_geo_focus (boca raton survives Palm Beach focus)
+- [Phase 11]: [Phase 11-01] _augment_seed_with_geo case-insensitive substring dedup feeds BOTH POST body q AND persisted by_seed[].seed — Phase 3 downstream sees the same augmented query, no schema drift. Empty --geo-focus default preserves Phase 2-10 backward compat
+- [Phase 11]: [Phase 11-01] _GEO_FOCUS_SUPPORTED module marker on serp_fetch enables tests to detect Phase 11 wiring via hasattr without monkey-importing argparse internals; merge_signals exposes _US_CITIES_DATA_PATH constant for monkeypatch-style fixture injection PLUS --us-cities-path CLI flag as the production override path
 
 ### Open Questions / Todos
 
@@ -204,9 +209,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-14T22:43:41.858Z
+**Last session:** 2026-05-14T22:57:35.271Z
 
-**Stopped at:** Completed 11-00-PLAN.md (Wave 0 RED scaffold for Phase 11). Tasks 1+2+3 committed (8973f52 + fddbe3f + d026b8b). 239 tests collected (up from 202); 166 GREEN (1 new: test_module_imports), 73 SKIP (37 new Phase 11 RED stubs), 0 collection errors, 0 regressions. Wave 1 (plans 11-01 + 11-02) ready to start in parallel.
+**Stopped at:** Completed 11-01-PLAN.md (Wave 1 geo plumbing). 4 tasks committed (f14b6f5 + c4add00 + 87c9b4d + 7bbe02d). Suite: 217 passed / 22 skipped (was 203 / 36); 14 GEO-* RED stubs flipped GREEN, 0 regressions. Wave 1 plan 11-02 (ad_group_match.py core) can run independently next, or Wave 2 plan 11-03 once 11-02 lands.
 
 **Next session:** Execute Phase 11 Wave 1 — plan 11-01 (geo plumbing: run_init geo_focus parse + serp_fetch `--geo-focus` arg + merge_signals city filter + references/us-cities.json reference data file) and plan 11-02 (ad_group_match.py core: build_mapping + _jaccard + _tokens + _classify against the Wave-0 stub) in parallel. They share no mutated files.
 
