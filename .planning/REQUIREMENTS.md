@@ -128,8 +128,8 @@ Milestone v1.1 — campaign launch kit additions. Builds on v1.0 artifacts (rank
 
 ### Compliance Flags
 
-- [ ] **CMPL-01**: `compliance_check.py` scans `ranked-enriched.json` + `brief.md` against regulated-vertical token lists (medical/legal/finance/gambling/crypto) and emits `{run_dir}/compliance-flags.json` with matched verticals, evidence tokens, and verification-path URLs
-- [ ] **CMPL-02**: Token lists are stored in `references/compliance-verticals.json` (data, not code) so operator can extend without code change; each vertical entry has `tokens[]`, `verification_url`, and `policy_note`
+- [x] **CMPL-01**: `compliance_check.py` scans `ranked-enriched.json` + `brief.md` against regulated-vertical token lists (medical/legal/finance/gambling/crypto) and emits `{run_dir}/compliance-flags.json` with matched verticals, evidence tokens, and verification-path URLs
+- [x] **CMPL-02**: Token lists are stored in `references/compliance-verticals.json` (data, not code) so operator can extend without code change; each vertical entry has `tokens[]`, `verification_url`, and `policy_note`
 - [ ] **CMPL-03**: Report renders a "⚠ Compliance Required" block above the Ranked Keywords table when any vertical matches; HTML uses warning-yellow background; markdown uses block quote with `⚠` prefix
 - [ ] **CMPL-04**: report.json `compliance[]` array lists matched verticals; build_report_json signature extends with `compliance` kwarg; absent → empty array
 - [ ] **CMPL-05**: Next-Steps checklist (STEP-01) reorders step 8 to step 1 when compliance flags present — "Complete <vertical> verification at <URL> before launching"; the rest of the checklist remains in order
@@ -224,8 +224,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FRCS-03 | Phase 9 | Complete |
 | FRCS-04 | Phase 9 | Pending |
 | FRCS-05 | Phase 9 | Complete |
-| CMPL-01 | Phase 9 | Pending |
-| CMPL-02 | Phase 9 | Pending |
+| CMPL-01 | Phase 9 | Complete |
+| CMPL-02 | Phase 9 | Complete |
 | CMPL-03 | Phase 9 | Pending |
 | CMPL-04 | Phase 9 | Pending |
 | CMPL-05 | Phase 9 | Pending |

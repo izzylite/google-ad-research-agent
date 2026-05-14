@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: Completed 09-02-PLAN.md (forecast_budget.py FRCS-01/02/03/05). Plan 09-03 (compliance_check) unblocked.
-last_updated: "2026-05-14T18:12:15.845Z"
+stopped_at: Completed 09-03-PLAN.md (compliance_check CMPL-01/02). 10/10 tests GREEN. Plan 09-04 (render_report extension) unblocked.
+last_updated: "2026-05-14T18:19:52.926Z"
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 33
-  completed_plans: 30
+  completed_plans: 31
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 9 — Campaign Economics and Compliance (in progress) |
-| Plan | 09-02 complete — next: 09-03 compliance_check |
-| Status | Wave 2 — bid_suggest + forecast_budget shipped; compliance_check unblocked; render_report extension (09-04) waits on 09-03 |
-| Last activity | 2026-05-14 — 09-02 GREEN (10/10 forecast_budget tests pass; full suite 121 passed) |
+| Plan | 09-03 complete — next: 09-04 render_report.py extension |
+| Status | Wave 2 — bid_suggest + forecast_budget + compliance_check shipped; render_report extension (09-04) unblocked |
+| Last activity | 2026-05-14 — 09-03 GREEN (10/10 compliance_check tests pass; full suite 131 passed + 10 skipped) |
 
 ## Previous Milestone
 
@@ -67,6 +67,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 06-negatives-report-assembly-and-persistence P05 | 87s | 2 tasks | 3 files |
 | Phase 09 P01 | 6min | 2 tasks | 1 files |
 | Phase 09 P02 | 3min | 2 tasks | 1 files |
+| Phase 09 P03 | 4min | 2 tasks | 1 files |
 
 ### Execution History
 
@@ -157,6 +158,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 09]: [Phase 09-02] forecast_budget.py: INTENT_CTRS / AVG_CPC_RATIO / BAND_MULTIPLIERS in single module-level config block with frozenset assertion — mirrors INTENT_MULTIPLIERS pattern from 09-01; methodology block in forecast.json reads from these dicts so disclaimer edits live in one place (FRCS-05)
 - [Phase 09]: [Phase 09-02] campaign_totals aggregated by SUM of per-cluster fields, not recomputed from raw rows (Pitfall 5) — keeps cluster-level and campaign-level skip-rules consistent; unjoined_keywords surfaced as silent-failure smoke signal
 - [Phase 09]: [Phase 09-02] daily_clicks_mid kept as float (not int-rounded) so tests can use pytest.approx; only low/high bands int-rounded for clean stdout summary. Render layer (09-04) can format as needed
+- [Phase 09]: [09-03] compliance_check: two-commit Task 1 (stub main_with_args) + Task 2 (full CLI) split — mirrors 09-01 bid_suggest pattern; lifts MODULE_MISSING guard immediately while preserving atomic per-task commits
+- [Phase 09]: [09-03] compliance_check: matched_keyword_count reuses find_matches recursively (rather than re-tokenizing) — single source of truth for the word-boundary algorithm; per-keyword cost negligible at default top_n=50
+- [Phase 09]: [09-03] compliance_check: ValueError from load_verticals on missing key maps to exit 3 (fatal, not retryable) — operator-edited references/compliance-verticals.json typos should fail fast, not silently emit empty matched_verticals[]
 
 ### Open Questions / Todos
 
@@ -174,9 +178,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-14T18:12:15.840Z
+**Last session:** 2026-05-14T18:19:43.137Z
 
-**Stopped at:** Completed 09-02-PLAN.md (forecast_budget.py FRCS-01/02/03/05). Plan 09-03 (compliance_check) unblocked.
+**Stopped at:** Completed 09-03-PLAN.md (compliance_check CMPL-01/02). 10/10 tests GREEN. Plan 09-04 (render_report extension) unblocked.
 
 **Next session:** Run `/gsd:plan-phase 9` to decompose Phase 9 (Campaign Economics and Compliance) into wave plans. Phase 9 covers BIDS + FRCS + CMPL (14 requirements).
 
