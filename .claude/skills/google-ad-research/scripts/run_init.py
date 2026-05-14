@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -35,6 +36,46 @@ from lib.io import create_run_dir, write_brief  # noqa: E402
 from lib.log import configure_logger  # noqa: E402
 
 log = configure_logger()
+
+
+# ---------------------------------------------------------------------------
+# GEO-01 — optional `**Geo focus:**` brief line parsing (Phase 11 plan 11-01)
+# ---------------------------------------------------------------------------
+
+_GEO_FOCUS_LINE_RE: re.Pattern[str] = re.compile(
+    r"^[-*\s]*\*\*Geo\s*focus:\*\*\s*(.+)$",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def _parse_optional_geo_focus(brief_text: str) -> list[str]:
+    """Extract the `**Geo focus:**` value list from a brief markdown.
+
+    Examples:
+        >>> _parse_optional_geo_focus("- **Geo focus:** Palm Beach County, Lake Worth")
+        ['Palm Beach County', 'Lake Worth']
+        >>> _parse_optional_geo_focus("no geo focus here")
+        []
+        >>> _parse_optional_geo_focus("- **Geo focus:**")
+        []
+
+    Splits on `,`. Strips surrounding whitespace per entry. Drops empty entries.
+    Returns [] if the line is absent or value blank.
+
+    Matches the GEO-01 brief.md schema (committed in plan 11-04 SKILL.md update).
+    The verbatim stdin → brief.md write path is unchanged — this helper is
+    consumed by merge_signals.py (and render_report.py in Wave 2) to pull
+    the list back out of brief.md at filter time.
+    """
+    if not brief_text:
+        return []
+    match = _GEO_FOCUS_LINE_RE.search(brief_text)
+    if not match:
+        return []
+    raw = match.group(1).strip()
+    if not raw:
+        return []
+    return [tok.strip() for tok in raw.split(",") if tok.strip()]
 
 
 def _find_project_root(start: Path) -> Path | None:
