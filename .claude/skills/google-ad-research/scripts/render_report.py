@@ -23,6 +23,7 @@ Exports: render_full_report(), build_report_json()
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -137,6 +138,23 @@ USAGE_PULSE_NEGATIVES = (
 )
 
 TIER_ORDER = ["Strong", "Considered", "Investigate"]
+
+# STEP-01: locked 8-step ops template. Step numbers derived from list
+# position at render time (CMPL-05 prepends a verification step when
+# compliance is non-empty — never hardcode step numbers in these strings).
+_STANDARD_NEXT_STEPS_TEMPLATE: list[str] = [
+    "Create campaign in {location} ({language}).",
+    "Set daily budget to ${daily_spend_mid_usd:.2f} (Phase 9 mid forecast).",
+    "Create ad groups: {cluster_names_csv}.",
+    "Paste positives.csv via Google Ads Editor -> Make multiple changes.",
+    "Paste negatives.csv at the levels specified by the Level column "
+    "(campaign for Strong, ad_group for Considered/Investigate).",
+    "Write 3 responsive search ads per ad group using competitor "
+    "headline / CTA / offer examples from the Competitor Ad Copy section.",
+    "Set Max CPC per keyword from the Suggested CPC column "
+    "(or leave Editor's default if Max CPC = $0.00).",
+    "Review compliance flags and budget forecast before enabling.",
+]
 
 
 def _micros_to_usd(micros: int | None) -> str:
@@ -708,6 +726,88 @@ def _derive_brief_slug(run_dir: Path) -> str:
 # ---------------------------------------------------------------------------
 
 
+def render_next_steps_section(
+    brief_fields: dict[str, str],
+    forecast: dict | None,
+    compliance: dict | None,
+    clusters_data: dict,
+) -> tuple[str, list[dict]]:
+    """Render the Next Steps checklist (STEP-01..04 + CMPL-05).
+
+    Returns (markdown_string, step_list) where step_list is the canonical
+    ordered list of step dicts shared by report.md, report.json, and the
+    HTML renderer. Step numbers are derived from final list position so the
+    CMPL-05 reorder (compliance present -> verification step prepended)
+    never produces wrong numbering.
+
+    Rules:
+        - 8 standard ops steps from the locked template.
+        - If compliance.matched_verticals is non-empty, prepend ONE combined
+          verification step (multi-vertical -> ONE step, not N).
+        - Step IDs = sha1(text)[:8] — stable across renders for HTML
+          localStorage keys.
+    """
+    location = (brief_fields or {}).get("location") or "<location>"
+    language = (brief_fields or {}).get("language") or "<language>"
+
+    totals = (forecast or {}).get("campaign_totals", {}) or {}
+    raw_mid = totals.get("daily_spend_mid_usd", 0.0)
+    try:
+        daily_spend_mid_usd = float(raw_mid) if raw_mid is not None else 0.0
+    except (TypeError, ValueError):
+        daily_spend_mid_usd = 0.0
+
+    cluster_names = [
+        c.get("name", "")
+        for c in (clusters_data or {}).get("clusters", []) or []
+        if c.get("name")
+    ]
+    cluster_names_csv = ", ".join(cluster_names) if cluster_names else "<clusters>"
+
+    fmt = {
+        "location": location,
+        "language": language,
+        "daily_spend_mid_usd": daily_spend_mid_usd,
+        "cluster_names_csv": cluster_names_csv,
+    }
+
+    try:
+        steps_text = [t.format(**fmt) for t in _STANDARD_NEXT_STEPS_TEMPLATE]
+    except KeyError as exc:
+        raise KeyError(
+            f"_STANDARD_NEXT_STEPS_TEMPLATE drift: missing substitution {exc}"
+        ) from exc
+
+    matched_verticals = (compliance or {}).get("matched_verticals") or []
+    if matched_verticals:
+        names = " + ".join(
+            (v.get("name", "") or "").title() for v in matched_verticals
+        ) or "<vertical>"
+        urls = "; ".join(
+            v.get("verification_url", "") or "" for v in matched_verticals
+        )
+        verify_step = (
+            f"Complete {names} verification at {urls} before launching."
+        )
+        steps_text = [verify_step] + steps_text
+
+    step_list: list[dict] = []
+    for n, text in enumerate(steps_text, start=1):
+        sid = hashlib.sha1(text.encode("utf-8")).hexdigest()[:8]
+        step_list.append({"n": n, "text": text, "id": sid})
+
+    parts = [
+        "## Next Steps\n\n",
+        "_Ordered ops checklist for moving from `report.md` to a live Google "
+        "Ads campaign. Check off each step as you complete it._\n\n",
+    ]
+    for step in step_list:
+        parts.append(f"{step['n']}. {step['text']}\n")
+    parts.append("\n")
+
+    return "".join(parts), step_list
+
+
 def render_full_report(
     ranked: list[dict],
     clusters_data: dict,
@@ -801,6 +901,13 @@ def render_full_report(
             render_keyword_table(ranked, top_n=top_n),
             "\n\n",
         ])
+    # Next Steps (Phase 10 STEP-01..04 + CMPL-05) — LAST section.
+    brief_fields = _parse_brief_fields(brief_text)
+    next_steps_md, _ = render_next_steps_section(
+        brief_fields, forecast, compliance, clusters_data
+    )
+    sections.append("\n")
+    sections.append(next_steps_md)
     return "".join(sections)
 
 
@@ -1063,6 +1170,12 @@ Keyword Planner for actual volume + CPC.
     </thead>
     <tbody></tbody>
   </table>
+</section>
+
+<section id="next-steps">
+  <h2>Next Steps</h2>
+  <div class="usage"><em>Ordered ops checklist. Progress saves locally in your browser per run.</em></div>
+  <div id="nextStepsContent"></div>
 </section>
 
 </main>
@@ -1441,9 +1554,33 @@ document.getElementById("intentFilter").addEventListener("change", renderKeyword
 document.getElementById("negFilter").addEventListener("input", renderNegatives);
 document.getElementById("negTierFilter").addEventListener("change", renderNegatives);
 
+function renderNextSteps() {{
+  var steps = (REPORT.next_steps || []);
+  var slug = (REPORT.meta && REPORT.meta.brief_slug) || "default";
+  var container = document.getElementById("nextStepsContent");
+  if (!container) return;
+  if (!steps.length) {{
+    container.innerHTML = "<p style='color:#666;font-size:13px'>No checklist available.</p>";
+    return;
+  }}
+  var items = steps.map(function(s) {{
+    var storageKey = `gar_${{slug}}_step_${{s.id}}`;
+    var saved = localStorage.getItem(storageKey);
+    var checked = (saved === "1") ? " checked" : "";
+    return '<li style="margin:6px 0"><label><input type="checkbox" data-key="' + storageKey + '"' + checked + '> ' + htmlEscape(s.text) + '</label></li>';
+  }}).join("");
+  container.innerHTML = "<ol>" + items + "</ol>";
+  container.querySelectorAll('input[type="checkbox"]').forEach(function(cb) {{
+    cb.addEventListener("change", function(e) {{
+      localStorage.setItem(e.target.dataset.key, e.target.checked ? "1" : "0");
+    }});
+  }});
+}}
+
 renderKeywords(); renderClusters(); renderCompetitors(); renderNichePulse();
 renderCompliance(); renderForecast();
 renderAccountPerf(); renderNegativesSync(); renderNegatives();
+renderNextSteps();
 makeSortable("kwTable"); makeSortable("negTable");
 </script>
 </body>
@@ -1464,6 +1601,7 @@ def build_report_json(
     negatives_sync: dict | None = None,
     forecast: dict | None = None,
     compliance: dict | None = None,
+    next_steps: list[dict] | None = None,
 ) -> dict:
     """Return canonical v1 report.json dict (not serialized)."""
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -1509,6 +1647,11 @@ def build_report_json(
         "negatives_sync": negatives_sync or {},
         "forecast": forecast or {},
         "compliance": compliance_list,
+        "next_steps": next_steps if next_steps is not None else (
+            render_next_steps_section(
+                brief_fields, forecast, compliance, clusters_data
+            )[1]
+        ),
     }
 
 
@@ -1603,6 +1746,13 @@ def main(argv: list[str] | None = None) -> int:
         except (json.JSONDecodeError, OSError):
             compliance = None
 
+    # Phase 10 STEP-01..04 + CMPL-05 — compute Next Steps once, share between
+    # report.md (via render_full_report internally) and report.json/HTML.
+    brief_fields_for_steps = _parse_brief_fields(brief_text)
+    _, next_steps_list = render_next_steps_section(
+        brief_fields_for_steps, forecast, compliance, clusters_data
+    )
+
     # Render
     report_md = render_full_report(
         ranked, clusters_data, competitor_intel, negatives,
@@ -1621,6 +1771,7 @@ def main(argv: list[str] | None = None) -> int:
         negatives_sync=negatives_sync,
         forecast=forecast,
         compliance=compliance,
+        next_steps=next_steps_list,
     )
 
     report_html = render_html_report(report_json)
