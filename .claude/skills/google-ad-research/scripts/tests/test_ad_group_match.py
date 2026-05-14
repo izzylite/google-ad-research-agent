@@ -30,19 +30,23 @@ except ImportError:
     MODULE_INCOMPLETE = True
     IMPORT_OK = False
 
-# Per-function guard — keep `test_module_imports` running so the stub itself
-# is exercised; everything else skips while build_mapping is absent.
-pytestmark = pytest.mark.skipif(
-    MODULE_INCOMPLETE,
-    reason="ad_group_match.build_mapping not yet implemented (Wave 1, plan 11-02)",
-)
-
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
+def _skip_unless_build_mapping() -> None:
+    """Per-function guard — every Wave-1 test calls this at its start.
+
+    `test_module_imports` deliberately omits the guard so it runs today
+    against the Wave-0 stub. All other tests skip until build_mapping ships.
+    """
+    if MODULE_INCOMPLETE:
+        pytest.skip(
+            "ad_group_match.build_mapping not yet implemented (Wave 1, plan 11-02)"
+        )
+
+
 # ---------------------------------------------------------------------------
-# Stub-time sanity (runs TODAY — not skipped by pytestmark above because we
-# wrap the actual assertion inside an explicit skipif-import guard).
+# Stub-time sanity — runs TODAY against the Wave-0 stub.
 # ---------------------------------------------------------------------------
 
 @pytest.mark.skipif(not IMPORT_OK, reason="ad_group_match stub not yet shipped")
@@ -66,18 +70,13 @@ def test_module_imports():
     assert "Wave 1" in msg or "11-02" in msg
 
 
-# Apply pytestmark from here down — Wave 1 functions absent → all SKIP.
-# (pytest applies module-level pytestmark to every test in the file; the
-# explicit `@pytest.mark.skipif(not IMPORT_OK, ...)` above is a no-op when
-# MODULE_INCOMPLETE is True because pytestmark wins.)
-
-
 # ---------------------------------------------------------------------------
 # ADGM-01 — Phase 8 artifacts absent → graceful skip
 # ---------------------------------------------------------------------------
 
 def test_phase8_absent_graceful_skip(tmp_path):
     """Missing raw/google-ads-perf.json → exit 0 + empty mapping with skipped_reason."""
+    _skip_unless_build_mapping()
     run_dir = tmp_path / "2026-05-14T120000Z-no-phase8"
     (run_dir / "raw").mkdir(parents=True)
     # Stage a minimal ranked-enriched.json (5 rows) but no perf.json.
@@ -103,6 +102,7 @@ def test_phase8_absent_graceful_skip(tmp_path):
 
 def test_similarity_math_exact_intent():
     """Identical token sets + matching intent → score 1.0 exact."""
+    _skip_unless_build_mapping()
     a = frozenset({"lake", "worth", "accident", "doctor"})
     score = ad_group_match._jaccard(a, a) * 1.0
     assert score == 1.0
@@ -110,6 +110,7 @@ def test_similarity_math_exact_intent():
 
 def test_similarity_math_intent_mismatch():
     """jaccard=0.6 × intent_mismatch_multiplier (0.5) = 0.3."""
+    _skip_unless_build_mapping()
     # Build two sets with jaccard exactly 0.6 — 3 shared / 5 union.
     a = frozenset({"lake", "worth", "accident"})
     b = frozenset({"lake", "worth", "accident", "exam", "fast"})
@@ -120,6 +121,7 @@ def test_similarity_math_intent_mismatch():
 
 def test_stopword_filter_active():
     """`_tokens` strips 'near'/'me' (Pitfall 3) — only meaningful tokens remain."""
+    _skip_unless_build_mapping()
     tokens = ad_group_match._tokens("doctor near me lake worth")
     assert tokens == frozenset({"doctor", "lake", "worth"})
 
@@ -129,22 +131,26 @@ def test_stopword_filter_active():
 # ---------------------------------------------------------------------------
 
 def test_confidence_tier_high():
+    _skip_unless_build_mapping()
     assert ad_group_match._classify(0.75) == "high"
 
 
 def test_confidence_tier_medium_boundary():
     """Boundary: 0.4 exactly → medium; 0.39999 → low."""
+    _skip_unless_build_mapping()
     assert ad_group_match._classify(0.4) == "medium"
     assert ad_group_match._classify(0.39999) == "low"
 
 
 def test_confidence_tier_high_boundary():
     """Boundary: 0.7 exactly → high; 0.69999 → medium."""
+    _skip_unless_build_mapping()
     assert ad_group_match._classify(0.7) == "high"
     assert ad_group_match._classify(0.69999) == "medium"
 
 
 def test_confidence_tier_low():
+    _skip_unless_build_mapping()
     assert ad_group_match._classify(0.2) == "low"
 
 
@@ -154,6 +160,7 @@ def test_confidence_tier_low():
 
 def test_mapping_shape_keys():
     """ad-group-mapping.json carries the locked schema (incl. row keys)."""
+    _skip_unless_build_mapping()
     mapping = json.loads(
         (FIXTURES / "ad-group-mapping-60pct.json").read_text(encoding="utf-8")
     )
@@ -166,6 +173,7 @@ def test_mapping_shape_keys():
 
 def test_coverage_pct_high_plus_medium_only(tmp_path):
     """coverage_pct counts (high + medium) / total_ranked; low excluded (Pitfall 7)."""
+    _skip_unless_build_mapping()
     # Build a synthetic 10-row mapping: 6 high + 2 medium + 2 low.
     matches = (
         [{"keyword": f"hi {i}", "existing_ad_group": "AG", "confidence": "high",
@@ -206,6 +214,7 @@ def test_coverage_pct_high_plus_medium_only(tmp_path):
 
 def test_disabled_ad_groups_skipped(tmp_path):
     """ad_groups[] with status='REMOVED' must NOT surface as a match candidate."""
+    _skip_unless_build_mapping()
     run_dir = tmp_path / "2026-05-14T120000Z-disabled"
     (run_dir / "raw").mkdir(parents=True)
     (run_dir / "ranked-enriched.json").write_text(
@@ -233,6 +242,7 @@ def test_disabled_ad_groups_skipped(tmp_path):
 
 def test_token_bag_keyed_by_ad_group_name(tmp_path):
     """search_terms.json keys on ad_group_name (NOT ad_group_id) — Pitfall 1."""
+    _skip_unless_build_mapping()
     run_dir = tmp_path / "2026-05-14T120000Z-keying"
     (run_dir / "raw").mkdir(parents=True)
     (run_dir / "ranked-enriched.json").write_text(
@@ -263,6 +273,7 @@ def test_token_bag_keyed_by_ad_group_name(tmp_path):
 
 def test_unicode_dashes_preserved(tmp_path):
     """Unicode en-dash (U+2013) in existing_ad_group round-trips byte-for-byte."""
+    _skip_unless_build_mapping()
     run_dir = tmp_path / "2026-05-14T120000Z-unicode"
     (run_dir / "raw").mkdir(parents=True)
     (run_dir / "ranked-enriched.json").write_text(
