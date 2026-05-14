@@ -653,3 +653,370 @@ def test_compliance_block_escapes_policy_note(run_dir, ranked_data, clusters_dat
     # Find the rendered policy_note line — must show escaped pipes (\|), not raw pipes,
     # because escape_md_cell was applied.
     assert r"\|" in md
+
+
+# ===========================================================================
+# Phase 10 Wave 0 — Next Steps + Export Files RED stubs
+#
+# Each function skips when the Wave 1 helper / kwarg is absent. We use
+# per-function guards (NOT a file-level pytestmark) so the existing
+# Phase 6 + Phase 9 GREEN tests above keep running.
+#
+# Contracts covered:
+#   STEP-01  ## Next Steps section appended to report.md
+#   STEP-02  Brief location/language + forecast spend substituted into steps
+#   STEP-03  HTML checkbox + localStorage namespacing
+#   STEP-04  report.json next_steps[] = list of {n, text, id}
+#   CMPL-05  Compliance reorder (single + combined verticals)
+#   EXPT-05  Export Files section + report.json exports[]  (Wave 2 stubs)
+# ===========================================================================
+
+NEXT_STEPS_HELPER = "render_next_steps_section"
+EXPORT_SECTION_HELPER = "render_export_section"
+
+
+def _skip_unless_next_steps():
+    if not hasattr(render_report, NEXT_STEPS_HELPER):
+        pytest.skip(
+            "render_report.render_next_steps_section not yet implemented "
+            "(Phase 10 Wave 1, plan 10-02)"
+        )
+
+
+def _skip_unless_export_section():
+    if not hasattr(render_report, EXPORT_SECTION_HELPER):
+        pytest.skip(
+            "render_report.render_export_section not yet implemented "
+            "(Phase 10 Wave 2, plan 10-03)"
+        )
+
+
+@pytest.fixture
+def brief_fields_phase10() -> dict[str, str]:
+    """Brief field dict mirroring `_parse_brief_fields` output."""
+    return {
+        "industry": "online groceries",
+        "product": "same-day grocery delivery",
+        "location": "UK",
+        "language": "en-GB",
+        "audience": "households 25-45 in metro areas",
+    }
+
+
+@pytest.fixture
+def forecast_phase10() -> dict:
+    return json.loads(
+        (FIXTURES_DIR / "forecast_phase10.json").read_text(encoding="utf-8")
+    )
+
+
+@pytest.fixture
+def clusters_phase10_data() -> dict:
+    return json.loads(
+        (FIXTURES_DIR / "clusters_phase10.json").read_text(encoding="utf-8")
+    )
+
+
+@pytest.fixture
+def compliance_with_match_data() -> dict:
+    return json.loads(
+        (FIXTURES_DIR / "compliance_with_match.json").read_text(encoding="utf-8")
+    )
+
+
+@pytest.fixture
+def compliance_two_verticals_data() -> dict:
+    return json.loads(
+        (FIXTURES_DIR / "compliance_two_verticals.json").read_text(encoding="utf-8")
+    )
+
+
+@pytest.fixture
+def compliance_empty_data() -> dict:
+    return json.loads(
+        (FIXTURES_DIR / "compliance_empty.json").read_text(encoding="utf-8")
+    )
+
+
+# ---------------------------------------------------------------------------
+# STEP-01 + STEP-02 + STEP-04 — render_next_steps_section() shape
+# ---------------------------------------------------------------------------
+
+def test_next_steps_section_default_order(brief_fields_phase10, forecast_phase10,
+                                           clusters_phase10_data, compliance_empty_data):
+    """Returns (markdown, list_of_8_steps) for the standard non-compliance flow."""
+    _skip_unless_next_steps()
+    md, steps = render_report.render_next_steps_section(
+        brief_fields_phase10, forecast_phase10, compliance_empty_data, clusters_phase10_data,
+    )
+    assert isinstance(md, str)
+    assert md.startswith("## Next Steps") or "## Next Steps" in md
+    assert isinstance(steps, list)
+    # 8 ops steps; no compliance prepend in empty-compliance path.
+    assert len(steps) == 8
+    for s in steps:
+        assert set(s.keys()) >= {"n", "text", "id"}
+
+
+def test_next_steps_section_substitution(brief_fields_phase10, forecast_phase10,
+                                          clusters_phase10_data, compliance_empty_data):
+    """Step text substitutes brief location/language, daily_spend_mid_usd, cluster names."""
+    _skip_unless_next_steps()
+    md, steps = render_report.render_next_steps_section(
+        brief_fields_phase10, forecast_phase10, compliance_empty_data, clusters_phase10_data,
+    )
+    all_text = " ".join(s["text"] for s in steps)
+    # Brief substitution
+    assert brief_fields_phase10["location"] in all_text
+    assert brief_fields_phase10["language"] in all_text
+    # Forecast substitution — daily_spend_mid_usd = 12.50 → "$12.50"
+    expected_spend = (
+        f"${forecast_phase10['campaign_totals']['daily_spend_mid_usd']:.2f}"
+    )
+    assert expected_spend in all_text
+    # Cluster names — all three cluster names appear somewhere in the checklist
+    for cluster in clusters_phase10_data["clusters"]:
+        assert cluster["name"] in all_text
+
+
+def test_next_steps_section_step_ids_8_char_sha1(brief_fields_phase10, forecast_phase10,
+                                                  clusters_phase10_data):
+    """Each step['id'] is 8 chars lowercase hex (SHA-1 prefix)."""
+    _skip_unless_next_steps()
+    _, steps = render_report.render_next_steps_section(
+        brief_fields_phase10, forecast_phase10, None, clusters_phase10_data,
+    )
+    for s in steps:
+        assert isinstance(s["id"], str)
+        assert len(s["id"]) == 8
+        assert all(c in "0123456789abcdef" for c in s["id"]), (
+            f"step id not lowercase hex: {s['id']!r}"
+        )
+
+
+def test_next_steps_section_n_from_position(brief_fields_phase10, forecast_phase10,
+                                             clusters_phase10_data):
+    """step['n'] is the 1-indexed position in the final list."""
+    _skip_unless_next_steps()
+    _, steps = render_report.render_next_steps_section(
+        brief_fields_phase10, forecast_phase10, None, clusters_phase10_data,
+    )
+    for idx, s in enumerate(steps, start=1):
+        assert s["n"] == idx, f"step at position {idx} has n={s['n']}"
+
+
+def test_report_json_next_steps_array(run_dir, ranked_data, clusters_data,
+                                       competitor_intel_data, negatives_data,
+                                       brief_text, forecast_phase10,
+                                       compliance_empty_data):
+    """build_report_json emits a top-level next_steps[] of {n, text, id} dicts.
+
+    Wave 1 plan 10-02 extends build_report_json to thread the kwarg.
+    Skip if signature has not been extended yet.
+    """
+    _skip_unless_next_steps()
+    from render_report import build_report_json
+    try:
+        report = build_report_json(
+            ranked_data, clusters_data, competitor_intel_data,
+            negatives_data, brief_text, run_dir,
+            forecast=forecast_phase10, compliance=compliance_empty_data,
+        )
+    except TypeError:
+        pytest.skip("build_report_json does not yet emit next_steps (Wave 1)")
+
+    if "next_steps" not in report:
+        pytest.skip("build_report_json next_steps key not yet implemented (Wave 1)")
+
+    assert isinstance(report["next_steps"], list)
+    assert len(report["next_steps"]) >= 1
+    for s in report["next_steps"]:
+        assert set(s.keys()) >= {"n", "text", "id"}
+        assert isinstance(s["n"], int)
+        assert isinstance(s["text"], str)
+        assert isinstance(s["id"], str) and len(s["id"]) == 8
+
+
+# ---------------------------------------------------------------------------
+# STEP-03 — HTML report renders next-steps section + localStorage namespacing
+# ---------------------------------------------------------------------------
+
+def test_next_steps_html_section_exists(run_dir, ranked_data, clusters_data,
+                                          competitor_intel_data, negatives_data,
+                                          brief_text, forecast_phase10):
+    """report.html contains <section id="next-steps"> + checkbox inputs."""
+    _skip_unless_next_steps()
+    if not hasattr(render_report, "render_html_report"):
+        pytest.skip("render_html_report not present")
+    from render_report import render_html_report, build_report_json
+    try:
+        report = build_report_json(
+            ranked_data, clusters_data, competitor_intel_data,
+            negatives_data, brief_text, run_dir,
+            forecast=forecast_phase10,
+        )
+    except TypeError:
+        pytest.skip("build_report_json forecast kwarg not threaded yet")
+    html = render_html_report(report)
+    assert 'id="next-steps"' in html
+    assert '<input type="checkbox"' in html
+
+
+def test_next_steps_html_localstorage_namespacing(run_dir, ranked_data, clusters_data,
+                                                    competitor_intel_data, negatives_data,
+                                                    brief_text, forecast_phase10):
+    """HTML script block namespaces localStorage keys per run slug (Pitfall 7)."""
+    _skip_unless_next_steps()
+    if not hasattr(render_report, "render_html_report"):
+        pytest.skip("render_html_report not present")
+    from render_report import render_html_report, build_report_json
+    import re
+    try:
+        report = build_report_json(
+            ranked_data, clusters_data, competitor_intel_data,
+            negatives_data, brief_text, run_dir,
+            forecast=forecast_phase10,
+        )
+    except TypeError:
+        pytest.skip("build_report_json forecast kwarg not threaded yet")
+    html = render_html_report(report)
+    # Accept any of: literal template `gar_${slug}_step_`,
+    # or fully-baked `gar_<runslug>_step_<id>`.
+    assert re.search(r"gar_(\$\{[A-Za-z_.]+\}|[a-zA-Z0-9_-]+)_step_", html), (
+        "localStorage key namespace pattern not found"
+    )
+
+
+def test_next_steps_html_escapes_step_text(brief_fields_phase10, forecast_phase10,
+                                             clusters_phase10_data):
+    """Step text containing <script> is escaped (reuse _html_escape)."""
+    _skip_unless_next_steps()
+    # Inject an XSS payload as an extra cluster name; assert it never appears
+    # raw in the rendered markdown / steps list.
+    injected = dict(clusters_phase10_data)
+    injected["clusters"] = list(injected["clusters"]) + [
+        {"name": "<script>alert(1)</script>", "intent": "transactional", "keywords": []}
+    ]
+    _, steps = render_report.render_next_steps_section(
+        brief_fields_phase10, forecast_phase10, None, injected,
+    )
+    if not hasattr(render_report, "_html_escape"):
+        pytest.skip("_html_escape helper not present")
+    # When the text would be rendered into HTML, _html_escape must neutralise it.
+    for s in steps:
+        escaped = render_report._html_escape(s["text"])
+        assert "<script>" not in escaped
+
+
+# ---------------------------------------------------------------------------
+# CMPL-05 — Compliance-aware reorder (single + combined verticals)
+# ---------------------------------------------------------------------------
+
+def test_next_steps_compliance_reorder_single_vertical(brief_fields_phase10,
+                                                         forecast_phase10,
+                                                         clusters_phase10_data,
+                                                         compliance_with_match_data):
+    """Single matched vertical → step 1 = verification; step 2 = 'Create campaign…'."""
+    _skip_unless_next_steps()
+    _, steps = render_report.render_next_steps_section(
+        brief_fields_phase10, forecast_phase10,
+        compliance_with_match_data, clusters_phase10_data,
+    )
+    # Compliance prepend → 8 ops steps + 1 verification = 9 total.
+    assert len(steps) == 9
+    vertical = compliance_with_match_data["matched_verticals"][0]
+    # Step 1 = verification — contains the vertical's name (title-cased) and URL.
+    assert "Medical" in steps[0]["text"] or "medical" in steps[0]["text"]
+    assert vertical["verification_url"] in steps[0]["text"]
+    # Step 2 = standard "Create campaign…" step (renumbered down by 1).
+    assert "Create campaign" in steps[1]["text"]
+
+
+def test_next_steps_compliance_combined_two_verticals(brief_fields_phase10,
+                                                        forecast_phase10,
+                                                        clusters_phase10_data,
+                                                        compliance_two_verticals_data):
+    """Two matched verticals → ONE combined step (not two separate steps)."""
+    _skip_unless_next_steps()
+    _, steps = render_report.render_next_steps_section(
+        brief_fields_phase10, forecast_phase10,
+        compliance_two_verticals_data, clusters_phase10_data,
+    )
+    # Combined step rule: exactly 1 verification prepend, not 2.
+    verification_steps = [
+        s for s in steps if "verification" in s["text"].lower()
+    ]
+    assert len(verification_steps) == 1, (
+        f"expected exactly 1 combined verification step, got {len(verification_steps)}"
+    )
+    combined = verification_steps[0]
+    # Both vertical names appear, joined "+" style.
+    assert "Medical" in combined["text"]
+    assert "Legal" in combined["text"]
+    # Both URLs appear (joined with "; " or similar — assert both substrings).
+    for v in compliance_two_verticals_data["matched_verticals"]:
+        assert v["verification_url"] in combined["text"]
+
+
+def test_next_steps_no_compliance_standard_order(brief_fields_phase10,
+                                                   forecast_phase10,
+                                                   clusters_phase10_data,
+                                                   compliance_empty_data):
+    """Empty matched_verticals → step 1 = 'Create campaign…' (no prepend)."""
+    _skip_unless_next_steps()
+    _, steps = render_report.render_next_steps_section(
+        brief_fields_phase10, forecast_phase10,
+        compliance_empty_data, clusters_phase10_data,
+    )
+    assert len(steps) == 8
+    # The first step in the standard order is the "Create campaign…" step.
+    assert "Create campaign" in steps[0]["text"]
+    # No literal angle-bracket fallback leaked into the text (Pitfall 8).
+    for s in steps:
+        assert "<vertical>" not in s["text"]
+        assert "<URL>" not in s["text"]
+
+
+# ---------------------------------------------------------------------------
+# EXPT-05 — Export Files section + report.json exports[] (Wave 2 stubs)
+# ---------------------------------------------------------------------------
+
+def test_export_files_section_in_markdown(run_dir):
+    """## Export Files markdown lists relative CSV paths (Wave 2)."""
+    _skip_unless_export_section()
+    # Stage the three CSVs the section is supposed to list.
+    export_dir = run_dir / "export"
+    export_dir.mkdir(exist_ok=True)
+    for name in ("positives.csv", "negatives.csv", "ad_groups.csv"):
+        (export_dir / name).write_text("Campaign,Ad Group\r\n", encoding="utf-8")
+    md = render_report.render_export_section(run_dir)
+    assert "## Export Files" in md
+    assert "export/positives.csv" in md
+    assert "export/negatives.csv" in md
+    assert "export/ad_groups.csv" in md
+
+
+def test_report_json_exports_array(run_dir, ranked_data, clusters_data,
+                                    competitor_intel_data, negatives_data,
+                                    brief_text):
+    """report.json top-level exports[] = ['export/positives.csv', ...] (Wave 2)."""
+    _skip_unless_export_section()
+    from render_report import build_report_json
+    # Stage the three CSVs so build_report_json (Wave 2) can compute exports[].
+    export_dir = run_dir / "export"
+    export_dir.mkdir(exist_ok=True)
+    for name in ("positives.csv", "negatives.csv", "ad_groups.csv"):
+        (export_dir / name).write_text("Campaign,Ad Group\r\n", encoding="utf-8")
+    try:
+        report = build_report_json(
+            ranked_data, clusters_data, competitor_intel_data,
+            negatives_data, brief_text, run_dir,
+        )
+    except TypeError:
+        pytest.skip("build_report_json exports kwarg not threaded yet")
+    if "exports" not in report:
+        pytest.skip("build_report_json exports key not yet implemented (Wave 2)")
+    assert isinstance(report["exports"], list)
+    assert "export/positives.csv" in report["exports"]
+    assert "export/negatives.csv" in report["exports"]
+    assert "export/ad_groups.csv" in report["exports"]
