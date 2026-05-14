@@ -1,35 +1,39 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-stopped_at: Completed 06-05-PLAN.md
-last_updated: "2026-05-08T07:26:39.886Z"
+milestone: v1.1
+milestone_name: operator-ready-output
+status: defining_requirements
+stopped_at: Milestone v1.1 started
+last_updated: "2026-05-14T00:00:00.000Z"
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 27
-  completed_plans: 27
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # State: Google Ad Research Agent
 
-**Last updated:** 2026-05-08
+**Last updated:** 2026-05-14
 
 ## Project Reference
 
 **Core value:** From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session.
 
-**Current focus:** Phase 1 complete (signed-off-by-inspection). Next: Phase 2 — Signal Collection (Plans 02-xx).
+**Current focus:** Milestone v1.1 — Operator-Ready Output. CSV export, bid suggestions, budget forecasts, next-steps checklist, compliance flags. Defining requirements.
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
-| Phase | 6 — Negatives, Report Assembly, and Persistence |
-| Plan | 06-05 COMPLETE (SKILL.md Phase 6 wiring — Steps 21-26 reference + Phase 5 stop gate removed) |
-| Status | Phase 6 complete — all 27 plans complete; v1 skill end-to-end runnable |
-| Progress | `[██████████] 6/6 phases complete` |
+| Phase | Not started (defining requirements) |
+| Plan | — |
+| Status | Defining requirements |
+| Last activity | 2026-05-14 — Milestone v1.1 started |
+
+## Previous Milestone
+
+v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-08. End-to-end runnable: brief intake → signals → ranking → clustering → competitor intel → negatives/report → niche pulse → account data + Ahrefs enrichment.
 
 ## Performance Metrics
 

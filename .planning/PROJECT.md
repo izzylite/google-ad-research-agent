@@ -8,39 +8,51 @@ Internal Claude Code skill for a centralized PPC operator. Operator pastes a cam
 
 From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session, without the operator leaving the chat.
 
+## Current Milestone: v1.1 Operator-Ready Output
+
+**Goal:** Turn the report from a data dump into a campaign launch kit — junior PPC managers can move from report.md to a live, compliant Google Ads campaign with starter bids, budget bands, and a step-by-step checklist.
+
+**Target features:**
+- CSV export in Google Ads Editor import format (positives, negatives, ad groups)
+- Per-keyword max-CPC bid suggestions (intent-weighted, derived from Ahrefs CPC)
+- Budget forecast per cluster (low/mid/high daily click + spend bands)
+- Operator Next-Steps ordered checklist appended to report.md
+- Compliance flags for regulated verticals (medical, legal, finance, gambling, crypto)
+
 ## Requirements
 
 ### Validated
 
 <!-- Shipped and confirmed valuable. -->
 
-(None yet — ship to validate)
+- ✓ Conversational brief intake (5 required fields + optional conditional follow-ups) — v1.0
+- ✓ Three-source signal collection (Serper, Tavily, WebSearch) with locale plumbing — v1.0
+- ✓ 4-class intent ranking + source-diversity-primary composite score — v1.0
+- ✓ Intent-homogeneous LLM clustering (5-15 kw per cluster) — v1.0
+- ✓ Per-cluster competitor ad copy + landing-page value-prop extraction — v1.0
+- ✓ Tiered negatives (Strong/Considered/Investigate) × 6 categories, dedup vs positive pool — v1.0
+- ✓ Four-section markdown + JSON twin + HTML report, sealed run folder, browsable INDEX — v1.0
+- ✓ Niche Pulse sidecar — 7-day news harvest with trending themes + regulatory alerts — v1.0
+- ✓ Account Data + Volume Enrichment sidecar — Ahrefs volume/CPC/KD + Google Ads search terms/perf/negatives sync — v1.0
 
 ### Active
 
-<!-- Current scope. Building toward these. -->
+<!-- v1.1 scope. Building toward these. -->
 
-- [ ] Conversational brief intake — skill prompts operator for missing context (industry, product, location, language, audience, budget signal) instead of expecting a filled template
-- [ ] Seed keyword expansion via Serper.dev SERP signals (organic results, People Also Ask, related searches)
-- [ ] Competitor / landing page mining via Tavily (extract value props, terminology, offers from competitor sites)
-- [ ] WebSearch as zero-cost baseline signal alongside Serper/Tavily
-- [ ] Ranking by frequency-of-occurrence + LLM-scored commercial intent (no volume/CPC API in v1)
-- [ ] Ad group clustering — keywords pre-grouped by theme, ready to paste into Google Ads ad groups
-- [ ] Competitor ad copy extraction from Serper ad block (top paid headlines + descriptions per theme)
-- [ ] Negative keyword candidate list
-- [ ] Markdown report output containing all four sections (table, clusters, ad copy, negatives)
-- [ ] Run history folder — each run = dated subfolder containing brief + report, browsable for past work
-- [ ] Generic engine usable across verticals (no vertical-specific presets in v1)
+- [ ] CSV export in Google Ads Editor format — positives.csv, negatives.csv, ad_groups.csv with match types + max CPC
+- [ ] Max-CPC bid suggestion column per keyword — Ahrefs CPC × intent multiplier (transactional 1.2x, commercial 0.8x, informational 0.4x)
+- [ ] Budget forecast per cluster — est. daily clicks + spend low/mid/high bands using volume × intent-CTR × suggested CPC
+- [ ] Operator Next-Steps checklist section in report.md — ordered ops list from campaign creation through launch
+- [ ] Compliance flags — detect regulated verticals (medical/legal/finance/gambling/crypto) and render warning block with verification path
 
 ### Out of Scope
 
 <!-- Explicit boundaries. Includes reasoning to prevent re-adding. -->
 
-- Volume / CPC / competition metrics from a paid data API (DataForSEO, Google Ads API) — v1 ranks on frequency + LLM intent; volume enrichment is manual via Keyword Planner. Revisit in v2.
 - Vertical presets (ecommerce / SaaS / lead gen / local) — defer to v2 once real usage shows which verticals matter.
 - Web dashboard / UI — markdown report is the deliverable; building a UI duplicates Claude Code chat without adding value for a single operator.
 - Multi-tenant or auth — single internal operator model, no per-user state needed.
-- Auto-push to Google Ads (API or Editor CSV import format) — operator pastes results manually; pushing risks bad data going live.
+- **Auto-push** to Google Ads via API — CSV export now in-scope (operator imports manually via Editor) but **direct API push** stays excluded; CSV-in-Editor gives operator final sanity check before going live.
 - Caching of SERP results — adds plumbing, real cost is low at this volume; revisit if API costs sting.
 - Real-time / scheduled runs — operator-triggered only; no cron.
 
@@ -70,7 +82,10 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | Generic engine v1, vertical presets v2 | Ship simpler core; let real usage reveal which verticals justify presets | — Pending |
 | Python helper scripts | Standard for LLM/data work, easy CSV/markdown generation, both Tavily and Serper have Python SDKs | — Pending |
 | Run history folder, no caching | Dated folders cover "what did we research last week"; caching adds plumbing without v1 payoff | — Pending |
-| Markdown report (no CSV, no dashboard) | Operator reads in Claude Code; markdown tables paste cleanly into docs/Slack; CSV deferrable if Google Ads import becomes a need | — Pending |
+| Markdown report (no CSV, no dashboard) — v1.0 | Operator reads in Claude Code; markdown tables paste cleanly into docs/Slack; CSV deferrable if Google Ads import becomes a need | ⚠️ Revisit — Editor CSV moved in-scope for v1.1 (operator productivity gain outweighs original concern, manual Editor step preserves bad-data gate) |
+| Add Editor CSV export in v1.1 | Junior managers spend 30+ min/run hand-copying keywords; Editor CSV is a one-import paste; manual Editor review keeps the "no bad data live" guardrail | — Pending |
+| Intent-weighted bid multipliers (1.2x / 0.8x / 0.4x) | Junior asks "what bid?" — defensible starting point from Ahrefs CPC anchored by buyer-stage; transactional aggressive, informational conservative | — Pending |
+| Compliance flag heuristics, not full policy engine | Detect 5 high-friction verticals (medical/legal/finance/gambling/crypto) by keyword token match; deeper Google Ads policy automation deferred — pointer to verification path is enough for junior | — Pending |
 
 ---
-*Last updated: 2026-05-08 after initialization*
+*Last updated: 2026-05-14 after milestone v1.1 start*
