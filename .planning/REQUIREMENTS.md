@@ -113,11 +113,11 @@ Milestone v1.1 — campaign launch kit additions. Builds on v1.0 artifacts (rank
 
 ### Budget Forecast
 
-- [ ] **FRCS-01**: `forecast_budget.py` reads `clusters.json` + `ranked-enriched.json` and emits `{run_dir}/forecast.json` containing per-cluster `est_daily_clicks_low/mid/high`, `est_daily_spend_low/mid/high`, `est_monthly_spend_band`, and a campaign-level rollup
-- [ ] **FRCS-02**: Click estimates use intent-class CTR anchors: transactional 6%, commercial 4%, informational 2%, navigational 8% (documented in script header, configurable)
-- [ ] **FRCS-03**: Spend estimates use suggested_max_cpc × 0.65 (typical avg CPC ratio to max CPC); low band = sum × 0.5, mid = sum × 1.0, high = sum × 1.5 to express forecast uncertainty
+- [x] **FRCS-01**: `forecast_budget.py` reads `clusters.json` + `ranked-enriched.json` and emits `{run_dir}/forecast.json` containing per-cluster `est_daily_clicks_low/mid/high`, `est_daily_spend_low/mid/high`, `est_monthly_spend_band`, and a campaign-level rollup
+- [x] **FRCS-02**: Click estimates use intent-class CTR anchors: transactional 6%, commercial 4%, informational 2%, navigational 8% (documented in script header, configurable)
+- [x] **FRCS-03**: Spend estimates use suggested_max_cpc × 0.65 (typical avg CPC ratio to max CPC); low band = sum × 0.5, mid = sum × 1.0, high = sum × 1.5 to express forecast uncertainty
 - [ ] **FRCS-04**: Report renders Budget Forecast section per cluster + campaign totals; report.md table shows low/mid/high daily spend per cluster
-- [ ] **FRCS-05**: Forecast section includes a "How this is calculated" subsection explaining assumptions are directional, not Google's official forecast tool — prevents operator over-promising to client
+- [x] **FRCS-05**: Forecast section includes a "How this is calculated" subsection explaining assumptions are directional, not Google's official forecast tool — prevents operator over-promising to client
 
 ### Operator Next-Steps Checklist
 
@@ -219,11 +219,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BIDS-02 | Phase 9 | Complete |
 | BIDS-03 | Phase 9 | Pending |
 | BIDS-04 | Phase 9 | Complete |
-| FRCS-01 | Phase 9 | Pending |
-| FRCS-02 | Phase 9 | Pending |
-| FRCS-03 | Phase 9 | Pending |
+| FRCS-01 | Phase 9 | Complete |
+| FRCS-02 | Phase 9 | Complete |
+| FRCS-03 | Phase 9 | Complete |
 | FRCS-04 | Phase 9 | Pending |
-| FRCS-05 | Phase 9 | Pending |
+| FRCS-05 | Phase 9 | Complete |
 | CMPL-01 | Phase 9 | Pending |
 | CMPL-02 | Phase 9 | Pending |
 | CMPL-03 | Phase 9 | Pending |

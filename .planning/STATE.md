@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: operator-ready-output
-status: in_progress
-stopped_at: Completed 09-01-PLAN.md (bid_suggest.py BIDS-01/02/04). Plans 09-02 and 09-03 unblocked.
-last_updated: "2026-05-14T18:03:33.022Z"
+milestone_name: Phases
+status: unknown
+stopped_at: Completed 09-02-PLAN.md (forecast_budget.py FRCS-01/02/03/05). Plan 09-03 (compliance_check) unblocked.
+last_updated: "2026-05-14T18:12:15.845Z"
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 33
-  completed_plans: 29
+  completed_plans: 30
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 9 — Campaign Economics and Compliance (in progress) |
-| Plan | 09-01 complete — next: 09-02 forecast_budget |
-| Status | Wave 2 — bid_suggest.py shipped; forecast_budget + compliance_check unblocked |
-| Last activity | 2026-05-14 — 09-01 GREEN (13/13 bid_suggest tests pass) |
+| Plan | 09-02 complete — next: 09-03 compliance_check |
+| Status | Wave 2 — bid_suggest + forecast_budget shipped; compliance_check unblocked; render_report extension (09-04) waits on 09-03 |
+| Last activity | 2026-05-14 — 09-02 GREEN (10/10 forecast_budget tests pass; full suite 121 passed) |
 
 ## Previous Milestone
 
@@ -66,6 +66,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 06-negatives-report-assembly-and-persistence P04 | 10 | 1 tasks | 1 files |
 | Phase 06-negatives-report-assembly-and-persistence P05 | 87s | 2 tasks | 3 files |
 | Phase 09 P01 | 6min | 2 tasks | 1 files |
+| Phase 09 P02 | 3min | 2 tasks | 1 files |
 
 ### Execution History
 
@@ -153,6 +154,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [v1.1 roadmap]: 23 v1.1 requirements mapped (not 22 as initial brief suggested) — recount: BIDS=4 + FRCS=5 + CMPL=5 + EXPT=5 + STEP=4 = 23. Discrepancy noted; all 23 mapped to phases.
 - [Phase 09]: [Phase 09-01] bid_suggest.py: stub main_with_args(NotImplementedError) committed alongside core to lift MODULE_MISSING guard immediately — full CLI lands in Task 2 commit, preserving atomic per-task commit discipline
 - [Phase 09]: [Phase 09-01] INTENT_MULTIPLIERS frozenset assertion at module import time guards typo / drift — fails fast (not at runtime); pattern available for forecast_budget.py INTENT_CTRS in plan 09-02
+- [Phase 09]: [Phase 09-02] forecast_budget.py: INTENT_CTRS / AVG_CPC_RATIO / BAND_MULTIPLIERS in single module-level config block with frozenset assertion — mirrors INTENT_MULTIPLIERS pattern from 09-01; methodology block in forecast.json reads from these dicts so disclaimer edits live in one place (FRCS-05)
+- [Phase 09]: [Phase 09-02] campaign_totals aggregated by SUM of per-cluster fields, not recomputed from raw rows (Pitfall 5) — keeps cluster-level and campaign-level skip-rules consistent; unjoined_keywords surfaced as silent-failure smoke signal
+- [Phase 09]: [Phase 09-02] daily_clicks_mid kept as float (not int-rounded) so tests can use pytest.approx; only low/high bands int-rounded for clean stdout summary. Render layer (09-04) can format as needed
 
 ### Open Questions / Todos
 
@@ -170,9 +174,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-14T18:03:33.013Z
+**Last session:** 2026-05-14T18:12:15.840Z
 
-**Stopped at:** Completed 09-01-PLAN.md (bid_suggest.py BIDS-01/02/04). Plans 09-02 and 09-03 unblocked.
+**Stopped at:** Completed 09-02-PLAN.md (forecast_budget.py FRCS-01/02/03/05). Plan 09-03 (compliance_check) unblocked.
 
 **Next session:** Run `/gsd:plan-phase 9` to decompose Phase 9 (Campaign Economics and Compliance) into wave plans. Phase 9 covers BIDS + FRCS + CMPL (14 requirements).
 
