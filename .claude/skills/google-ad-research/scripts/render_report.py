@@ -138,6 +138,18 @@ USAGE_PULSE_NEGATIVES = (
 
 TIER_ORDER = ["Strong", "Considered", "Investigate"]
 
+
+def _micros_to_usd(micros: int | None) -> str:
+    """Format a cpc_micros (or suggested_max_cpc_micros) integer as USD with cents.
+
+    micros = USD × 1_000_000 (Pitfall 8 invariant). Returns '—' (em-dash) for
+    None / falsy values so missing-data rows render consistently across the
+    enriched-keyword table.
+    """
+    if micros is None:
+        return "—"
+    return f"${micros / 1_000_000:.2f}"
+
 TIER_DESCRIPTIONS = {
     "Strong": "Add to all campaigns unconditionally.",
     "Considered": "Add if brand is premium-positioned; review before adding for value-tier brands.",
@@ -315,12 +327,18 @@ def render_niche_pulse_section(pulse: dict) -> str:
 
 
 def render_enriched_keyword_table(ranked: list[dict], top_n: int = 100) -> str:
-    """Volume-enriched keyword table. Used when at least one row has Ahrefs data."""
+    """Volume-enriched keyword table. Used when at least one row has Ahrefs data.
+
+    Carries CPC (Ahrefs) AND Suggested CPC (Phase 9 bid_suggest output) side by
+    side so the operator can compare market price vs the recommended max bid.
+    Both columns use the single `_micros_to_usd` helper (Pitfall 8 — micros to
+    USD conversion happens in one place).
+    """
     rows = []
     for r in ranked[:top_n]:
         vol = r.get("volume")
-        cpc_micros = r.get("cpc_micros")
-        cpc = f"${(cpc_micros / 10_000 / 100):.2f}" if cpc_micros else "—"
+        cpc = _micros_to_usd(r.get("cpc_micros"))
+        sugg = _micros_to_usd(r.get("suggested_max_cpc_micros"))
         kd = r.get("difficulty")
         parent = r.get("parent_topic") or ""
         rows.append([
@@ -329,13 +347,14 @@ def render_enriched_keyword_table(ranked: list[dict], top_n: int = 100) -> str:
             r["match_type"],
             f"{vol:,}" if vol is not None else "—",
             cpc,
+            sugg,
             f"{kd}" if kd is not None else "—",
             escape_md_cell(parent),
             str(r["source_diversity"]),
             str(r["score"]),
         ])
     headers = [
-        "Keyword", "Intent", "Match", "Vol/mo", "CPC", "KD",
+        "Keyword", "Intent", "Match", "Vol/mo", "CPC", "Suggested CPC", "KD",
         "Parent Topic", "Src Div", "Score",
     ]
     return tabulate(rows, headers=headers, tablefmt="github")
@@ -1185,6 +1204,8 @@ def build_report_json(
     niche_pulse: dict | None = None,
     account_perf: dict | None = None,
     negatives_sync: dict | None = None,
+    forecast: dict | None = None,
+    compliance: dict | None = None,
 ) -> dict:
     """Return canonical v1 report.json dict (not serialized)."""
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -1199,6 +1220,13 @@ def build_report_json(
     for kw in ranked:
         cluster_id = cluster_index.get(kw["keyword"].lower()) or None
         enriched_keywords.append({**kw, "cluster_id": cluster_id})
+
+    # CMPL-04: surface matched_verticals[] as a top-level array (not the wrapping object)
+    compliance_list: list[dict] = []
+    if isinstance(compliance, dict):
+        matched = compliance.get("matched_verticals") or []
+        if isinstance(matched, list):
+            compliance_list = matched
 
     return {
         "meta": {
@@ -1221,6 +1249,8 @@ def build_report_json(
         "niche_pulse": niche_pulse or {},
         "account_perf": account_perf or {},
         "negatives_sync": negatives_sync or {},
+        "forecast": forecast or {},
+        "compliance": compliance_list,
     }
 
 
