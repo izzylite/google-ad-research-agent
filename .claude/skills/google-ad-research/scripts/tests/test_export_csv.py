@@ -417,13 +417,50 @@ def _skip_unless_mapping_aware() -> None:
 def _stage_mapping_run(tmp_path: Path, mapping_fixture: str | None,
                        clusters_phase10: dict, negatives_phase10: list[dict],
                        ranked_enriched_phase10: list[dict]) -> Path:
-    """Stage a phase-10-style run_dir + optional ad-group-mapping.json at root."""
+    """Stage a phase-10-style run_dir + optional ad-group-mapping.json at root.
+
+    When a mapping fixture is supplied, augment ranked-enriched + clusters with
+    the mapping's keywords so the existing-ad-group resolution path can fire.
+    The original grocery fixtures alone don't overlap with the mapping's
+    accident-doctor keywords; the test contract requires the overlap to exist
+    so positives.csv can pick up the mapped Ad Group cell.
+    """
     run = tmp_path / "2026-05-14T120000Z-phase-11-mapping"
     (run / "raw").mkdir(parents=True)
+
+    ranked_to_write = list(ranked_enriched_phase10)
+    clusters_to_write = json.loads(json.dumps(clusters_phase10))  # deep copy
+    if mapping_fixture is not None:
+        mapping_data = json.loads(
+            (FIXTURES / mapping_fixture).read_text(encoding="utf-8")
+        )
+        # One synthetic cluster holds all mapping keywords so the positives
+        # joiner has a cluster fallback for low-confidence rows (Pitfall 6).
+        mapping_cluster_kws = []
+        for m in mapping_data.get("matches", []):
+            kw = m.get("keyword", "")
+            ranked_to_write.append({
+                "keyword": kw,
+                "intent": "transactional",
+                "match_type": "phrase",
+                "cpc_micros": 250_000,
+                "suggested_max_cpc_micros": 300_000,
+                "score": 50,
+            })
+            mapping_cluster_kws.append({"keyword": kw, "score": 50})
+        clusters_to_write["clusters"].append({
+            "name": "phase11_mapping_fallback",
+            "intent": "transactional",
+            "keywords": mapping_cluster_kws,
+        })
+        (run / "ad-group-mapping.json").write_text(
+            json.dumps(mapping_data), encoding="utf-8",
+        )
+
     (run / "ranked-enriched.json").write_text(
-        json.dumps(ranked_enriched_phase10), encoding="utf-8")
+        json.dumps(ranked_to_write), encoding="utf-8")
     (run / "clusters.json").write_text(
-        json.dumps(clusters_phase10), encoding="utf-8")
+        json.dumps(clusters_to_write), encoding="utf-8")
     (run / "negatives.json").write_text(
         json.dumps(negatives_phase10), encoding="utf-8")
     (run / "brief.md").write_text(
@@ -431,11 +468,6 @@ def _stage_mapping_run(tmp_path: Path, mapping_fixture: str | None,
         "**Location:** UK\n**Language:** en-GB\n**Audience:** test\n",
         encoding="utf-8",
     )
-    if mapping_fixture is not None:
-        (run / "ad-group-mapping.json").write_text(
-            (FIXTURES / mapping_fixture).read_text(encoding="utf-8"),
-            encoding="utf-8",
-        )
     return run
 
 
