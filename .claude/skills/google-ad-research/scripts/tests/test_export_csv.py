@@ -394,3 +394,132 @@ def test_exit_code_3_on_missing_inputs(tmp_path):
     (run / "raw").mkdir(parents=True)
     rc = export_csv.main(["--run-dir", str(run)])
     assert rc == 3
+
+
+# ===========================================================================
+# Phase 11 Wave 0 — ADGM-05 RED stubs (per-function hasattr guards)
+#
+# Wave 2 (plan 11-03) extends export_csv to consult `{run_dir}/ad-group-mapping.json`
+# at write time. When the mapping is absent → fall back to cluster slug
+# (existing behaviour). When present:
+#   - positives.csv Ad Group = existing_ad_group name for high/medium matches
+#   - ad_groups.csv ROWS only contain NEW cluster slugs (existing names excluded)
+# ===========================================================================
+
+def _skip_unless_mapping_aware() -> None:
+    """Skip if Wave 2 mapping integration is absent."""
+    if MODULE_INCOMPLETE:
+        pytest.skip("export_csv stub — Wave 1 not yet shipped")
+    if not hasattr(export_csv, "_resolve_ad_group_from_mapping"):
+        pytest.skip("export_csv mapping-aware helpers — Wave 2 plan 11-03")
+
+
+def _stage_mapping_run(tmp_path: Path, mapping_fixture: str | None,
+                       clusters_phase10: dict, negatives_phase10: list[dict],
+                       ranked_enriched_phase10: list[dict]) -> Path:
+    """Stage a phase-10-style run_dir + optional ad-group-mapping.json at root."""
+    run = tmp_path / "2026-05-14T120000Z-phase-11-mapping"
+    (run / "raw").mkdir(parents=True)
+    (run / "ranked-enriched.json").write_text(
+        json.dumps(ranked_enriched_phase10), encoding="utf-8")
+    (run / "clusters.json").write_text(
+        json.dumps(clusters_phase10), encoding="utf-8")
+    (run / "negatives.json").write_text(
+        json.dumps(negatives_phase10), encoding="utf-8")
+    (run / "brief.md").write_text(
+        "**Industry:** test\n**Product:** phase 11 mapping\n"
+        "**Location:** UK\n**Language:** en-GB\n**Audience:** test\n",
+        encoding="utf-8",
+    )
+    if mapping_fixture is not None:
+        (run / "ad-group-mapping.json").write_text(
+            (FIXTURES / mapping_fixture).read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+    return run
+
+
+def test_existing_ad_group_in_positives(tmp_path, clusters_phase10,
+                                         negatives_phase10, ranked_enriched_phase10):
+    """ADGM-05: ad-group-mapping.json present → positives.csv Ad Group = existing name for high matches."""
+    _skip_unless_mapping_aware()
+    run = _stage_mapping_run(
+        tmp_path, "ad-group-mapping-60pct.json",
+        clusters_phase10, negatives_phase10, ranked_enriched_phase10,
+    )
+    rc = export_csv.main(["--run-dir", str(run)])
+    assert rc == 0
+
+    path = run / "export" / "positives.csv"
+    with path.open("r", encoding="utf-8", newline="") as f:
+        rows = list(csv.DictReader(f))
+    # At least one row's Ad Group should be the existing "Accident Exams – Lake Worth"
+    existing_ag_rows = [
+        r for r in rows if r["Ad Group"] == "Accident Exams – Lake Worth"
+    ]
+    assert existing_ag_rows, (
+        "no positives.csv row picked up existing ad group name from mapping"
+    )
+
+
+def test_ad_groups_csv_skips_existing(tmp_path, clusters_phase10,
+                                       negatives_phase10, ranked_enriched_phase10):
+    """ADGM-05: ad_groups.csv excludes existing-ad-group names from mapping (prevents Editor dupes)."""
+    _skip_unless_mapping_aware()
+    run = _stage_mapping_run(
+        tmp_path, "ad-group-mapping-60pct.json",
+        clusters_phase10, negatives_phase10, ranked_enriched_phase10,
+    )
+    export_csv.main(["--run-dir", str(run)])
+
+    path = run / "export" / "ad_groups.csv"
+    with path.open("r", encoding="utf-8", newline="") as f:
+        rows = list(csv.DictReader(f))
+    ag_names = {r["Ad Group"] for r in rows}
+    mapping = json.loads(
+        (FIXTURES / "ad-group-mapping-60pct.json").read_text(encoding="utf-8")
+    )
+    existing_names = {
+        m["existing_ad_group"] for m in mapping["matches"]
+        if m["confidence"] in ("high", "medium")
+    }
+    overlap = ag_names & existing_names
+    assert not overlap, (
+        f"ad_groups.csv contains existing ad-group names (Editor dupe risk): {overlap}"
+    )
+
+
+def test_no_mapping_file_backward_compat(tmp_path, clusters_phase10,
+                                          negatives_phase10, ranked_enriched_phase10):
+    """ADGM-05 backward compat: mapping absent → positives.csv Ad Group = cluster slug."""
+    _skip_unless_mapping_aware()
+    run = _stage_mapping_run(
+        tmp_path, None,  # NO mapping file
+        clusters_phase10, negatives_phase10, ranked_enriched_phase10,
+    )
+    rc = export_csv.main(["--run-dir", str(run)])
+    assert rc == 0
+
+    path = run / "export" / "positives.csv"
+    with path.open("r", encoding="utf-8", newline="") as f:
+        rows = list(csv.DictReader(f))
+    cluster_names = {c["name"] for c in clusters_phase10["clusters"]}
+    for r in rows:
+        assert r["Ad Group"] in cluster_names, (
+            f"backward-compat broken: Ad Group {r['Ad Group']!r} not a cluster slug"
+        )
+
+
+def test_unicode_dash_preserved_in_csv(tmp_path, clusters_phase10,
+                                        negatives_phase10, ranked_enriched_phase10):
+    """ADGM-05 / Pitfall 2: 'Accident Exams – Lake Worth' (U+2013) round-trips through CSV."""
+    _skip_unless_mapping_aware()
+    run = _stage_mapping_run(
+        tmp_path, "ad-group-mapping-60pct.json",
+        clusters_phase10, negatives_phase10, ranked_enriched_phase10,
+    )
+    export_csv.main(["--run-dir", str(run)])
+
+    raw_bytes = (run / "export" / "positives.csv").read_bytes()
+    # UTF-8 encoding of U+2013 en-dash = 0xE2 0x80 0x93.
+    assert b"\xe2\x80\x93" in raw_bytes, "en-dash bytes lost through CSV write"

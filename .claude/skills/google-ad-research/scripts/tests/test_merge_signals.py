@@ -33,6 +33,14 @@ pytestmark = pytest.mark.skipif(MODULE_MISSING, reason="merge_signals.py not yet
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
+def _skip_unless_city_filter() -> None:
+    """Phase 11 GEO-03 guard — Wave 1 plan 11-01 adds the city filter."""
+    if MODULE_MISSING:
+        pytest.skip("merge_signals module incomplete")
+    if not hasattr(merge_signals, "_keyword_drifts_city"):
+        pytest.skip("merge_signals city filter — Wave 1 plan 11-01")
+
+
 # ---------------------------------------------------------------------------
 # Helpers to write minimal raw fixture files into tmp_run_dir/raw/
 # ---------------------------------------------------------------------------
@@ -323,3 +331,112 @@ def test_end_to_end_with_fixtures(tmp_run_dir):
         missing = required_fields - set(kw.keys())
         assert not missing, f"Row missing fields {missing}: {kw}"
         assert len(kw["sources"]) >= 1, f"Row has empty sources: {kw['canonical']}"
+
+
+# ===========================================================================
+# Phase 11 Wave 0 — GEO-03 integration RED stubs (per-function hasattr guards)
+#
+# Wave 1 plan 11-01 will add a --us-cities-path CLI flag to merge_signals.py
+# defaulting to references/us-cities.json so tests can swap in a fixture file.
+# ===========================================================================
+
+def _stage_geo_run(tmp_run_dir: Path, brief_path: Path) -> None:
+    """Drop a minimal serper.json + brief.md + us-cities-subset.json into run_dir."""
+    raw_dir = tmp_run_dir / "raw"
+    # Three serper organic hits, all FL location-flavoured.
+    _write_serper(raw_dir, [{
+        "seed": "accident doctor",
+        "locale": {"gl": "us", "hl": "en-US"},
+        "organic": [
+            {"title": "lake worth chiropractor", "link": "https://ex.com/1",
+             "snippet": "Lake Worth FL chiropractor", "source": "serper-organic",
+             "from_seed": "accident doctor"},
+            {"title": "boca raton dentist", "link": "https://ex.com/2",
+             "snippet": "Boca Raton dental care", "source": "serper-organic",
+             "from_seed": "accident doctor"},
+            {"title": "tampa pain clinic", "link": "https://ex.com/3",
+             "snippet": "Tampa pain management", "source": "serper-organic",
+             "from_seed": "accident doctor"},
+        ],
+        "peopleAlsoAsk": [],
+        "relatedSearches": [],
+        "ads": [],
+        "searchParameters": {"gl": "us", "hl": "en-US"},
+    }])
+    (tmp_run_dir / "brief.md").write_text(
+        brief_path.read_text(encoding="utf-8"), encoding="utf-8",
+    )
+
+
+def test_city_filter_active(tmp_run_dir, monkeypatch):
+    """GEO-03 integration: brief with geo_focus → Tampa-flavoured keyword dropped."""
+    _skip_unless_city_filter()
+    _stage_geo_run(tmp_run_dir, FIXTURES_DIR / "brief-with-geo-focus.md")
+    # Wave 1: merge_signals.py grows --us-cities-path. Today: monkeypatch
+    # the module-level constant so the fixture subset is used.
+    if hasattr(merge_signals, "_US_CITIES_DATA_PATH"):
+        monkeypatch.setattr(
+            merge_signals, "_US_CITIES_DATA_PATH",
+            FIXTURES_DIR / "us-cities-subset.json",
+        )
+
+    merge_signals.main_with_args(["--run-dir", str(tmp_run_dir)])
+
+    keywords = _read_keywords(tmp_run_dir)
+    canonicals = {kw["canonical"] for kw in keywords}
+    variants = {v for kw in keywords for v in kw.get("variants", [])}
+    all_surfaces = canonicals | variants
+    # Tampa NOT in Palm Beach focus → dropped.
+    assert not any("tampa" in s for s in all_surfaces), (
+        f"tampa pain clinic should be dropped; surfaces: {all_surfaces}"
+    )
+    # Lake Worth IS in Palm Beach focus → kept.
+    assert any("lake worth" in s for s in all_surfaces), (
+        f"lake worth should be kept; surfaces: {all_surfaces}"
+    )
+
+
+def test_city_filter_inactive_when_geo_focus_empty(tmp_run_dir, monkeypatch):
+    """GEO-03 backward compat: no geo_focus line → Tampa NOT dropped."""
+    _skip_unless_city_filter()
+    _stage_geo_run(tmp_run_dir, FIXTURES_DIR / "brief-no-geo-focus.md")
+    if hasattr(merge_signals, "_US_CITIES_DATA_PATH"):
+        monkeypatch.setattr(
+            merge_signals, "_US_CITIES_DATA_PATH",
+            FIXTURES_DIR / "us-cities-subset.json",
+        )
+
+    merge_signals.main_with_args(["--run-dir", str(tmp_run_dir)])
+
+    keywords = _read_keywords(tmp_run_dir)
+    all_surfaces = (
+        {kw["canonical"] for kw in keywords}
+        | {v for kw in keywords for v in kw.get("variants", [])}
+    )
+    # Empty geo_focus disables filter — Tampa must remain.
+    assert any("tampa" in s for s in all_surfaces), (
+        f"tampa pain clinic should NOT be dropped when geo_focus empty: {all_surfaces}"
+    )
+
+
+def test_city_filter_preserves_county_hierarchy(tmp_run_dir, monkeypatch):
+    """GEO-03 Pitfall 5: Boca Raton (Palm Beach county) kept under Palm Beach focus."""
+    _skip_unless_city_filter()
+    _stage_geo_run(tmp_run_dir, FIXTURES_DIR / "brief-with-geo-focus.md")
+    if hasattr(merge_signals, "_US_CITIES_DATA_PATH"):
+        monkeypatch.setattr(
+            merge_signals, "_US_CITIES_DATA_PATH",
+            FIXTURES_DIR / "us-cities-subset.json",
+        )
+
+    merge_signals.main_with_args(["--run-dir", str(tmp_run_dir)])
+
+    keywords = _read_keywords(tmp_run_dir)
+    all_surfaces = (
+        {kw["canonical"] for kw in keywords}
+        | {v for kw in keywords for v in kw.get("variants", [])}
+    )
+    # Boca Raton's county IS Palm Beach → must survive the filter.
+    assert any("boca raton" in s for s in all_surfaces), (
+        f"boca raton dentist should be kept via county hierarchy: {all_surfaces}"
+    )

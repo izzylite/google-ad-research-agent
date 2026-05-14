@@ -10,6 +10,18 @@ import pytest
 
 
 SCRIPT_PATH = Path(__file__).resolve().parent.parent / "run_init.py"
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
+
+
+def _skip_unless_geo_focus_supported() -> None:
+    """Phase 11 GEO-01 guard — Wave 1 plan 11-01 adds geo_focus parsing."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    try:
+        import run_init  # noqa: F401
+    except ImportError:
+        pytest.skip("run_init module incomplete")
+    if not hasattr(run_init, "_parse_optional_geo_focus"):
+        pytest.skip("run_init geo focus support — Wave 1 plan 11-01")
 
 
 def _run(brief: str, slug_source: str, runs_root: Path) -> subprocess.CompletedProcess[str]:
@@ -81,3 +93,30 @@ def test_stdout_is_single_json_line(tmp_runs_root: Path, sample_brief_text: str)
     assert len(lines) == 1
     payload = json.loads(lines[0])
     assert set(payload.keys()) >= {"run_dir", "slug", "timestamp", "brief_path"}
+
+
+# ===========================================================================
+# Phase 11 Wave 0 — GEO-01 RED stubs (per-function hasattr guards)
+# ===========================================================================
+
+def test_geo_focus_persisted(tmp_runs_root: Path) -> None:
+    """GEO-01: stdin brief with **Geo focus:** line → brief.md preserves it verbatim."""
+    _skip_unless_geo_focus_supported()
+    brief_text = (FIXTURES_DIR / "brief-with-geo-focus.md").read_text(encoding="utf-8")
+    proc = _run(brief_text, "urgent-care", tmp_runs_root)
+    assert proc.returncode == 0, f"stderr:\n{proc.stderr}"
+    payload = json.loads(proc.stdout.strip())
+    brief_path = Path(payload["brief_path"])
+    contents = brief_path.read_text(encoding="utf-8")
+    assert "**Geo focus:** Palm Beach County, Lake Worth" in contents
+
+
+def test_geo_focus_absent_backward_compat(tmp_runs_root: Path) -> None:
+    """GEO-01: brief without geo_focus line → brief.md does NOT contain `**Geo focus:**`."""
+    _skip_unless_geo_focus_supported()
+    brief_text = (FIXTURES_DIR / "brief-no-geo-focus.md").read_text(encoding="utf-8")
+    proc = _run(brief_text, "urgent-care", tmp_runs_root)
+    assert proc.returncode == 0, f"stderr:\n{proc.stderr}"
+    payload = json.loads(proc.stdout.strip())
+    contents = Path(payload["brief_path"]).read_text(encoding="utf-8")
+    assert "**Geo focus:**" not in contents

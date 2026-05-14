@@ -1020,3 +1020,135 @@ def test_report_json_exports_array(run_dir, ranked_data, clusters_data,
     assert "export/positives.csv" in report["exports"]
     assert "export/negatives.csv" in report["exports"]
     assert "export/ad_groups.csv" in report["exports"]
+
+
+# ===========================================================================
+# Phase 11 Wave 0 — GEO-05 + ADGM-06 RED stubs (per-function hasattr guards)
+#
+# GEO-05: render_geographic_focus_section() emits "## Geographic Focus" block
+#         when brief carries geo_focus; empty string when absent.
+# ADGM-06: Next Steps step 3 rewrites when coverage_pct > 50.0.
+# ===========================================================================
+
+def _skip_unless_geo_section():
+    if not hasattr(render_report, "render_geographic_focus_section"):
+        pytest.skip("render_geographic_focus_section — Wave 2 plan 11-03")
+
+
+def _skip_unless_next_steps_mapping_aware():
+    if not hasattr(render_report, "render_next_steps_section"):
+        pytest.skip(
+            "render_next_steps_section absent — Phase 10 Wave 1 prerequisite"
+        )
+    # Wave 2 (plan 11-03) extends render_next_steps_section signature to
+    # accept an `ad_group_mapping` kwarg. Detect by signature inspection.
+    import inspect
+    sig = inspect.signature(render_report.render_next_steps_section)
+    if "ad_group_mapping" not in sig.parameters:
+        pytest.skip(
+            "render_next_steps_section ad_group_mapping kwarg — Wave 2 plan 11-03"
+        )
+
+
+def _brief_fields_with_geo() -> dict[str, str]:
+    return {
+        "industry": "urgent care",
+        "product": "accident & injury care",
+        "location": "Florida",
+        "language": "en-US",
+        "audience": "adults 25-65 post-accident",
+        "geo_focus": "Palm Beach County, Lake Worth",
+    }
+
+
+def _brief_fields_without_geo() -> dict[str, str]:
+    return {
+        "industry": "urgent care",
+        "product": "accident & injury care",
+        "location": "Florida",
+        "language": "en-US",
+        "audience": "adults 25-65 post-accident",
+    }
+
+
+# ---------------------------------------------------------------------------
+# GEO-05 — Geographic Focus callout
+# ---------------------------------------------------------------------------
+
+def test_geo_focus_section_rendered():
+    """GEO-05: render_geographic_focus_section returns markdown with '## Geographic Focus'."""
+    _skip_unless_geo_section()
+    md = render_report.render_geographic_focus_section(_brief_fields_with_geo())
+    assert "## Geographic Focus" in md
+    assert "Florida" in md
+    assert "Palm Beach County" in md
+    assert "Lake Worth" in md
+
+
+def test_geo_focus_section_omitted_when_empty():
+    """GEO-05: empty geo_focus → empty string (no heading)."""
+    _skip_unless_geo_section()
+    md = render_report.render_geographic_focus_section(_brief_fields_without_geo())
+    assert md == "" or "## Geographic Focus" not in md
+
+
+# ---------------------------------------------------------------------------
+# ADGM-06 — Next Steps step 3 rewrite when coverage > 50%
+# ---------------------------------------------------------------------------
+
+def test_next_steps_rewrite_high_coverage(brief_fields_phase10, forecast_phase10,
+                                            clusters_phase10_data,
+                                            compliance_empty_data):
+    """ADGM-06: coverage 60% (> 50) → step 3 rewrites to 'Add keywords to existing ad groups: ...'."""
+    _skip_unless_next_steps_mapping_aware()
+    mapping = json.loads(
+        (FIXTURES_DIR / "ad-group-mapping-60pct.json").read_text(encoding="utf-8")
+    )
+    _, steps = render_report.render_next_steps_section(
+        brief_fields_phase10, forecast_phase10,
+        compliance_empty_data, clusters_phase10_data,
+        ad_group_mapping=mapping,
+    )
+    step3 = steps[2]["text"]  # 0-indexed list, step 3 = index 2
+    assert "Add keywords to existing ad groups" in step3
+    # The 60pct fixture has at least 2 distinct existing ad-group names —
+    # confirm both groups appear with keyword counts.
+    assert "Accident Exams – Lake Worth" in step3
+    assert "Sports Injury" in step3 or "Car Injury Care" in step3
+
+
+def test_next_steps_no_rewrite_at_exactly_50pct(brief_fields_phase10, forecast_phase10,
+                                                  clusters_phase10_data,
+                                                  compliance_empty_data):
+    """ADGM-06 boundary (Pitfall 7 / Open-Q 4): coverage == 50.0 → NO rewrite (strict `>`)."""
+    _skip_unless_next_steps_mapping_aware()
+    mapping = json.loads(
+        (FIXTURES_DIR / "ad-group-mapping-50pct.json").read_text(encoding="utf-8")
+    )
+    _, steps = render_report.render_next_steps_section(
+        brief_fields_phase10, forecast_phase10,
+        compliance_empty_data, clusters_phase10_data,
+        ad_group_mapping=mapping,
+    )
+    step3 = steps[2]["text"]
+    # Boundary: standard step retained ("Create ad groups: ...").
+    assert "Create ad groups" in step3
+    assert "Add keywords to existing ad groups" not in step3
+
+
+def test_next_steps_no_rewrite_low_coverage(brief_fields_phase10, forecast_phase10,
+                                              clusters_phase10_data,
+                                              compliance_empty_data):
+    """ADGM-06 negative path: coverage 20% → step 3 stays at standard 'Create ad groups: ...'."""
+    _skip_unless_next_steps_mapping_aware()
+    mapping = json.loads(
+        (FIXTURES_DIR / "ad-group-mapping-20pct.json").read_text(encoding="utf-8")
+    )
+    _, steps = render_report.render_next_steps_section(
+        brief_fields_phase10, forecast_phase10,
+        compliance_empty_data, clusters_phase10_data,
+        ad_group_mapping=mapping,
+    )
+    step3 = steps[2]["text"]
+    assert "Create ad groups" in step3
+    assert "Add keywords to existing ad groups" not in step3
