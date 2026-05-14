@@ -1,0 +1,66 @@
+{
+  "metadata": {
+    "forecasted_at": "2026-05-14T00:00:00Z",
+    "ranked_input": "ranked-enriched.json",
+    "clusters_input": "clusters.json"
+  },
+  "clusters": [
+    {
+      "name": "same_day_delivery_transactional",
+      "intent": "transactional",
+      "keywords_count": 3,
+      "daily_clicks_low": 4,
+      "daily_clicks_mid": 8.0,
+      "daily_clicks_high": 12,
+      "daily_spend_low_usd": 1.40,
+      "daily_spend_mid_usd": 2.80,
+      "daily_spend_high_usd": 4.20
+    },
+    {
+      "name": "grocery_comparison_commercial",
+      "intent": "commercial",
+      "keywords_count": 3,
+      "daily_clicks_low": 3,
+      "daily_clicks_mid": 6.0,
+      "daily_clicks_high": 9,
+      "daily_spend_low_usd": 1.10,
+      "daily_spend_mid_usd": 2.20,
+      "daily_spend_high_usd": 3.30
+    },
+    {
+      "name": "grocery_delivery_basics_informational",
+      "intent": "informational",
+      "keywords_count": 2,
+      "daily_clicks_low": 2,
+      "daily_clicks_mid": 4.0,
+      "daily_clicks_high": 6,
+      "daily_spend_low_usd": 0.50,
+      "daily_spend_mid_usd": 1.00,
+      "daily_spend_high_usd": 1.50
+    }
+  ],
+  "campaign_totals": {
+    "daily_clicks_low": 9,
+    "daily_clicks_mid": 18.0,
+    "daily_clicks_high": 27,
+    "daily_spend_low_usd": 3.00,
+    "daily_spend_mid_usd": 12.50,
+    "daily_spend_high_usd": 9.00
+  },
+  "methodology": {
+    "intent_ctrs": {
+      "transactional": 0.045,
+      "commercial": 0.030,
+      "informational": 0.012,
+      "navigational": 0.040
+    },
+    "avg_cpc_ratio": 0.65,
+    "band_multipliers": {
+      "low": 0.5,
+      "mid": 1.0,
+      "high": 1.5
+    },
+    "disclaimer": "Directional anchor, not a Google Ads forecast. Calibrate against live data after 2-3 launches."
+  },
+  "unjoined_keywords": 0
+}

@@ -1,0 +1,20 @@
+{
+  "metadata": {
+    "scanned_at": "2026-05-14T00:00:00Z",
+    "top_n": 50,
+    "verticals_loaded": 5
+  },
+  "matched_verticals": [
+    {
+      "name": "medical",
+      "evidence_tokens": ["clinic", "patient"],
+      "evidence_sources": {
+        "brief": ["clinic"],
+        "keywords": ["patient"]
+      },
+      "matched_keyword_count": 3,
+      "verification_url": "https://support.google.com/adspolicy/answer/176031",
+      "policy_note": "Healthcare and medicines policy: certain medical products and services require additional verification with Google Ads."
+    }
+  ]
+}

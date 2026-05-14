@@ -1,0 +1,6 @@
+Campaign,Ad Group,Keyword,Match Type,Level
+Phase 10 Test Brief,,grocery delivery jobs,Phrase,campaign
+Phase 10 Test Brief,,free grocery delivery,Phrase,campaign
+Phase 10 Test Brief,same_day_delivery_transactional,used grocery delivery boxes,Phrase,ad_group
+Phase 10 Test Brief,grocery_comparison_commercial,ocado discount code,Exact,ad_group
+Phase 10 Test Brief,same_day_delivery_transactional,grocery delivery northern ireland,Phrase,ad_group

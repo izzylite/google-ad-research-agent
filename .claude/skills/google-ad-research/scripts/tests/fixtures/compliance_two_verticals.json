@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "scanned_at": "2026-05-14T00:00:00Z",
+    "top_n": 50,
+    "verticals_loaded": 5
+  },
+  "matched_verticals": [
+    {
+      "name": "medical",
+      "evidence_tokens": ["clinic"],
+      "evidence_sources": {
+        "brief": ["clinic"],
+        "keywords": []
+      },
+      "matched_keyword_count": 1,
+      "verification_url": "https://support.google.com/adspolicy/answer/176031",
+      "policy_note": "Healthcare and medicines policy."
+    },
+    {
+      "name": "legal",
+      "evidence_tokens": ["lawyer"],
+      "evidence_sources": {
+        "brief": ["lawyer"],
+        "keywords": ["attorney"]
+      },
+      "matched_keyword_count": 2,
+      "verification_url": "https://support.google.com/adspolicy/answer/6160903",
+      "policy_note": "Legal services policy."
+    }
+  ]
+}
