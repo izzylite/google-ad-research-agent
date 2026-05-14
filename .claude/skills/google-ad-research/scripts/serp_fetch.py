@@ -10,10 +10,12 @@
 
 CLI:
     uv run serp_fetch.py --run-dir <abs path> --seeds "kw1" "kw2" "kw3" --gl uk --hl en-GB
+    [--geo-focus "Palm Beach County" "Lake Worth"]
 
 Stdout (exactly one JSON line):
     {"raw_path": "<abs>", "seed_count": 3, "organic_count": 28, "paa_count": 12,
-     "related_count": 22, "ads_count": 4, "credits_used": 3}
+     "related_count": 22, "ads_count": 4, "credits_used": 3,
+     "geo_focus_tokens": ["..."]}
 
 Stderr: human-readable progress per seed (via lib/log.configure_logger()).
 
@@ -21,6 +23,10 @@ Exit codes:
     0  ok
     2  retryable upstream (429 after retries / 5xx after retries)
     3  fatal (auth 401/403 / IO / config)
+
+GEO-02 (Phase 11 plan 11-01): optional `--geo-focus` tokens are appended to
+each seed's `q` body field exactly once, with case-insensitive dedup against
+tokens already textually present in the seed (Pitfall 8).
 """
 from __future__ import annotations
 
@@ -41,6 +47,34 @@ from lib.log import configure_logger  # noqa: E402
 
 log = configure_logger()
 SERPER_URL = "https://google.serper.dev/search"
+
+# GEO-02 marker — tests detect Phase 11 plan 11-01 geo support via this attribute.
+_GEO_FOCUS_SUPPORTED: bool = True
+
+
+def _augment_seed_with_geo(seed: str, geo_focus_tokens: list[str]) -> str:
+    """Append geo_focus tokens to a seed query, skipping tokens already textually present.
+
+    Pitfall 8: avoid double-locating composites like 'lake worth car accident doctor'.
+    Case-insensitive substring guard; appends with single-space delimiter.
+
+    Examples:
+        >>> _augment_seed_with_geo("car accident doctor", ["Palm Beach County", "Lake Worth"])
+        'car accident doctor Palm Beach County Lake Worth'
+        >>> _augment_seed_with_geo("lake worth accident", ["Lake Worth"])
+        'lake worth accident'
+        >>> _augment_seed_with_geo("kw", [])
+        'kw'
+    """
+    augmented = seed
+    for token in geo_focus_tokens or ():
+        token = token.strip()
+        if not token:
+            continue
+        if token.lower() in augmented.lower():
+            continue
+        augmented = f"{augmented} {token}"
+    return augmented
 
 
 def fetch_seed(
@@ -140,6 +174,11 @@ def main_with_args(argv: list[str]) -> int:
     parser.add_argument("--location", default=None,
                         help="Optional Serper location string for finer geo targeting "
                              "(e.g. 'Lake Worth, Florida, United States').")
+    parser.add_argument("--geo-focus", nargs="*", default=[],
+                        help="Optional geo tokens (e.g., 'Palm Beach County' 'Lake Worth') "
+                             "appended to each seed query for locality bias. Skipped "
+                             "per-query when token already textually present "
+                             "(case-insensitive). GEO-02.")
     args = parser.parse_args(argv)
 
     # Validate run-dir up front (exit 3 — fatal IO/config error).
@@ -163,12 +202,20 @@ def main_with_args(argv: list[str]) -> int:
 
     aggregated: dict = {"by_seed": []}
 
+    geo_focus_tokens: list[str] = list(args.geo_focus or [])
+    if geo_focus_tokens:
+        log.info(f"Geo focus tokens: {geo_focus_tokens}")
+
     with build_client(timeout=30.0) as client:
         for seed in args.seeds:
-            log.info(f"Serper: {seed!r} (gl={args.gl}, hl={args.hl})")
+            # GEO-02: append geo_focus tokens to the query once each (Pitfall 8 dedup).
+            augmented_seed = _augment_seed_with_geo(seed, geo_focus_tokens)
+            log.info(
+                f"Serper: {augmented_seed!r} (gl={args.gl}, hl={args.hl})"
+            )
             try:
                 raw = fetch_seed(
-                    client, seed,
+                    client, augmented_seed,
                     gl=args.gl, hl=args.hl,
                     num=args.num, location=args.location, api_key=api_key,
                 )
@@ -177,11 +224,11 @@ def main_with_args(argv: list[str]) -> int:
                 if status in (401, 403):
                     log.error(f"Serper auth failure: {status}")
                     return 3
-                log.error(f"Serper retryable failure for {seed!r}: {exc}")
+                log.error(f"Serper retryable failure for {augmented_seed!r}: {exc}")
                 return 2
 
             aggregated["by_seed"].append(
-                normalise_response(raw, seed=seed, gl=args.gl, hl=args.hl)
+                normalise_response(raw, seed=augmented_seed, gl=args.gl, hl=args.hl)
             )
 
     out_path.write_text(json.dumps(aggregated, indent=2), encoding="utf-8")
@@ -200,6 +247,7 @@ def main_with_args(argv: list[str]) -> int:
         "related_count": related_total,
         "ads_count": ads_total,
         "credits_used": len(args.seeds),  # 1 credit per /search call per Serper pricing
+        "geo_focus_tokens": geo_focus_tokens,  # GEO-02 traceability
     }))
     return 0
 
