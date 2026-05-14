@@ -148,10 +148,10 @@ Milestone v1.2 — Phase 11 only. Team feedback driven: research narrows to spec
 
 ### Ad-Group Mapping (existing client structure)
 
-- [ ] **ADGM-01**: `ad_group_match.py` reads `raw/google-ads-perf.json` (Phase 8 GADS-02 output) + `raw/google-ads-search-terms.json` (GADS-01) to extract a `{existing_ad_group → [member_keywords]}` index. Skip silently when Phase 8 not run.
-- [ ] **ADGM-02**: For each ranked-enriched keyword, compute similarity to each existing ad group via token overlap + intent class match; pick highest-scoring match above a configurable threshold (default 0.4).
-- [ ] **ADGM-03**: Confidence tier per match — `high` (>= 0.7), `medium` (0.4-0.7), `low` (< 0.4 = no match, fallback to new cluster). Threshold values in a single config block, frozenset-asserted.
-- [ ] **ADGM-04**: Emits `ad-group-mapping.json` sidecar: `{matches: [{keyword, existing_ad_group, confidence, reason}], unmapped_count, mapping_coverage_pct}`.
+- [x] **ADGM-01**: `ad_group_match.py` reads `raw/google-ads-perf.json` (Phase 8 GADS-02 output) + `raw/google-ads-search-terms.json` (GADS-01) to extract a `{existing_ad_group → [member_keywords]}` index. Skip silently when Phase 8 not run.
+- [x] **ADGM-02**: For each ranked-enriched keyword, compute similarity to each existing ad group via token overlap + intent class match; pick highest-scoring match above a configurable threshold (default 0.4).
+- [x] **ADGM-03**: Confidence tier per match — `high` (>= 0.7), `medium` (0.4-0.7), `low` (< 0.4 = no match, fallback to new cluster). Threshold values in a single config block, frozenset-asserted.
+- [x] **ADGM-04**: Emits `ad-group-mapping.json` sidecar: `{matches: [{keyword, existing_ad_group, confidence, reason}], unmapped_count, mapping_coverage_pct}`.
 - [ ] **ADGM-05**: `export_csv.py` reads `ad-group-mapping.json` when present; positives.csv `Ad Group` column = existing ad group name for matched keywords, cluster slug for unmapped. ad_groups.csv lists only NEW ad groups (skip existing ones to avoid Editor duplicate-name errors).
 - [ ] **ADGM-06**: `render_report.py` Next Steps section conditionally rewrites when mapping coverage > 50% — "Add keywords to existing ad groups: <names>" replaces "Create ad groups: <new names>"; existing ad groups listed by name with keyword count.
 
@@ -264,10 +264,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GEO-03 | Phase 11 | Complete |
 | GEO-04 | Phase 11 | Complete |
 | GEO-05 | Phase 11 | Pending |
-| ADGM-01 | Phase 11 | Pending |
-| ADGM-02 | Phase 11 | Pending |
-| ADGM-03 | Phase 11 | Pending |
-| ADGM-04 | Phase 11 | Pending |
+| ADGM-01 | Phase 11 | Complete |
+| ADGM-02 | Phase 11 | Complete |
+| ADGM-03 | Phase 11 | Complete |
+| ADGM-04 | Phase 11 | Complete |
 | ADGM-05 | Phase 11 | Pending |
 | ADGM-06 | Phase 11 | Pending |
 

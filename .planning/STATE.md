@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: account-structure-mapping
 status: in_progress
-stopped_at: "Completed 11-01-PLAN.md (Wave 1 geo plumbing). 4 tasks committed (f14b6f5 + c4add00 + 87c9b4d + 7bbe02d). Suite: 217 passed / 22 skipped (was 203 / 36); 14 GEO-* RED stubs flipped GREEN, 0 regressions. Wave 1 plan 11-02 (ad_group_match.py core) can run independently next, or Wave 2 plan 11-03 once 11-02 lands."
-last_updated: "2026-05-14T22:57:50.360Z"
+stopped_at: "Completed 11-02-PLAN.md (Wave 1 ad_group_match.py core). 3 tasks committed (84ec60c + efaa871 + 479ce22). Suite: 230 passed / 9 skipped (full deps); 14/14 ad_group_match tests GREEN, 0 regressions. Wave 1 complete — Wave 2 plan 11-03 (export_csv + render_report integrations) now unblocked."
+last_updated: "2026-05-15T23:11:00Z"
 progress:
   total_phases: 11
   completed_phases: 10
   total_plans: 48
-  completed_plans: 41
+  completed_plans: 42
 ---
 
 # State: Google Ad Research Agent
@@ -26,10 +26,10 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | 11 — Account-Structure Mapping (Wave 1 plan 11-01 complete; 11-02 ready) |
-| Plan | 2 / 5 (11-00 + 11-01 complete) |
-| Status | Wave 1 geo plumbing shipped — Wave 1 plan 11-02 (ad_group_match.py core) ready; Wave 2 plan 11-03 gates on 11-02 |
-| Last activity | 2026-05-14 — 11-01 committed (Tasks 1-4: f14b6f5 / c4add00 / 87c9b4d / 7bbe02d); 217 passed / 22 skipped; 14 GEO-* RED→GREEN; 0 regressions |
+| Phase | 11 — Account-Structure Mapping (Wave 1 complete: 11-00 + 11-01 + 11-02) |
+| Plan | 3 / 5 (11-00 + 11-01 + 11-02 complete; 11-03 next) |
+| Status | Wave 1 complete — ad_group_match.py core shipped; Wave 2 plan 11-03 (export_csv + render_report integrations) unblocked |
+| Last activity | 2026-05-15 — 11-02 committed (Tasks 1-3: 84ec60c / efaa871 / 479ce22); 230 passed / 9 skipped (full deps); 14/14 ad_group_match tests GREEN; 0 regressions |
 
 ## Previous Milestone
 
@@ -43,7 +43,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 |--------|-------|
 | Phases planned | 11 / 11 |
 | Phases complete | 10 / 11 (v1.0 + v1.1 complete; Phase 11 Wave 0 shipped) |
-| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) + 1 (v1.1 Phase 10) + 1 (v1.2 Phase 11 Wave 0) |
+| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) + 1 (v1.1 Phase 10) + 3 (v1.2 Phase 11: Wave 0 + 11-01 + 11-02) |
 | v1.0 requirements complete | 52 / 52 |
 | v1.1 requirements complete | 13 / 23 (BIDS 4/4, FRCS 5/5, CMPL 4/5 — CMPL-05 mapped to Phase 10; EXPT-* / STEP-* RED-scaffolded in 10-00, GREEN in Wave 1+) |
 | Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
@@ -76,6 +76,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 11 P00 | 7min | 3 tasks | 11 created + 5 modified |
 | Phase 11 P00 | 7 | 3 tasks | 16 files |
 | Phase 11 P01 | 8 | 4 tasks | 6 files |
+| Phase 11 P02 | 6 | 3 tasks | 2 files |
 
 ### Execution History
 
@@ -192,6 +193,10 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 11]: [Phase 11-01] _build_city_filter normalises geo_focus via _strip_county_suffix once, then matches each state-cities entry on city name OR county value — Pitfall 5 city→county hierarchy verified by test_keyword_kept_when_city_county_in_geo_focus (boca raton survives Palm Beach focus)
 - [Phase 11]: [Phase 11-01] _augment_seed_with_geo case-insensitive substring dedup feeds BOTH POST body q AND persisted by_seed[].seed — Phase 3 downstream sees the same augmented query, no schema drift. Empty --geo-focus default preserves Phase 2-10 backward compat
 - [Phase 11]: [Phase 11-01] _GEO_FOCUS_SUPPORTED module marker on serp_fetch enables tests to detect Phase 11 wiring via hasattr without monkey-importing argparse internals; merge_signals exposes _US_CITIES_DATA_PATH constant for monkeypatch-style fixture injection PLUS --us-cities-path CLI flag as the production override path
+- [Phase 11]: [Phase 11-02] _INTENT_MARKERS['transactional'] extended with healthcare/service action words (doctor, clinic, treatment, exam, care, injury, appointment, service, repair, install) — plan's minimal lexicon (buy/order/book/cheap/delivery/price) was too sparse for paid-search ad-group bags, causing every fixture bag to default to 'commercial' and breaking test_token_bag_keyed_by_ad_group_name (0.5 raw jaccard × 0.5 mismatch = 0.25 → low → None)
+- [Phase 11]: [Phase 11-02] build_mapping rounds final score to 4 decimals (round(score, 4)) for stable JSON diff in committed mapping fixtures and snapshot tests — eliminates floating-point representation noise across platforms
+- [Phase 11]: [Phase 11-02] test_module_imports rewritten from Wave-0 stub-state assertions (assert not hasattr build_mapping + main raises NotImplementedError) to Wave-1 public-surface assertions (hasattr build_mapping/_tokens/_jaccard/_classify/_intent_match_multiplier/_infer_ad_group_intent/_build_ad_group_index + callable main_with_args) — original assertions were intrinsically incompatible with Wave 1 helpers landing
+- [Phase 11]: [Phase 11-02] test_coverage_pct_high_plus_medium_only rewritten with deterministic-jaccard keywords (6×0.7/2×0.5+0.4/2×0.0 against Accident-Exams–Lake-Worth bag) — original Wave-0 keywords ('hi 0' / 'med 0' / 'low 0') shared zero tokens with every ad-group bag, making asserted 80% coverage literally unachievable. Per-tier sanity counts added for explicit math contract
 
 ### Open Questions / Todos
 
@@ -209,11 +214,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-14T22:57:35.271Z
+**Last session:** 2026-05-15T23:07:16Z
 
-**Stopped at:** Completed 11-01-PLAN.md (Wave 1 geo plumbing). 4 tasks committed (f14b6f5 + c4add00 + 87c9b4d + 7bbe02d). Suite: 217 passed / 22 skipped (was 203 / 36); 14 GEO-* RED stubs flipped GREEN, 0 regressions. Wave 1 plan 11-02 (ad_group_match.py core) can run independently next, or Wave 2 plan 11-03 once 11-02 lands.
+**Stopped at:** Completed 11-02-PLAN.md (Wave 1 ad_group_match.py core). 3 tasks committed (84ec60c + efaa871 + 479ce22). Suite: 230 passed / 9 skipped (full deps); 14/14 ad_group_match tests GREEN, 0 regressions. Wave 1 complete — Wave 2 plan 11-03 (export_csv + render_report integrations) now unblocked.
 
-**Next session:** Execute Phase 11 Wave 1 — plan 11-01 (geo plumbing: run_init geo_focus parse + serp_fetch `--geo-focus` arg + merge_signals city filter + references/us-cities.json reference data file) and plan 11-02 (ad_group_match.py core: build_mapping + _jaccard + _tokens + _classify against the Wave-0 stub) in parallel. They share no mutated files.
+**Next session:** Execute Phase 11 Wave 2 — plan 11-03 (export_csv reads ad-group-mapping.json for positives Ad Group resolution + ad_groups.csv exclusion of existing — ADGM-05; render_report Next Steps step 3 rewrites when coverage_pct > 50.0 — ADGM-06). Then Wave 3 plan 11-04 (SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify smoke).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
