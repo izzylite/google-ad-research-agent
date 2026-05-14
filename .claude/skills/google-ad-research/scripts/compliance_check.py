@@ -301,16 +301,97 @@ def _default_verticals_path() -> Path:
 
 
 def main_with_args(argv: list[str]) -> int:
-    """CLI entrypoint stub — full implementation lands in Task 2 commit.
+    """CLI: compliance_check --run-dir <path> [--verticals-path <path>].
 
-    Lifts MODULE_MISSING in test_compliance_check.py so the non-CLI tests
-    (find_matches / load_verticals / scan) flip RED → GREEN immediately;
-    test_main_with_args_writes_compliance_flags + test_emits_empty_array_on_no_match
-    remain RED until Task 2 fills this body in.
+    Reads brief.md + ranked-enriched.json + references/compliance-verticals.json.
+    Writes {run_dir}/compliance-flags.json with the CMPL-01 schema.
+
+    Exit codes:
+        0  ok (file written; matched_verticals may be empty)
+        2  retryable (transient disk error)
+        3  fatal (missing input, malformed JSON, schema violation)
     """
-    raise NotImplementedError(
-        "compliance_check CLI not implemented yet — see Task 2 of 09-03-PLAN.md"
+    parser = argparse.ArgumentParser(
+        prog="compliance_check",
+        description=(
+            "Scan brief.md + top-N ranked keywords against vertical token "
+            "lists; emit compliance-flags.json sidecar (CMPL-01..02)."
+        ),
     )
+    parser.add_argument("--run-dir", required=True, type=Path)
+    parser.add_argument(
+        "--verticals-path",
+        type=Path,
+        default=None,
+        help=(
+            "Override path to compliance-verticals.json (default: skill-root/"
+            "references/compliance-verticals.json)."
+        ),
+    )
+
+    # argv[0]-skip heuristic — matches serp_fetch.py / volume_enrich.py /
+    # bid_suggest.py / forecast_budget.py. Accept either full sys.argv or
+    # args-only list.
+    args_only = argv[1:] if argv and not argv[0].startswith("-") else argv
+    args = parser.parse_args(args_only)
+
+    run_dir: Path = args.run_dir
+    if not run_dir.exists():
+        log.error("--run-dir does not exist: %s", run_dir)
+        return 3
+
+    verticals_path: Path = args.verticals_path or _default_verticals_path()
+    brief_path = run_dir / "brief.md"
+    ranked_path = run_dir / "ranked-enriched.json"
+
+    for p, label in (
+        (brief_path, "brief.md"),
+        (ranked_path, "ranked-enriched.json"),
+        (verticals_path, "compliance-verticals.json"),
+    ):
+        if not p.exists():
+            log.error("%s not found at %s", label, p)
+            return 3
+
+    try:
+        brief_text = brief_path.read_text(encoding="utf-8")
+        ranked: list[dict] = json.loads(ranked_path.read_text(encoding="utf-8"))
+        verticals = load_verticals(verticals_path)
+    except FileNotFoundError as exc:
+        log.error("Missing input: %s", exc)
+        return 3
+    except json.JSONDecodeError as exc:
+        log.error("Failed to parse input JSON: %s", exc)
+        return 3
+    except ValueError as exc:
+        log.error("Schema violation in compliance-verticals.json: %s", exc)
+        return 3
+    except OSError as exc:
+        log.error("Failed to read input file: %s", exc)
+        return 2
+
+    result: dict[str, Any] = scan(brief_text, ranked, verticals)
+    result["metadata"]["run_id"] = run_dir.name
+
+    # Atomic-ish write: write to .tmp then rename (matches forecast_budget.py).
+    out_path = run_dir / "compliance-flags.json"
+    try:
+        tmp = out_path.with_suffix(".json.tmp")
+        tmp.write_text(
+            json.dumps(result, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        tmp.replace(out_path)
+    except OSError as exc:
+        log.error("Failed to write compliance-flags.json: %s", exc)
+        return 2
+
+    summary = {
+        "matched_verticals_count": len(result["matched_verticals"]),
+        "verticals": [v["name"] for v in result["matched_verticals"]],
+    }
+    print(json.dumps(summary))
+    return 0
 
 
 if __name__ == "__main__":
