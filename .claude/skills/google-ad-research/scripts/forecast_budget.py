@@ -287,17 +287,85 @@ def build_forecast(
 # ---------------------------------------------------------------------------
 
 def main_with_args(argv: list[str]) -> int:
-    """CLI entrypoint stub — full implementation lands in Task 2.
+    """CLI: forecast_budget --run-dir <path>.
 
-    The body is intentionally a NotImplementedError so the MODULE_MISSING
-    guard in tests/test_forecast_budget.py lifts immediately (import
-    succeeds), while CLI behaviour-tests (test_main_with_args_*) still fail
-    until Task 2 replaces this stub.
+    Reads {run_dir}/ranked-enriched.json + {run_dir}/clusters.json,
+    writes {run_dir}/forecast.json with the FRCS-01 schema.
+
+    Exit codes:
+        0  ok
+        2  retryable (transient disk error)
+        3  fatal (missing input, malformed JSON)
     """
-    _ = argv
-    raise NotImplementedError(
-        "main_with_args lands in plan 09-02 Task 2 — see PLAN.md"
+    parser = argparse.ArgumentParser(
+        prog="forecast_budget",
+        description=(
+            "Write {run_dir}/forecast.json with per-cluster + campaign-level "
+            "click and spend bands (FRCS-01..05)."
+        ),
     )
+    parser.add_argument("--run-dir", required=True, type=Path)
+
+    # argv[0]-skip heuristic — matches serp_fetch.py / volume_enrich.py /
+    # bid_suggest.py. Accept either full sys.argv or args-only list.
+    args_only = (
+        argv[1:] if argv and not argv[0].startswith("-") else argv
+    )
+    args = parser.parse_args(args_only)
+
+    run_dir: Path = args.run_dir
+    if not run_dir.exists():
+        log.error("--run-dir does not exist: %s", run_dir)
+        return 3
+
+    ranked_path = run_dir / "ranked-enriched.json"
+    clusters_path = run_dir / "clusters.json"
+
+    for p, label in (
+        (ranked_path, "ranked-enriched.json"),
+        (clusters_path, "clusters.json"),
+    ):
+        if not p.exists():
+            log.error("%s not found at %s", label, p)
+            return 3
+
+    try:
+        ranked: list[dict] = json.loads(
+            ranked_path.read_text(encoding="utf-8")
+        )
+        clusters_data: dict[str, Any] = json.loads(
+            clusters_path.read_text(encoding="utf-8")
+        )
+    except json.JSONDecodeError as exc:
+        log.error("Failed to parse input JSON: %s", exc)
+        return 3
+    except OSError as exc:
+        log.error("Failed to read input file: %s", exc)
+        return 2
+
+    forecast = build_forecast(ranked, clusters_data, run_id=run_dir.name)
+
+    # Atomic-ish write: write to .tmp then rename.
+    out_path = run_dir / "forecast.json"
+    try:
+        tmp = out_path.with_suffix(".json.tmp")
+        tmp.write_text(
+            json.dumps(forecast, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        tmp.replace(out_path)
+    except OSError as exc:
+        log.error("Failed to write forecast.json: %s", exc)
+        return 2
+
+    summary = {
+        "clusters_forecast": len(forecast["clusters"]),
+        "keywords_in_forecast": forecast["campaign_totals"]["keyword_count"],
+        "daily_spend_mid_usd": forecast["campaign_totals"]["daily_spend_mid_usd"],
+        "unjoined_keywords": forecast["campaign_totals"]["unjoined_keywords"],
+    }
+    print(json.dumps(summary))
+    return 0
 
 
 if __name__ == "__main__":
