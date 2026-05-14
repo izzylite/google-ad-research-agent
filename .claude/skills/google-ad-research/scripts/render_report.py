@@ -139,6 +139,15 @@ USAGE_PULSE_NEGATIVES = (
 
 TIER_ORDER = ["Strong", "Considered", "Investigate"]
 
+# EXPT-05: canonical Export Files manifest. Drives both the report.md section
+# and the report.json exports[] array. Order matters — files appear in this
+# order in the bullet list and the JSON array.
+_EXPORT_FILE_DESCRIPTIONS: list[tuple[str, str]] = [
+    ("positives.csv", "keywords, ad-group assignments, suggested Max CPC."),
+    ("negatives.csv", "tiered negatives with Level column (campaign vs ad_group)."),
+    ("ad_groups.csv", "ad group definitions with Default Max CPC."),
+]
+
 # STEP-01: locked 8-step ops template. Step numbers derived from list
 # position at render time (CMPL-05 prepends a verification step when
 # compliance is non-empty — never hardcode step numbers in these strings).
@@ -726,6 +735,45 @@ def _derive_brief_slug(run_dir: Path) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _scan_exports(run_dir: Path) -> list[tuple[str, str]]:
+    """Scan {run_dir}/export/ for canonical CSVs. Returns list of
+    (filename, description) tuples in canonical order, or [] when absent.
+    """
+    export_dir = run_dir / "export"
+    if not export_dir.exists() or not export_dir.is_dir():
+        return []
+    return [
+        (name, desc)
+        for name, desc in _EXPORT_FILE_DESCRIPTIONS
+        if (export_dir / name).exists()
+    ]
+
+
+def list_export_paths(run_dir: Path) -> list[str]:
+    """Return POSIX-style relative export paths for report.json.exports[]."""
+    return [f"export/{name}" for name, _ in _scan_exports(run_dir)]
+
+
+def render_export_section(run_dir: Path) -> str:
+    """Render the Export Files section (EXPT-05) as markdown string.
+
+    Graceful degrade: missing export/ dir OR all 3 CSVs absent → "".
+    Partial presence: lists only files that exist.
+    """
+    present = _scan_exports(run_dir)
+    if not present:
+        return ""
+    parts = [
+        "## Export Files\n\n",
+        "_Google Ads Editor v2.x-importable CSVs produced by `export_csv.py`. "
+        "Paths are relative to this run folder._\n\n",
+    ]
+    for name, desc in present:
+        parts.append(f"- `export/{name}` — {desc}\n")
+    parts.append("\n")
+    return "".join(parts)
+
+
 def render_next_steps_section(
     brief_fields: dict[str, str],
     forecast: dict | None,
@@ -901,6 +949,13 @@ def render_full_report(
             render_keyword_table(ranked, top_n=top_n),
             "\n\n",
         ])
+    # Export Files (EXPT-05) — positioned above Next Steps so file list
+    # sits right above the ops checklist that references them.
+    export_md = render_export_section(run_dir)
+    if export_md:
+        sections.append("\n")
+        sections.append(export_md)
+
     # Next Steps (Phase 10 STEP-01..04 + CMPL-05) — LAST section.
     brief_fields = _parse_brief_fields(brief_text)
     next_steps_md, _ = render_next_steps_section(
@@ -1602,6 +1657,7 @@ def build_report_json(
     forecast: dict | None = None,
     compliance: dict | None = None,
     next_steps: list[dict] | None = None,
+    exports: list[str] | None = None,
 ) -> dict:
     """Return canonical v1 report.json dict (not serialized)."""
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -1652,6 +1708,7 @@ def build_report_json(
                 brief_fields, forecast, compliance, clusters_data
             )[1]
         ),
+        "exports": exports if exports is not None else list_export_paths(run_dir),
     }
 
 
@@ -1752,6 +1809,8 @@ def main(argv: list[str] | None = None) -> int:
     _, next_steps_list = render_next_steps_section(
         brief_fields_for_steps, forecast, compliance, clusters_data
     )
+    # Phase 10 EXPT-05 — Export Files list (relative POSIX paths).
+    exports_list = list_export_paths(run_dir)
 
     # Render
     report_md = render_full_report(
@@ -1772,6 +1831,7 @@ def main(argv: list[str] | None = None) -> int:
         forecast=forecast,
         compliance=compliance,
         next_steps=next_steps_list,
+        exports=exports_list,
     )
 
     report_html = render_html_report(report_json)
