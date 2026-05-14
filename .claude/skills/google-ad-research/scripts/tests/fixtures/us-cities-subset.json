@@ -1,0 +1,20 @@
+{
+  "fl": {
+    "lake worth": "palm beach",
+    "boca raton": "palm beach",
+    "west palm beach": "palm beach",
+    "tampa": "hillsborough",
+    "miami": "miami-dade",
+    "jacksonville": "duval",
+    "hollywood": "broward"
+  },
+  "tx": {
+    "lake worth": "tarrant",
+    "dallas": "dallas",
+    "houston": "harris"
+  },
+  "ca": {
+    "los angeles": "los angeles",
+    "hollywood": "los angeles"
+  }
+}

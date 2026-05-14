@@ -1,0 +1,115 @@
+{
+  "fetched_at": "2026-05-14T16:00:54.102686Z",
+  "horizon_days": 30,
+  "customer_id": "4580213643",
+  "items": [
+    {
+      "search_term": "car accident doctor lake worth",
+      "match_type": "NEAR_EXACT",
+      "impressions": 340,
+      "clicks": 12,
+      "cost_micros": 18200000,
+      "cost_usd": 18.20,
+      "conversions": 0.0,
+      "conversions_value": 0.0,
+      "campaign_name": "Primary Urgent Care",
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "search_term": "lake worth accident exam",
+      "match_type": "NEAR_PHRASE",
+      "impressions": 120,
+      "clicks": 4,
+      "cost_micros": 6400000,
+      "cost_usd": 6.40,
+      "conversions": 0.0,
+      "conversions_value": 0.0,
+      "campaign_name": "Primary Urgent Care",
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "search_term": "car accident clinic palm beach",
+      "match_type": "EXACT",
+      "impressions": 80,
+      "clicks": 3,
+      "cost_micros": 4500000,
+      "cost_usd": 4.50,
+      "conversions": 0.0,
+      "conversions_value": 0.0,
+      "campaign_name": "Primary Urgent Care",
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "search_term": "auto accident doctor near me",
+      "match_type": "NEAR_PHRASE",
+      "impressions": 60,
+      "clicks": 2,
+      "cost_micros": 3100000,
+      "cost_usd": 3.10,
+      "conversions": 0.0,
+      "conversions_value": 0.0,
+      "campaign_name": "Primary Urgent Care",
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "search_term": "sports injury clinic",
+      "match_type": "EXACT",
+      "impressions": 95,
+      "clicks": 4,
+      "cost_micros": 6400000,
+      "cost_usd": 6.40,
+      "conversions": 0.0,
+      "conversions_value": 0.0,
+      "campaign_name": "Primary Urgent Care",
+      "ad_group_name": "Sports Injury"
+    },
+    {
+      "search_term": "sports injury doctor",
+      "match_type": "NEAR_PHRASE",
+      "impressions": 50,
+      "clicks": 2,
+      "cost_micros": 3200000,
+      "cost_usd": 3.20,
+      "conversions": 0.0,
+      "conversions_value": 0.0,
+      "campaign_name": "Primary Urgent Care",
+      "ad_group_name": "Sports Injury"
+    },
+    {
+      "search_term": "athletic injury treatment",
+      "match_type": "NEAR_PHRASE",
+      "impressions": 30,
+      "clicks": 1,
+      "cost_micros": 1500000,
+      "cost_usd": 1.50,
+      "conversions": 0.0,
+      "conversions_value": 0.0,
+      "campaign_name": "Primary Urgent Care",
+      "ad_group_name": "Sports Injury"
+    },
+    {
+      "search_term": "car injury care",
+      "match_type": "EXACT",
+      "impressions": 70,
+      "clicks": 3,
+      "cost_micros": 4600000,
+      "cost_usd": 4.60,
+      "conversions": 0.0,
+      "conversions_value": 0.0,
+      "campaign_name": "Primary Urgent Care",
+      "ad_group_name": "Car Injury Care"
+    },
+    {
+      "search_term": "auto accident injury treatment",
+      "match_type": "NEAR_PHRASE",
+      "impressions": 50,
+      "clicks": 3,
+      "cost_micros": 4600000,
+      "cost_usd": 4.60,
+      "conversions": 0.0,
+      "conversions_value": 0.0,
+      "campaign_name": "Primary Urgent Care",
+      "ad_group_name": "Car Injury Care"
+    }
+  ]
+}

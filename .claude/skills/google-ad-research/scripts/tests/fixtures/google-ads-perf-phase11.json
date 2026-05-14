@@ -1,0 +1,66 @@
+{
+  "fetched_at": "2026-05-14T16:00:54.102686Z",
+  "horizon_days": 30,
+  "customer_id": "4580213643",
+  "campaigns": [
+    {
+      "campaign_id": "23334357960",
+      "name": "Primary Urgent Care",
+      "status": "ENABLED",
+      "channel": "SEARCH",
+      "impressions": 501,
+      "clicks": 36,
+      "cost_usd": 1826.78,
+      "conversions": 2.0,
+      "conversions_value": 100.0,
+      "cpa_usd": 913.39,
+      "roas": 0.054
+    }
+  ],
+  "ad_groups": [
+    {
+      "ad_group_id": "189273064986",
+      "name": "Accident Exams – Lake Worth",
+      "status": "ENABLED",
+      "campaign_name": "Primary Urgent Care",
+      "impressions": 501,
+      "clicks": 36,
+      "cost_usd": 1826.78,
+      "conversions": 2.0,
+      "conversions_value": 100.0
+    },
+    {
+      "ad_group_id": "177906406490",
+      "name": "Sports Injury",
+      "status": "ENABLED",
+      "campaign_name": "Primary Urgent Care",
+      "impressions": 95,
+      "clicks": 4,
+      "cost_usd": 6.40,
+      "conversions": 0.0,
+      "conversions_value": 0.0
+    },
+    {
+      "ad_group_id": "177906406530",
+      "name": "Car Injury Care",
+      "status": "ENABLED",
+      "campaign_name": "Primary Urgent Care",
+      "impressions": 120,
+      "clicks": 6,
+      "cost_usd": 9.20,
+      "conversions": 0.0,
+      "conversions_value": 0.0
+    },
+    {
+      "ad_group_id": "177906406690",
+      "name": "Old Legacy Ad Group",
+      "status": "REMOVED",
+      "campaign_name": "Primary Urgent Care",
+      "impressions": 0,
+      "clicks": 0,
+      "cost_usd": 0.0,
+      "conversions": 0.0,
+      "conversions_value": 0.0
+    }
+  ]
+}

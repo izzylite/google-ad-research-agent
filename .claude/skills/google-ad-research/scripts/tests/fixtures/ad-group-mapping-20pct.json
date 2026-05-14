@@ -1,0 +1,18 @@
+{
+  "matches": [
+    {"keyword": "lake worth accident doctor", "existing_ad_group": "Accident Exams – Lake Worth", "confidence": "high", "score": 0.82, "reason": "jaccard=0.82 intent_match=true"},
+    {"keyword": "sports injury clinic", "existing_ad_group": "Sports Injury", "confidence": "medium", "score": 0.52, "reason": "jaccard=0.52 intent_match=true"},
+    {"keyword": "near me accident doctor", "existing_ad_group": "Accident Exams – Lake Worth", "confidence": "low", "score": 0.32, "reason": "jaccard=0.64 intent_match=false (*0.5)"},
+    {"keyword": "best chiropractor", "existing_ad_group": "Sports Injury", "confidence": "low", "score": 0.28, "reason": "jaccard=0.56 intent_match=false (*0.5)"},
+    {"keyword": "physical therapy office", "existing_ad_group": "Sports Injury", "confidence": "low", "score": 0.22, "reason": "jaccard=0.44 intent_match=false (*0.5)"},
+    {"keyword": "neck pain treatment", "existing_ad_group": "Car Injury Care", "confidence": "low", "score": 0.18, "reason": "jaccard=0.36 intent_match=false (*0.5)"},
+    {"keyword": "back pain specialist", "existing_ad_group": "Car Injury Care", "confidence": "low", "score": 0.15, "reason": "jaccard=0.30 intent_match=false (*0.5)"},
+    {"keyword": "auto pain doctor", "existing_ad_group": "Car Injury Care", "confidence": "low", "score": 0.12, "reason": "jaccard=0.24 intent_match=false (*0.5)"},
+    {"keyword": "knee injury specialist", "existing_ad_group": "Sports Injury", "confidence": "low", "score": 0.10, "reason": "jaccard=0.20 intent_match=false (*0.5)"},
+    {"keyword": "shoulder pain treatment", "existing_ad_group": "Car Injury Care", "confidence": "low", "score": 0.08, "reason": "jaccard=0.16 intent_match=false (*0.5)"}
+  ],
+  "unmapped_count": 8,
+  "mapping_coverage_pct": 20.0,
+  "computed_at": "2026-05-14T22:00:00Z",
+  "skipped_reason": null
+}
