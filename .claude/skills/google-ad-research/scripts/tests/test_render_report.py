@@ -391,3 +391,144 @@ def test_report_json_compliance_array(run_dir, ranked_data, clusters_data,
     assert isinstance(report["compliance"], list)
     assert len(report["compliance"]) == 1
     assert report["compliance"][0]["name"] == "medical"
+
+
+# ===========================================================================
+# Phase 9 Plan 04 — Task 2 tests
+#   FRCS-04: Budget Forecast section in report.md (between Clusters & Negatives)
+#   FRCS-05: "How this is calculated" subsection (CTRs, ratios, multipliers, disclaimer)
+# ===========================================================================
+
+
+def _sample_forecast() -> dict:
+    """Minimal forecast.json dict shape (per forecast_budget.build_forecast)."""
+    return {
+        "metadata": {
+            "generated_at": "2026-05-14T18:30:00Z",
+            "run_id": "test-run",
+            "schema_version": "v1",
+            "horizon": "daily",
+        },
+        "methodology": {
+            "intent_ctrs": {
+                "transactional": 0.06,
+                "commercial":    0.04,
+                "informational": 0.02,
+                "navigational":  0.08,
+            },
+            "avg_cpc_ratio": 0.65,
+            "band_multipliers": {"low": 0.5, "mid": 1.0, "high": 1.5},
+            "notes": (
+                "Forecast is directional — not Google's official forecast. "
+                "Bands ×0.5/×1.0/×1.5; avg CPC = suggested max CPC × 0.65."
+            ),
+        },
+        "clusters": [
+            {
+                "name": "same_day_delivery_transactional",
+                "intent": "transactional",
+                "keyword_count": 3,
+                "keywords_with_volume": 3,
+                "total_monthly_volume": 9200,
+                "daily_clicks_low": 9,
+                "daily_clicks_mid": 18.4,
+                "daily_clicks_high": 28,
+                "daily_spend_low_usd": 2.89,
+                "daily_spend_mid_usd": 5.78,
+                "daily_spend_high_usd": 8.67,
+                "monthly_spend_mid_usd": 173.4,
+                "unjoined_keywords": 0,
+            },
+        ],
+        "campaign_totals": {
+            "cluster_count": 1,
+            "keyword_count": 3,
+            "daily_clicks_low": 9,
+            "daily_clicks_mid": 18.4,
+            "daily_clicks_high": 28,
+            "daily_spend_low_usd": 2.89,
+            "daily_spend_mid_usd": 5.78,
+            "daily_spend_high_usd": 8.67,
+            "monthly_spend_mid_usd": 173.4,
+            "unjoined_keywords": 0,
+        },
+    }
+
+
+def test_forecast_section_in_report(run_dir, ranked_data, clusters_data,
+                                     competitor_intel_data, negatives_data,
+                                     brief_text):
+    """FRCS-04: render_full_report includes '## Budget Forecast' when forecast supplied."""
+    from render_report import render_full_report
+
+    md = render_full_report(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+        forecast=_sample_forecast(),
+    )
+    assert "## Budget Forecast" in md
+
+
+def test_forecast_section_position(run_dir, ranked_data, clusters_data,
+                                    competitor_intel_data, negatives_data,
+                                    brief_text):
+    """FRCS-04: Budget Forecast lands between Ad Group Clusters and Negative Keywords."""
+    from render_report import render_full_report
+
+    md = render_full_report(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+        forecast=_sample_forecast(),
+    )
+    idx_clusters = md.index("## Ad Group Clusters")
+    idx_forecast = md.index("## Budget Forecast")
+    idx_negatives = md.index("## Negative Keywords")
+    assert idx_clusters < idx_forecast < idx_negatives
+
+
+def test_forecast_methodology_present(run_dir, ranked_data, clusters_data,
+                                       competitor_intel_data, negatives_data,
+                                       brief_text):
+    """FRCS-05: 'How this is calculated' subsection names CTR anchors, avg-CPC ratio, bands, disclaimer."""
+    from render_report import render_full_report
+
+    md = render_full_report(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+        forecast=_sample_forecast(),
+    )
+    assert "### How this is calculated" in md
+    # All four intent labels by name
+    for intent in ("transactional", "commercial", "informational", "navigational"):
+        assert intent in md
+    # avg-CPC ratio mention (0.65)
+    assert "0.65" in md
+    # Disclaimer keyword (verbatim from methodology.notes — "directional")
+    assert "directional" in md
+
+
+def test_no_forecast_section_when_data_absent(run_dir, ranked_data, clusters_data,
+                                               competitor_intel_data, negatives_data,
+                                               brief_text):
+    """FRCS-04 graceful degrade: no forecast kwarg → 'Budget Forecast' NOT in report."""
+    from render_report import render_full_report
+
+    md = render_full_report(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+    )
+    assert "Budget Forecast" not in md
+
+
+def test_no_forecast_section_when_empty_dict(run_dir, ranked_data, clusters_data,
+                                              competitor_intel_data, negatives_data,
+                                              brief_text):
+    """FRCS-04: forecast={} (no clusters[]) → 'Budget Forecast' NOT in report."""
+    from render_report import render_full_report
+
+    md = render_full_report(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+        forecast={},
+    )
+    assert "Budget Forecast" not in md

@@ -472,6 +472,105 @@ def render_negatives_sync_section(sync: dict) -> str:
     return "".join(parts)
 
 
+def render_forecast_section(forecast: dict | None) -> str:
+    """Render the Budget Forecast section (FRCS-04 + FRCS-05) as markdown.
+
+    Returns an empty string when forecast is None / missing clusters[] —
+    callers can append unconditionally; graceful-degrade is built in.
+
+    Sections:
+      * Per-cluster table (Cluster | Intent | Keywords | Daily Clicks | Daily Spend | Monthly Spend)
+      * Campaign Totals one-liner
+      * "How this is calculated" subsection naming CTR anchors, avg-CPC ratio,
+        band multipliers, and the verbatim methodology.notes disclaimer
+        (single source of truth for FRCS-05 — sourced from forecast_budget.py).
+    """
+    if not forecast or not isinstance(forecast, dict):
+        return ""
+    clusters = forecast.get("clusters") or []
+    if not clusters:
+        return ""
+
+    parts = ["## Budget Forecast\n\n"]
+    parts.append(
+        "_Directional estimates — not Google's official forecast. Use the "
+        "**mid** band for a sane Day 1 budget; bracket with low/high once "
+        "click-through data lands._\n\n"
+    )
+
+    # Per-cluster table
+    rows = []
+    for c in clusters:
+        name = escape_md_cell(c.get("name", "") or "")
+        intent = escape_md_cell(c.get("intent", "") or "")
+        kw_count = c.get("keyword_count", 0)
+        with_vol = c.get("keywords_with_volume", 0)
+        clicks_low = c.get("daily_clicks_low", 0)
+        clicks_mid = c.get("daily_clicks_mid", 0)
+        clicks_high = c.get("daily_clicks_high", 0)
+        spend_low = c.get("daily_spend_low_usd", 0)
+        spend_mid = c.get("daily_spend_mid_usd", 0)
+        spend_high = c.get("daily_spend_high_usd", 0)
+        monthly_mid = c.get("monthly_spend_mid_usd", 0)
+        rows.append([
+            name,
+            intent,
+            f"{kw_count} ({with_vol} with vol)",
+            f"{clicks_low}/{clicks_mid}/{clicks_high}",
+            f"${spend_low:.2f}/${spend_mid:.2f}/${spend_high:.2f}",
+            f"${monthly_mid:.2f}",
+        ])
+    headers = [
+        "Cluster", "Intent", "Keywords",
+        "Daily Clicks (lo/mid/hi)", "Daily Spend USD (lo/mid/hi)",
+        "Monthly Spend Mid USD",
+    ]
+    parts.append(tabulate(rows, headers=headers, tablefmt="github"))
+    parts.append("\n\n")
+
+    # Campaign totals one-liner
+    totals = forecast.get("campaign_totals", {}) or {}
+    if totals:
+        parts.append(
+            f"**Campaign Totals:** Daily "
+            f"{totals.get('daily_clicks_low', 0)}/"
+            f"{totals.get('daily_clicks_mid', 0)}/"
+            f"{totals.get('daily_clicks_high', 0)} clicks · "
+            f"${totals.get('daily_spend_low_usd', 0):.2f}/"
+            f"${totals.get('daily_spend_mid_usd', 0):.2f}/"
+            f"${totals.get('daily_spend_high_usd', 0):.2f} daily spend · "
+            f"${totals.get('monthly_spend_mid_usd', 0):.2f} monthly (mid).\n\n"
+        )
+
+    # "How this is calculated" — FRCS-05 methodology mirrors module constants
+    method = forecast.get("methodology", {}) or {}
+    ctrs = method.get("intent_ctrs", {}) or {}
+    ratio = method.get("avg_cpc_ratio", 0.65)
+    bands = method.get("band_multipliers", {}) or {}
+    notes = method.get("notes", "") or ""
+
+    parts.append("### How this is calculated\n\n")
+    parts.append(
+        f"- **Clicks** = monthly search volume × intent-class CTR ÷ 30 days. "
+        f"CTR anchors: transactional {ctrs.get('transactional', 0)*100:.0f}%, "
+        f"commercial {ctrs.get('commercial', 0)*100:.0f}%, "
+        f"informational {ctrs.get('informational', 0)*100:.0f}%, "
+        f"navigational {ctrs.get('navigational', 0)*100:.0f}%.\n"
+    )
+    parts.append(
+        f"- **Spend** = clicks × (suggested max CPC × {ratio}) (avg-CPC ratio).\n"
+    )
+    parts.append(
+        f"- **Bands** = mid × {bands.get('low', 0.5)} (low) / "
+        f"× {bands.get('mid', 1.0)} (mid) / "
+        f"× {bands.get('high', 1.5)} (high).\n"
+    )
+    if notes:
+        parts.append(f"- {escape_md_cell(notes, max_len=400)}\n")
+
+    return "".join(parts)
+
+
 def render_negatives_section(negatives: list[dict]) -> str:
     """Render the Negative Keywords section with Strong/Considered/Investigate tiers."""
     by_tier: dict[str, list[dict]] = {t: [] for t in TIER_ORDER}
@@ -563,6 +662,8 @@ def render_full_report(
     niche_pulse: dict | None = None,
     account_perf: dict | None = None,
     negatives_sync: dict | None = None,
+    forecast: dict | None = None,
+    compliance: dict | None = None,
 ) -> str:
     """Return full report.md content as a string."""
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -601,10 +702,20 @@ def render_full_report(
     if negatives_sync:
         sections.append("\n")
         sections.append(render_negatives_sync_section(negatives_sync))
-    # Ad groups + negatives (evergreen)
+    # Ad groups (evergreen)
     sections.extend([
         "\n",
         render_clusters_section(clusters_data),
+    ])
+    # Budget Forecast (Phase 9 FRCS-04) — between Clusters and Negatives.
+    # render_forecast_section returns "" when forecast is None / clusters absent,
+    # so we can append unconditionally (graceful degrade).
+    forecast_md = render_forecast_section(forecast)
+    if forecast_md:
+        sections.append("\n")
+        sections.append(forecast_md)
+    # Negatives + Competitor (evergreen)
+    sections.extend([
         "\n",
         render_negatives_section(negatives),
         "\n",
@@ -1326,6 +1437,25 @@ def main(argv: list[str] | None = None) -> int:
         except (json.JSONDecodeError, OSError):
             negatives_sync = None
 
+    # Load optional Phase 9 sidecars (forecast.json + compliance-flags.json).
+    # Missing files degrade gracefully — sections are simply omitted from the
+    # report. Mirrors the niche-pulse / account-perf / negatives-sync pattern.
+    forecast: dict | None = None
+    forecast_path = run_dir / "forecast.json"
+    if forecast_path.exists():
+        try:
+            forecast = json.loads(forecast_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            forecast = None
+
+    compliance: dict | None = None
+    compliance_path = run_dir / "compliance-flags.json"
+    if compliance_path.exists():
+        try:
+            compliance = json.loads(compliance_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            compliance = None
+
     # Render
     report_md = render_full_report(
         ranked, clusters_data, competitor_intel, negatives,
@@ -1333,6 +1463,8 @@ def main(argv: list[str] | None = None) -> int:
         niche_pulse=niche_pulse,
         account_perf=account_perf,
         negatives_sync=negatives_sync,
+        forecast=forecast,
+        compliance=compliance,
     )
     report_json = build_report_json(
         ranked, clusters_data, competitor_intel, negatives,
@@ -1340,6 +1472,8 @@ def main(argv: list[str] | None = None) -> int:
         niche_pulse=niche_pulse,
         account_perf=account_perf,
         negatives_sync=negatives_sync,
+        forecast=forecast,
+        compliance=compliance,
     )
 
     report_html = render_html_report(report_json)
