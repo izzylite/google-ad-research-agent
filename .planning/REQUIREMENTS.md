@@ -106,10 +106,10 @@ Milestone v1.1 — campaign launch kit additions. Builds on v1.0 artifacts (rank
 
 ### Max-CPC Bid Suggestions
 
-- [ ] **BIDS-01**: `bid_suggest.py` (or extension to volume_enrich.py) adds `suggested_max_cpc_micros` column to `ranked-enriched.json` derived from `cpc_micros × intent_multiplier` (transactional 1.2, commercial 0.8, informational 0.4, navigational 1.0)
-- [ ] **BIDS-02**: Keywords with no Ahrefs `cpc_micros` data fall back to cluster-median CPC × intent_multiplier; if cluster has no CPC data at all, suggested_max_cpc is `null` and flagged `no_cpc_data` in report
+- [x] **BIDS-01**: `bid_suggest.py` (or extension to volume_enrich.py) adds `suggested_max_cpc_micros` column to `ranked-enriched.json` derived from `cpc_micros × intent_multiplier` (transactional 1.2, commercial 0.8, informational 0.4, navigational 1.0)
+- [x] **BIDS-02**: Keywords with no Ahrefs `cpc_micros` data fall back to cluster-median CPC × intent_multiplier; if cluster has no CPC data at all, suggested_max_cpc is `null` and flagged `no_cpc_data` in report
 - [ ] **BIDS-03**: Report ranked-enriched table renders `Suggested Max CPC` column (USD with cents); HTML report shows the multiplier in a tooltip on hover
-- [ ] **BIDS-04**: Bid multipliers are loaded from a single config block at top of `bid_suggest.py` (no magic numbers scattered across code) so operator can tune in one place
+- [x] **BIDS-04**: Bid multipliers are loaded from a single config block at top of `bid_suggest.py` (no magic numbers scattered across code) so operator can tune in one place
 
 ### Budget Forecast
 
@@ -215,10 +215,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RPRT-05 | Phase 6 | Complete |
 | PRST-01 | Phase 6 | Complete |
 | PRST-02 | Phase 6 | Complete |
-| BIDS-01 | Phase 9 | Pending |
-| BIDS-02 | Phase 9 | Pending |
+| BIDS-01 | Phase 9 | Complete |
+| BIDS-02 | Phase 9 | Complete |
 | BIDS-03 | Phase 9 | Pending |
-| BIDS-04 | Phase 9 | Pending |
+| BIDS-04 | Phase 9 | Complete |
 | FRCS-01 | Phase 9 | Pending |
 | FRCS-02 | Phase 9 | Pending |
 | FRCS-03 | Phase 9 | Pending |
