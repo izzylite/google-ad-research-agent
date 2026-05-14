@@ -127,22 +127,135 @@ def _infer_ad_group_intent(token_bag: frozenset[str]) -> str:
     return best
 
 
-def _build_ad_group_index(perf, search_terms):  # pragma: no cover — Task 2 fills in
-    """Wave 1 Task 1 placeholder — Task 2 ships the real implementation."""
-    raise NotImplementedError(
-        "_build_ad_group_index is implemented in plan 11-02 Task 2 (Wave 1)."
-    )
+from datetime import datetime, timezone
+from typing import Any
 
 
-def build_mapping(ranked, perf, search_terms):  # pragma: no cover — Task 2 fills in
-    """Wave 1 Task 1 placeholder — Task 2 ships the real implementation.
+def _now_iso_z() -> str:
+    """UTC timestamp in `YYYY-MM-DDTHH:MM:SSZ` form (ad-group-mapping.json contract)."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    Stub exists so per-function `_skip_unless_build_mapping()` guard in tests
-    flips from SKIP→ACTIVE, letting Task 1's pure-helper tests execute.
+
+def _build_ad_group_index(
+    perf: dict, search_terms: dict
+) -> dict[str, dict[str, Any]]:
+    """Build {ad_group_name: {token_bag, inferred_intent, status}} from Phase 8 raws.
+
+    - Filters perf.ad_groups[] to status='ENABLED' (REMOVED dropped).
+    - Buckets search_terms.items[] by ad_group_name (Pitfall 1 — verified key).
+    - Drops ad groups with empty token bags (no search-term coverage in 30-day window).
+    - Preserves original ad_group_name string byte-for-byte (Pitfall 2 — Unicode dashes).
     """
-    raise NotImplementedError(
-        "build_mapping is implemented in plan 11-02 Task 2 (Wave 1)."
-    )
+    # 1. Enumerate ENABLED ad groups from perf.ad_groups[]
+    enabled_names: set[str] = set()
+    for ag in (perf or {}).get("ad_groups", []) or []:
+        name = ag.get("name")
+        status = (ag.get("status") or "").upper()
+        if name and status == "ENABLED":
+            enabled_names.add(name)
+
+    # 2. Bucket search_terms.items[] by ad_group_name (Pitfall 1 — name, NOT id)
+    buckets: dict[str, set[str]] = {}
+    for item in (search_terms or {}).get("items", []) or []:
+        ag_name = item.get("ad_group_name")
+        term = item.get("search_term") or ""
+        if not ag_name or ag_name not in enabled_names:
+            continue
+        tokens = _tokens(term)
+        if not tokens:
+            continue
+        buckets.setdefault(ag_name, set()).update(tokens)
+
+    # 3. Build the index — drop empty bags (Pitfall 6 edge — no search coverage)
+    index: dict[str, dict[str, Any]] = {}
+    for ag_name, bag in buckets.items():
+        if not bag:
+            continue
+        frozen = frozenset(bag)
+        index[ag_name] = {
+            "token_bag": frozen,
+            "inferred_intent": _infer_ad_group_intent(frozen),
+            "status": "ENABLED",
+        }
+    return index
+
+
+def build_mapping(
+    ranked: list[dict],
+    perf: dict,
+    search_terms: dict,
+) -> dict[str, Any]:
+    """Compute the ad-group-mapping.json body. See module docstring for schema.
+
+    Algorithm (ADGM-02):
+        score = jaccard(kw_tokens, ag.token_bag) * intent_multiplier
+        intent_multiplier = 1.0 if kw.intent == ag.inferred_intent else 0.5
+
+    Confidence tiers (ADGM-03):
+        high   >= 0.7
+        medium 0.4..0.7
+        low    < 0.4  →  existing_ad_group=None (no claim of match)
+
+    Coverage % (Pitfall 7):
+        (high + medium count) / total_ranked * 100  —  low EXCLUDED
+    """
+    index = _build_ad_group_index(perf, search_terms)
+    matches: list[dict[str, Any]] = []
+    unmapped_count = 0
+    match_count = 0  # high + medium only (Pitfall 7)
+
+    for kw in ranked or []:
+        kw_text = (kw.get("keyword") or "").strip()
+        kw_intent = (kw.get("intent") or "").lower()
+        kw_tokens = _tokens(kw_text)
+
+        best_score = 0.0
+        best_ag_name: str | None = None
+        best_jaccard = 0.0
+        best_intent_match = False
+
+        for ag_name, ag in index.items():
+            raw_j = _jaccard(kw_tokens, ag["token_bag"])
+            if raw_j == 0.0:
+                continue
+            intent_match = kw_intent == ag["inferred_intent"]
+            score = raw_j * (
+                1.0 if intent_match else _DEFAULT_INTENT_MISMATCH_MULTIPLIER
+            )
+            if score > best_score:
+                best_score = score
+                best_ag_name = ag_name
+                best_jaccard = raw_j
+                best_intent_match = intent_match
+
+        confidence = _classify(best_score)
+        if confidence == "low":
+            unmapped_count += 1
+            resolved_ag = None
+        else:
+            match_count += 1
+            resolved_ag = best_ag_name
+
+        matches.append({
+            "keyword": kw_text,
+            "existing_ad_group": resolved_ag,
+            "confidence": confidence,
+            "score": round(best_score, 4),
+            "reason": (
+                f"jaccard={best_jaccard:.2f} intent_match={best_intent_match}"
+            ),
+        })
+
+    total = len(matches)
+    coverage_pct = round((match_count / total * 100.0), 2) if total else 0.0
+
+    return {
+        "matches": matches,
+        "unmapped_count": unmapped_count,
+        "mapping_coverage_pct": coverage_pct,
+        "computed_at": _now_iso_z(),
+        "skipped_reason": None,
+    }
 
 
 def main_with_args(argv: list[str]) -> int:  # pragma: no cover — Task 3 fills in

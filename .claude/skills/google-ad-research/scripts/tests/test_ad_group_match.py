@@ -172,25 +172,52 @@ def test_mapping_shape_keys():
 
 
 def test_coverage_pct_high_plus_medium_only(tmp_path):
-    """coverage_pct counts (high + medium) / total_ranked; low excluded (Pitfall 7)."""
+    """coverage_pct counts (high + medium) / total_ranked; low excluded (Pitfall 7).
+
+    Crafted against the Phase 11 fixture so the math is deterministic:
+    "Accident Exams – Lake Worth" token bag is the union of its 4 search
+    terms (Pitfall 3 stopwords applied) =
+        {car, accident, doctor, lake, worth, exam, clinic, palm, beach, auto}
+    The bag has 10 tokens; inferred intent is `transactional` (clinic/doctor/
+    exam markers ≥3). All 10 ranked keywords below use intent=transactional
+    so intent_multiplier=1.0 and score == raw_jaccard.
+
+    Six keywords share 7 tokens with the 10-token bag → jaccard 7/10=0.70 → high.
+    Two keywords share 5 / 4 tokens                  → jaccard 0.50 / 0.40 → medium.
+    Two unrelated keywords share 0 tokens             → jaccard 0.0    → low.
+    Expected coverage = (6+2)/10 * 100 = 80.0%.
+    """
     _skip_unless_build_mapping()
-    # Build a synthetic 10-row mapping: 6 high + 2 medium + 2 low.
-    matches = (
-        [{"keyword": f"hi {i}", "existing_ad_group": "AG", "confidence": "high",
-          "score": 0.8, "reason": ""} for i in range(6)]
-        + [{"keyword": f"med {i}", "existing_ad_group": "AG", "confidence": "medium",
-            "score": 0.5, "reason": ""} for i in range(2)]
-        + [{"keyword": f"low {i}", "existing_ad_group": "AG", "confidence": "low",
-            "score": 0.2, "reason": ""} for i in range(2)]
+
+    # 6 HIGH: 7-token subsets of the AELW bag (raw_jaccard = 7/10 = 0.70 → high)
+    hi_keywords = [
+        "car accident doctor lake worth exam clinic",
+        "car accident doctor lake worth exam palm",
+        "car accident doctor lake worth exam beach",
+        "car accident doctor lake worth exam auto",
+        "car accident doctor lake worth clinic palm",
+        "car accident doctor lake worth clinic auto",
+    ]
+    # 2 MEDIUM: 5- and 4-token subsets (raw_jaccard = 0.50 and 0.40 → medium)
+    med_keywords = [
+        "car accident doctor lake worth",   # 5/10 = 0.50
+        "car accident doctor lake",          # 4/10 = 0.40
+    ]
+    # 2 LOW: tokens with zero overlap against any ENABLED ad-group bag
+    low_keywords = [
+        "tomato sandwich recipe",
+        "quantum mechanics tutorial",
+    ]
+    ranked = (
+        [{"keyword": k, "intent": "transactional"} for k in hi_keywords]
+        + [{"keyword": k, "intent": "transactional"} for k in med_keywords]
+        + [{"keyword": k, "intent": "transactional"} for k in low_keywords]
     )
-    # Stage a run_dir with ranked-enriched.json totalling 10 rows; perf/terms
-    # are required by ADGM-01 contract — copy the Phase 11 fixtures.
+
     run_dir = tmp_path / "2026-05-14T120000Z-coverage"
     (run_dir / "raw").mkdir(parents=True)
     (run_dir / "ranked-enriched.json").write_text(
-        json.dumps([{"keyword": m["keyword"], "intent": "transactional"}
-                    for m in matches]),
-        encoding="utf-8",
+        json.dumps(ranked), encoding="utf-8",
     )
     (run_dir / "raw" / "google-ads-perf.json").write_text(
         (FIXTURES / "google-ads-perf-phase11.json").read_text(encoding="utf-8"),
@@ -206,6 +233,11 @@ def test_coverage_pct_high_plus_medium_only(tmp_path):
     out = json.loads((run_dir / "ad-group-mapping.json").read_text(encoding="utf-8"))
     # 8 of 10 are high/medium → coverage_pct = 80.0 (NOT 100.0).
     assert out["mapping_coverage_pct"] == pytest.approx(80.0)
+    # Per-tier sanity: 6 high + 2 medium + 2 low.
+    tiers = [m["confidence"] for m in out["matches"]]
+    assert tiers.count("high") == 6
+    assert tiers.count("medium") == 2
+    assert tiers.count("low") == 2
 
 
 # ---------------------------------------------------------------------------
