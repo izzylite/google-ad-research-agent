@@ -77,6 +77,7 @@ Do NOT ask all five every time — that buries the operator in noise.
 | **language exclusions** | The location is multilingual (Belgium, Switzerland, Canada) and only one language matters |
 | **brand terms** | The brief names the brand or competitor brands but does not list every term/variation |
 | **competitor URLs** | The brief names competitors by name but does not provide URLs |
+| **geo_focus** | The location is at state/region level and operator hints at sub-area focus (county or city). Comma-separated list — e.g., "Palm Beach County, Lake Worth". Drives `serp_fetch.py --geo-focus` + `merge_signals.py` city filter (GEO-01..03). |
 
 When you ask, ask ONE field per turn. After the operator answers, re-evaluate whether other triggers now fire. Skip silently when no trigger fires.
 
@@ -107,6 +108,7 @@ When all required fields are non-empty (and any opened optional follow-ups are r
 - **Language exclusions:** {language_exclusions}
 - **Brand terms:** {brand_terms}
 - **Competitor URLs:** {competitor_urls}
+- **Geo focus:** {geo_focus}
 
 ## Raw operator paste
 
@@ -228,6 +230,8 @@ uv run "${CLAUDE_SKILL_DIR}/scripts/serp_fetch.py" \
   --gl {gl} \
   --hl {hl}
 ```
+
+When brief has `**Geo focus:**`, append `--geo-focus "{token_1}" "{token_2}"` (one quoted arg per token); `serp_fetch.py` appends tokens to each seed query once, case-insensitively skipping already-present tokens (GEO-02; see `references/phase11-account-structure-mapping.md`).
 
 Parse stdout JSON. Surface `organic_count`, `paa_count`, `related_count`, `ads_count`, `credits_used` to operator.
 
@@ -466,25 +470,17 @@ Tell the operator:
 
 Phase 5 (competitor intel) begins at Step 18 below.
 
----
-
 ## Phase 5: Competitor Ad Copy and Landing Page Extraction
 
 > See `.claude/skills/google-ad-research/references/phase5-competitor-intel.md` for full step instructions (Steps 18-20). Load it with the Read tool when entering Phase 5.
-
----
 
 ## Phase 6: Negatives, Report Assembly, and Persistence
 
 > See `.claude/skills/google-ad-research/references/phase6-negatives-report.md` for full step instructions (Steps 21-26). Load it with the Read tool when entering Phase 6.
 
----
-
 ## Phase 7: Niche Pulse (optional, time-sensitive sidecar)
 
 > See `.claude/skills/google-ad-research/references/phase7-niche-pulse.md` for full step instructions (Steps 27-30). Load it with the Read tool when entering Phase 7. Phase 7 is optional — ask the operator before running. It surfaces trending news themes, regulatory alerts, competitor news, and trending negative candidates from the last 7 days. Costs ~12 Serper + ~12 Tavily credits per run. Does NOT merge into the main `keywords.json` — produces its own `niche-pulse.json`.
-
----
 
 ## Phase 8: Account Data + Volume Enrichment (optional, account-aware sidecar)
 
@@ -498,3 +494,6 @@ Phase 5 (competitor intel) begins at Step 18 below.
 
 ## Phase 10: Operator Launch Kit (optional, campaign-launch artifacts)
 > See `.claude/skills/google-ad-research/references/phase10-operator-launch-kit.md` for full step instructions (Steps 41-43). Optional; turns report into ready-to-import campaign. Emits 3 Editor v2.x CSVs (`positives.csv`, `negatives.csv`, `ad_groups.csv`) + appends bespoke Next Steps checklist. Pure compute, no API costs. Requires Phase 9. Produces `{run_dir}/export/*.csv` + extends `report.md`/`report.json`/`report.html`.
+
+## Phase 11: Account-Structure Mapping (optional, geo refinement + existing ad-group preservation)
+> See `.claude/skills/google-ad-research/references/phase11-account-structure-mapping.md` for full step instructions (Steps 44-47). Load it with the Read tool when entering Phase 11. Optional; refines research to specific counties/cities (GEO-01..05) and maps ranked keywords to the client's existing ad groups (ADGM-01..06). Pure compute, no API costs. Requires Phase 8 (`raw/google-ads-perf.json` + `raw/google-ads-search-terms.json`); graceful skip if absent. Produces `{run_dir}/ad-group-mapping.json` + rewrites `report.md` Next Steps step 3 when coverage > 50% + filters `export/ad_groups.csv` to skip existing names.
