@@ -215,14 +215,38 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RPRT-05 | Phase 6 | Complete |
 | PRST-01 | Phase 6 | Complete |
 | PRST-02 | Phase 6 | Complete |
+| BIDS-01 | Phase 9 | Pending |
+| BIDS-02 | Phase 9 | Pending |
+| BIDS-03 | Phase 9 | Pending |
+| BIDS-04 | Phase 9 | Pending |
+| FRCS-01 | Phase 9 | Pending |
+| FRCS-02 | Phase 9 | Pending |
+| FRCS-03 | Phase 9 | Pending |
+| FRCS-04 | Phase 9 | Pending |
+| FRCS-05 | Phase 9 | Pending |
+| CMPL-01 | Phase 9 | Pending |
+| CMPL-02 | Phase 9 | Pending |
+| CMPL-03 | Phase 9 | Pending |
+| CMPL-04 | Phase 9 | Pending |
+| CMPL-05 | Phase 9 | Pending |
+| EXPT-01 | Phase 10 | Pending |
+| EXPT-02 | Phase 10 | Pending |
+| EXPT-03 | Phase 10 | Pending |
+| EXPT-04 | Phase 10 | Pending |
+| EXPT-05 | Phase 10 | Pending |
+| STEP-01 | Phase 10 | Pending |
+| STEP-02 | Phase 10 | Pending |
+| STEP-03 | Phase 10 | Pending |
+| STEP-04 | Phase 10 | Pending |
 
 **Coverage:**
 - v1.0 requirements: 52 total (35 originally mapped + 9 PULSE + 8 AHRF/GADS added during v1.0)
 - v1.0 mapped to phases: 52 (Phases 1-8)
-- v1.1 requirements: 22 total (EXPT-01..05, BIDS-01..04, FRCS-01..05, STEP-01..04, CMPL-01..05)
-- v1.1 mapped to phases: pending roadmap creation
-- Unmapped: 0 v1.0 / 22 v1.1 (will be mapped by roadmapper in next step)
+- v1.1 requirements: 23 total (BIDS-01..04, FRCS-01..05, CMPL-01..05, EXPT-01..05, STEP-01..04)
+- v1.1 mapped to phases: 23 (Phase 9: 14 reqs, Phase 10: 9 reqs)
+- Unmapped: 0 v1.0 / 0 v1.1
+- Orphaned: 0 — every requirement maps to exactly one phase
 
 ---
 *Requirements defined: 2026-05-08*
-*Last updated: 2026-05-14 — v1.1 requirements added (EXPT/BIDS/FRCS/STEP/CMPL)*
+*Last updated: 2026-05-14 — v1.1 traceability rows added (Phases 9-10)*

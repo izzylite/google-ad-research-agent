@@ -122,6 +122,46 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. `report.md` and `report.html` carry a Niche Pulse section showing the freshness window (`horizon_days`), trending themes, regulatory alerts, and competitor news.
   4. Niche pulse keywords are NOT merged into `keywords.json` — they live in their own `niche-pulse.json` because they have a 1-30 day shelf life vs evergreen kw.
 
+---
+
+# Milestone v1.1 — Operator-Ready Output
+
+**Started:** 2026-05-14
+**Goal:** Turn the report from a data dump into a campaign launch kit — junior PPC managers can move from `report.md` to a live, compliant Google Ads campaign with starter bids, budget bands, a step-by-step checklist, and Editor-importable CSVs.
+**Granularity:** standard (2 phases for 23 requirements)
+**Coverage:** 23/23 v1.1 requirements mapped (100%)
+
+## v1.1 Phases
+
+- [ ] **Phase 9: Campaign Economics and Compliance** — Enrich existing v1.0 artifacts with starter-bid suggestions, per-cluster budget forecast bands, and regulated-vertical compliance flags. All output enriches `ranked-enriched.json`/`clusters.json` and writes new `forecast.json` + `compliance-flags.json` sidecars.
+- [ ] **Phase 10: Operator Launch Kit** — Consume the enriched data from Phase 9 to emit Editor-importable CSVs and a bespoke Next-Steps checklist that walks a junior PPC manager from `report.md` to a live campaign.
+
+## v1.1 Phase Details
+
+### Phase 9: Campaign Economics and Compliance
+**Goal:** The operator can answer the three economic questions a junior PPC manager asks — "What should I bid?", "How much will it cost?", "Is this vertical regulated?" — directly from the report, with values baked into the JSON artifacts so downstream tooling can consume them.
+**Depends on:** Phase 8 (needs `ranked-enriched.json` with Ahrefs `cpc_micros`; needs `clusters.json` for per-cluster aggregation; needs `brief.md` for compliance keyword matching).
+**Requirements:** BIDS-01, BIDS-02, BIDS-03, BIDS-04, FRCS-01, FRCS-02, FRCS-03, FRCS-04, FRCS-05, CMPL-01, CMPL-02, CMPL-03, CMPL-04, CMPL-05
+**Success Criteria** (what must be TRUE):
+  1. The operator opens `report.md` and sees a `Suggested Max CPC` (USD with cents) on every keyword row; keywords with no Ahrefs CPC data fall back to cluster-median × intent multiplier and are flagged `no_cpc_data` so the operator knows the value is imputed.
+  2. The operator opens the new "Budget Forecast" section in `report.md` and reads per-cluster + campaign-level daily click bands (low/mid/high) and daily spend bands, plus a "How this is calculated" subsection that names the CTR and avg-CPC assumptions so the operator does not over-promise to a client.
+  3. When the brief or top keywords match a regulated vertical (medical, legal, finance, gambling, crypto), a "⚠ Compliance Required" warning block renders above the Ranked Keywords table naming the matched vertical, the evidence tokens, and a verification-path URL — invisible on non-regulated runs.
+  4. The bid multipliers live in a single config block (one place to tune transactional/commercial/informational/navigational ratios) and the compliance token lists live in `references/compliance-verticals.json` (data, not code) so the operator can extend either without editing Python.
+  5. The downstream JSON contract is stable: `ranked-enriched.json` gains a `suggested_max_cpc_micros` field, a new `forecast.json` sidecar carries per-cluster + campaign-level click/spend bands, and a new `compliance-flags.json` sidecar lists matched verticals; `report.json` gains a `compliance[]` array.
+**Plans:** TBD
+
+### Phase 10: Operator Launch Kit
+**Goal:** A junior PPC manager finishing `report.md` has three CSVs to paste into Google Ads Editor and an ordered, run-specific checklist that names the campaign location, budget, ad groups, compliance verification (if any), and step order — zero hand-copying, zero boilerplate.
+**Depends on:** Phase 9 (CSV Max-CPC column comes from `suggested_max_cpc_micros`; Next-Steps "set daily budget to <mid forecast>" reads `forecast.json`; checklist reorders compliance-first when `compliance-flags.json` is non-empty).
+**Requirements:** EXPT-01, EXPT-02, EXPT-03, EXPT-04, EXPT-05, STEP-01, STEP-02, STEP-03, STEP-04
+**Success Criteria** (what must be TRUE):
+  1. The operator finds three Editor-importable CSVs under `{run_dir}/export/` — `positives.csv`, `negatives.csv`, `ad_groups.csv` — that import cleanly into Google Ads Editor v2.x without column-mapping errors (UTF-8 no BOM, CRLF line endings, exact header match, `csv.DictReader` round-trip passes).
+  2. The negatives CSV correctly assigns Strong-tier negatives to campaign level and Considered/Investigate to ad-group level, so a single Editor paste lands them at the correct scope — no manual re-bucketing needed.
+  3. `report.md` ends with a "Next Steps" section containing an ordered 8-step ops checklist whose values (location, language, audience, daily-budget mid-forecast number, ad-group names from clusters) are substituted from the brief and Phase 9 forecast — each run reads as bespoke instructions, never as boilerplate.
+  4. When `compliance-flags.json` is non-empty, the Next-Steps checklist promotes "Complete <vertical> verification at <URL> before launching" from step 8 to step 1 and renumbers the remaining steps, so the operator cannot accidentally launch ahead of regulated-vertical verification.
+  5. The HTML report renders the checklist with copy-able command snippets and localStorage-backed checkboxes so the operator can track per-session progress; `report.json` carries the ordered list as a `next_steps[]` array and the CSV file paths as an `exports[]` array for downstream tooling.
+**Plans:** TBD
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -134,6 +174,8 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 6. Negatives, Report Assembly, and Persistence | 6/6 | Complete    | 2026-05-08 |
 | 7. Niche Pulse | 2/2 | Complete    | 2026-05-08 |
 | 8. Account Data + Volume Enrichment | 8/8 | Complete    | 2026-05-08 |
+| 9. Campaign Economics and Compliance | 0/0 | Not started | — |
+| 10. Operator Launch Kit | 0/0 | Not started | — |
 
 ## Coverage Map
 
@@ -145,10 +187,12 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 4 | CLST-01, CLST-02, CLST-03 | 3 |
 | 5 | COMP-01, COMP-02, COMP-03 | 3 |
 | 6 | NEGT-01, NEGT-02, NEGT-03, RPRT-01, RPRT-02, RPRT-03, RPRT-04, RPRT-05, PRST-01, PRST-02 | 10 |
-| 7 | PULSE-01, PULSE-02, PULSE-03, PULSE-04, PULSE-05, PULSE-06, PULSE-07, PULSE-08, PULSE-09 | 9 |
-| **Total** | | **44 / 44** |
+| 7 | PULSE-01..09 | 9 |
+| 9 | BIDS-01, BIDS-02, BIDS-03, BIDS-04, FRCS-01, FRCS-02, FRCS-03, FRCS-04, FRCS-05, CMPL-01, CMPL-02, CMPL-03, CMPL-04, CMPL-05 | 14 |
+| 10 | EXPT-01, EXPT-02, EXPT-03, EXPT-04, EXPT-05, STEP-01, STEP-02, STEP-03, STEP-04 | 9 |
+| **Total** | | **67 / 67** |
 
-No orphans. No duplicates. Every v1 requirement maps to exactly one phase.
+No orphans. No duplicates. Every v1 + v1.1 requirement maps to exactly one phase.
 
 ## Phase Ordering Rationale
 
@@ -157,7 +201,9 @@ No orphans. No duplicates. Every v1 requirement maps to exactly one phase.
 - **Scoring before clustering:** intent class is a hard prerequisite split for clustering (no intent-mixed ad groups).
 - **Clustering before ad copy:** per-cluster Serper requery and per-cluster Tavily LP extraction need clusters to exist as their unit of work.
 - **Positives before negatives:** negatives must dedup against the final positive pool; running them earlier produces collisions.
-- **Report assembly last:** render is the integration test for every upstream stage; markdown sanitization and JSON-twin schema validation depend on all data being final.
+- **Report assembly last (v1.0):** render is the integration test for every upstream stage; markdown sanitization and JSON-twin schema validation depend on all data being final.
+- **Economics before launch kit (v1.1):** Phase 10 CSVs need Phase 9's `suggested_max_cpc_micros` for the Max-CPC column; Phase 10 Next-Steps checklist needs Phase 9's mid-forecast spend for the daily-budget step and Phase 9's compliance flags to decide checklist ordering. Splitting data layer from output layer keeps each phase's success criteria observable in isolation.
+- **Why not one fat Phase 9?** 23 requirements in one phase produces ~13 plans and a coverage map where success criteria mix data-shape concerns (does `forecast.json` exist?) with output concerns (does CSV import into Editor?). Splitting yields two phases of ~5-7 plans each with crisper success criteria.
 
 ---
 *Roadmap created: 2026-05-08*
@@ -166,3 +212,4 @@ No orphans. No duplicates. Every v1 requirement maps to exactly one phase.
 *Phase 3 plans drafted: 2026-05-08*
 *Phase 5 plans drafted: 2026-05-08*
 *Phase 6 plans drafted: 2026-05-08*
+*v1.1 milestone phases (9-10) added: 2026-05-14*

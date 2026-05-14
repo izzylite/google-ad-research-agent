@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: operator-ready-output
-status: defining_requirements
-stopped_at: Milestone v1.1 started
+status: ready_to_plan_phase
+stopped_at: ROADMAP v1.1 phases 9-10 defined; ready to /gsd:plan-phase 9
 last_updated: "2026-05-14T00:00:00.000Z"
 progress:
-  total_phases: 0
-  completed_phases: 0
+  total_phases: 10
+  completed_phases: 8
   total_plans: 0
   completed_plans: 0
 ---
@@ -20,16 +20,16 @@ progress:
 
 **Core value:** From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session.
 
-**Current focus:** Milestone v1.1 — Operator-Ready Output. CSV export, bid suggestions, budget forecasts, next-steps checklist, compliance flags. Defining requirements.
+**Current focus:** Milestone v1.1 — Operator-Ready Output. Phases 9 (Campaign Economics + Compliance) and 10 (Operator Launch Kit) defined. Ready to plan Phase 9.
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
-| Phase | Not started (defining requirements) |
+| Phase | 9 — Campaign Economics and Compliance (not yet planned) |
 | Plan | — |
-| Status | Defining requirements |
-| Last activity | 2026-05-14 — Milestone v1.1 started |
+| Status | Roadmap complete; ready for `/gsd:plan-phase 9` |
+| Last activity | 2026-05-14 — v1.1 roadmap created (Phases 9-10), 23 requirements mapped |
 
 ## Previous Milestone
 
@@ -39,10 +39,11 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 
 | Metric | Value |
 |--------|-------|
-| Phases planned | 6 / 6 |
-| Phases complete | 1 / 6 |
-| Plans complete | 6 |
-| v1 requirements complete | 9 / 35 |
+| Phases planned | 8 / 10 |
+| Phases complete | 8 / 10 |
+| Plans complete | 27 (v1.0) + 0 (v1.1) |
+| v1.0 requirements complete | 52 / 52 |
+| v1.1 requirements complete | 0 / 23 |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
 | Phase 02-signal-collection P02 | 8min | 2 tasks | 2 files |
@@ -146,6 +147,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 06-04]: Missing brief.md returns industry="unknown" with exit 0 — INDEX.md audit trail priority over completeness
 - [Phase 06-05]: Step 21 instructs LLM to write negatives.json to {run_dir}/negatives.json (not raw/); generate_negatives.py copies validated output to raw/negatives.json — clean operator-writes / script-validates boundary
 - [Phase 06-05]: Step 26 is a hard STOP with no continuation prompts — workflow complete signal is unambiguous
+- [v1.1 roadmap]: Two-phase split (9: data layer, 10: output layer) chosen over single fat phase — Phase 10 CSVs and Next-Steps checklist consume Phase 9's `suggested_max_cpc_micros`, mid-forecast spend, and compliance flags; splitting makes success criteria observable in isolation and yields ~5-7 plans per phase rather than ~13.
+- [v1.1 roadmap]: Phase 9 success criteria 4 enforces "data not code" for tuning knobs — bid multipliers in single config block, compliance verticals in `references/compliance-verticals.json` — so operator-side tuning needs zero Python edits.
+- [v1.1 roadmap]: 23 v1.1 requirements mapped (not 22 as initial brief suggested) — recount: BIDS=4 + FRCS=5 + CMPL=5 + EXPT=5 + STEP=4 = 23. Discrepancy noted; all 23 mapped to phases.
 
 ### Open Questions / Todos
 
@@ -153,6 +157,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - Tavily credit consumption per run — estimated $0.09-$0.30; measure from run 1, adjust caps if needed.
 - Cluster count vs vertical — narrow verticals may yield fewer than the 5-10 general recommendation; do not force the range.
 - Match-type recommendation conservatism — validate after first campaign launch.
+- [v1.1] Bid multiplier calibration (transactional 1.2 / commercial 0.8 / informational 0.4 / navigational 1.0) — defensible starting point per PROJECT.md decision; revisit after first 3 v1.1 runs against client CPA targets.
+- [v1.1] FRCS avg-CPC-to-max-CPC ratio of 0.65 and band spread (×0.5 / ×1.0 / ×1.5) — directional anchor, not Google forecast; measure delta against real campaign data after first 2-3 launches.
+- [v1.1] Compliance vertical token lists — start with 5 (medical/legal/finance/gambling/crypto); operator can extend via `references/compliance-verticals.json`. Track which verticals get extended for v2 preset signal.
 
 ### Blockers
 
@@ -160,11 +167,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-08T07:20:09Z
+**Last session:** 2026-05-14
 
-**Stopped at:** Completed 06-05-PLAN.md
+**Stopped at:** v1.1 ROADMAP created — Phases 9 and 10 defined, 23 requirements mapped, traceability table updated.
 
-**Next session:** All 27 plans complete. v1 skill is end-to-end runnable. Run `/gsd:verify-work` for final sign-off.
+**Next session:** Run `/gsd:plan-phase 9` to decompose Phase 9 (Campaign Economics and Compliance) into wave plans. Phase 9 covers BIDS + FRCS + CMPL (14 requirements).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
@@ -176,3 +183,4 @@ None.
 
 ---
 *State initialized: 2026-05-08*
+*v1.1 milestone started: 2026-05-14*
