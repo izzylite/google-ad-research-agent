@@ -216,7 +216,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 8. Account Data + Volume Enrichment | 8/8 | Complete    | 2026-05-08 |
 | 9. Campaign Economics and Compliance | 6/6 | Complete    | 2026-05-14 |
 | 10. Operator Launch Kit | 5/5 | Complete    | 2026-05-14 |
-| 11. Account-Structure Mapping | 5/5 | Complete   | 2026-05-14 |
+| 11. Account-Structure Mapping | 5/5 | Complete    | 2026-05-14 |
 
 ## Coverage Map
 

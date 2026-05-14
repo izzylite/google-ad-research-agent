@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Account-Structure Mapping
-status: complete
-stopped_at: "Completed 11-04-PLAN.md — Phase 11 closed; milestone v1.2 complete. 2 task commits (6aed701 + f16ef49) + 1 auto-fix commit (16f5d5d, render_report regex). E2E smoke approved against real Phase 8 urgent-care data: 239 tests GREEN, SKILL.md 499/500, references/phase11 240 lines, coverage 0.0% mathematically correct, ADGM-06 rewrite NOT firing at ≤50% (correct), CMPL-05 compliance-first reorder confirmed. All 11 v1.2 requirements (GEO-01..05 + ADGM-01..06) marked Complete."
-last_updated: "2026-05-15T00:35:00.000Z"
+milestone: v1.1
+milestone_name: Phases
+status: unknown
+stopped_at: "Completed 11-04-PLAN.md — Phase 11 closeout + milestone v1.2 ship. 2 task commits (6aed701 references/phase11 + f16ef49 SKILL.md wiring) + 1 auto-fix commit (16f5d5d render_report regex). E2E smoke approved against real Phase 8 urgent-care data: 239 tests GREEN, SKILL.md 499/500, references/phase11 240 lines, coverage 0.0% mathematically correct, ADGM-06 rewrite NOT firing at ≤50% (correct), CMPL-05 compliance-first reorder confirmed at step 1. All 11 v1.2 requirements (GEO-01..05 + ADGM-01..06) marked Complete in REQUIREMENTS.md."
+last_updated: "2026-05-14T23:39:09.289Z"
 progress:
-  total_phases: 11
-  completed_phases: 11
-  total_plans: 48
-  completed_plans: 48
+  total_phases: 10
+  completed_phases: 9
+  total_plans: 43
+  completed_plans: 43
 ---
 
 # State: Google Ad Research Agent
