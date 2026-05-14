@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: account-structure-mapping
-status: defining_requirements
-stopped_at: Milestone v1.2 started — Phase 11 (geo refinement + ad-group mapping) ahead
-last_updated: "2026-05-14T22:00:00.000Z"
+status: in_progress
+stopped_at: "Completed 11-00-PLAN.md (Wave 0 RED scaffold for Phase 11). Tasks 1+2+3 committed (8973f52 + fddbe3f + d026b8b). 239 tests collected (up from 202); 166 GREEN (1 new: test_module_imports), 73 SKIP (37 new Phase 11 RED stubs), 0 collection errors, 0 regressions. Wave 1 (plans 11-01 + 11-02) ready to start in parallel."
+last_updated: "2026-05-14T22:43:41.861Z"
 progress:
   total_phases: 11
   completed_phases: 10
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 48
+  completed_plans: 40
 ---
 
 # State: Google Ad Research Agent
@@ -26,10 +26,10 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | 11 — Account-Structure Mapping (not yet planned) |
-| Plan | — |
-| Status | Defining requirements |
-| Last activity | 2026-05-14 — Milestone v1.2 started after team feedback (Palm Beach County focus + reuse existing ad groups) |
+| Phase | 11 — Account-Structure Mapping (Wave 0 complete; Wave 1 next) |
+| Plan | 1 / 5 (11-00 complete) |
+| Status | Wave 0 RED scaffold shipped — Wave 1 plans 11-01 + 11-02 ready to start in parallel |
+| Last activity | 2026-05-14 — 11-00 committed (Tasks 1+2+3: 8973f52 / fddbe3f / d026b8b); 166 passed / 73 skipped; 0 regressions |
 
 ## Previous Milestone
 
@@ -41,9 +41,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 
 | Metric | Value |
 |--------|-------|
-| Phases planned | 10 / 10 |
-| Phases complete | 8 / 10 (Phase 9 plans 6/6 done; Phase 10 plan 00/?? scaffolding shipped) |
-| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) + 1 (v1.1 Phase 10 Wave 0) |
+| Phases planned | 11 / 11 |
+| Phases complete | 10 / 11 (v1.0 + v1.1 complete; Phase 11 Wave 0 shipped) |
+| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) + 1 (v1.1 Phase 10) + 1 (v1.2 Phase 11 Wave 0) |
 | v1.0 requirements complete | 52 / 52 |
 | v1.1 requirements complete | 13 / 23 (BIDS 4/4, FRCS 5/5, CMPL 4/5 — CMPL-05 mapped to Phase 10; EXPT-* / STEP-* RED-scaffolded in 10-00, GREEN in Wave 1+) |
 | Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
@@ -73,6 +73,8 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 09 P03 | 4min | 2 tasks | 1 files |
 | Phase 09 P04 | 9min | 3 tasks | 2 files |
 | Phase 09 P05 | 12min | 3 tasks | 2 files |
+| Phase 11 P00 | 7min | 3 tasks | 11 created + 5 modified |
+| Phase 11 P00 | 7 | 3 tasks | 16 files |
 
 ### Execution History
 
@@ -181,6 +183,10 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 10]: [10-00] Deterministic Campaign literal 'Phase 10 Test Brief' — derived from fixture run-dir name `2026-05-14T120000Z-phase-10-test-brief` → `_derive_brief_slug` → title-cased. Locked in goldens so Wave 1's slug-derivation cannot drift; tests read constant via module attribute, not by recomputing.
 - [Phase 10]: [10-00] Informational cluster (grocery_delivery_basics_informational) in clusters_phase10.json intentionally seeded with all-null cpc_micros — exercises the BIDS-02 fallback path AND the 0.00-not-blank Default Max CPC rule (Pitfall 10) without needing a synthetic test-only cluster.
 - [Phase 10]: [10-00] compliance_two_verticals fixture has 2 matched verticals (medical + legal) so CMPL-05 ONE-combined-step rule can be asserted directly via `len(verification_steps) == 1` rather than inferred.
+- [Phase 11]: test_ad_group_match.py uses per-function _skip_unless_build_mapping() guard (NOT module-level pytestmark) so test_module_imports PASSES against the Wave-0 stub while other 13 tests SKIP — mirrors Phase 10 10-00 per-function pattern
+- [Phase 11]: ad-group-mapping-*pct.json fixtures encode coverage_pct exactly at 50.0 (boundary - no rewrite), 60.0 (rewrite), 20.0 (negative path) so ADGM-06 strict- math is testable without running build_mapping
+- [Phase 11]: us-cities-subset.json schema: state_code_lower -> city_lower -> county_lower (county as VALUE, no 'county' suffix). Wave 1 plan 11-01 will strip 'county' suffix from geo_focus tokens before lookup
+- [Phase 11]: Wave-1 contract pre-decisions: merge_signals.py grows --us-cities-path CLI flag (tests monkeypatch _US_CITIES_DATA_PATH constant); render_next_steps_section gains ad_group_mapping kwarg in Wave 2 plan 11-03 (tests detect via inspect.signature)
 
 ### Open Questions / Todos
 
@@ -198,11 +204,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-14T20:10:00Z
+**Last session:** 2026-05-14T22:43:41.858Z
 
-**Stopped at:** Completed 10-00-PLAN.md (Wave 0 RED scaffolding for Operator Launch Kit). Tasks 1+2 committed (815988c + 3bdbcc7). 202 tests collected (up from 159); 149 GREEN legacy, 43 Phase 10 RED stubs SKIPPED via MODULE_INCOMPLETE / hasattr guards, 0 collection errors, 0 regressions. Wave 1 (plans 10-01 + 10-02) ready to start in parallel.
+**Stopped at:** Completed 11-00-PLAN.md (Wave 0 RED scaffold for Phase 11). Tasks 1+2+3 committed (8973f52 + fddbe3f + d026b8b). 239 tests collected (up from 202); 166 GREEN (1 new: test_module_imports), 73 SKIP (37 new Phase 11 RED stubs), 0 collection errors, 0 regressions. Wave 1 (plans 11-01 + 11-02) ready to start in parallel.
 
-**Next session:** Execute 10-01 (`export_csv.py` write_positives / write_negatives / write_ad_groups + CLI — flips 23 EXPT cases GREEN) and 10-02 (`render_report.render_next_steps_section` + `build_report_json` `next_steps` kwarg — flips STEP-01..04 + CMPL-05 GREEN) in parallel. They share no mutated files.
+**Next session:** Execute Phase 11 Wave 1 — plan 11-01 (geo plumbing: run_init geo_focus parse + serp_fetch `--geo-focus` arg + merge_signals city filter + references/us-cities.json reference data file) and plan 11-02 (ad_group_match.py core: build_mapping + _jaccard + _tokens + _classify against the Wave-0 stub) in parallel. They share no mutated files.
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`

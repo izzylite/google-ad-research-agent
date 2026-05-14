@@ -135,7 +135,8 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 
 - [x] **Phase 9: Campaign Economics and Compliance** — Enrich existing v1.0 artifacts with starter-bid suggestions, per-cluster budget forecast bands, and regulated-vertical compliance flags. All output enriches `ranked-enriched.json`/`clusters.json` and writes new `forecast.json` + `compliance-flags.json` sidecars.
  (completed 2026-05-14)
-- [x] **Phase 10: Operator Launch Kit** — Consume the enriched data from Phase 9 to emit Editor-importable CSVs and a bespoke Next-Steps checklist that walks a junior PPC manager from `report.md` to a live campaign. (completed 2026-05-14)
+- [x] **Phase 10: Operator Launch Kit** — Consume the enriched data from Phase 9 to emit Editor-importable CSVs and a bespoke Next-Steps checklist that walks a junior PPC manager from `report.md` to a live campaign.
+ (completed 2026-05-14)
 
 ## v1.1 Phase Details
 
@@ -188,7 +189,12 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. `ad_group_match.py` reads `raw/google-ads-perf.json` + `raw/google-ads-search-terms.json` and emits `ad-group-mapping.json` with per-keyword `{existing_ad_group, confidence}` tier (high/medium/low).
   4. When mapping covers >50% of keywords, `export_csv.py` writes existing ad group names in the `Ad Group` column for matched rows; ad_groups.csv lists only NEW ad groups (preserves existing names, no Editor duplicate-name errors).
   5. Report Next Steps section conditionally rewrites step 3 to "Add keywords to existing ad groups: <names>" instead of "Create ad groups: <new names>" when mapping coverage > 50%.
-**Plans:** TBD
+**Plans:** 1/5 plans executed
+- [ ] 11-00-PLAN.md — Wave 0: test scaffolding (test_geo_filter.py + test_ad_group_match.py + 5 extended test files + 7 fixtures + ad_group_match.py MODULE_INCOMPLETE stub)
+- [ ] 11-01-PLAN.md — Wave 1: geo plumbing (us-cities.json data + run_init geo_focus helper + serp_fetch --geo-focus + merge_signals city filter)
+- [ ] 11-02-PLAN.md — Wave 1: ad_group_match.py full implementation (build_mapping + Jaccard × intent match + confidence tiers + sidecar + graceful Phase-8-absent skip)
+- [ ] 11-03-PLAN.md — Wave 2: integrations (export_csv mapping-aware + render_report Geographic Focus + Next Steps step-3 rewrite)
+- [ ] 11-04-PLAN.md — Wave 3: SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify e2e smoke
 
 ## Progress
 
@@ -204,7 +210,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 8. Account Data + Volume Enrichment | 8/8 | Complete    | 2026-05-08 |
 | 9. Campaign Economics and Compliance | 6/6 | Complete    | 2026-05-14 |
 | 10. Operator Launch Kit | 5/5 | Complete    | 2026-05-14 |
-| 11. Account-Structure Mapping | 0/0 | Not started | — |
+| 11. Account-Structure Mapping | 1/5 | In Progress|  |
 
 ## Coverage Map
 
