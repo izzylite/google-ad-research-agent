@@ -1,0 +1,113 @@
+{
+  "$schema_version": "v1",
+  "generated_at": "2026-05-14",
+  "verticals": [
+    {
+      "name": "medical",
+      "tokens": [
+        "doctor",
+        "physician",
+        "clinic",
+        "hospital",
+        "patient",
+        "medical",
+        "medicine",
+        "prescription",
+        "diagnosis",
+        "treatment",
+        "surgery",
+        "therapy",
+        "pharmaceutical",
+        "rx",
+        "telehealth",
+        "mental health",
+        "rehab"
+      ],
+      "verification_url": "https://support.google.com/adspolicy/answer/176031",
+      "policy_note": "Healthcare advertisers may require LegitScript certification or country-specific licensing. Verify before launching."
+    },
+    {
+      "name": "legal",
+      "tokens": [
+        "lawyer",
+        "attorney",
+        "law firm",
+        "legal",
+        "litigation",
+        "lawsuit",
+        "injury attorney",
+        "dui",
+        "personal injury",
+        "class action",
+        "settlement"
+      ],
+      "verification_url": "https://support.google.com/adspolicy/answer/2464998",
+      "policy_note": "Legal services subject to lawyer-advertising rules in most jurisdictions."
+    },
+    {
+      "name": "finance",
+      "tokens": [
+        "loan",
+        "mortgage",
+        "credit",
+        "credit card",
+        "personal loan",
+        "payday",
+        "installment loan",
+        "consumer credit",
+        "bnpl",
+        "buy now pay later",
+        "broker",
+        "trading",
+        "forex",
+        "cfd",
+        "investment",
+        "wealth management",
+        "robo-advisor"
+      ],
+      "verification_url": "https://support.google.com/adspolicy/answer/2464998",
+      "policy_note": "Financial services verification expanded April 2026 - 14 new jurisdictions, vertical-specific KYC for loans, BNPL."
+    },
+    {
+      "name": "gambling",
+      "tokens": [
+        "casino",
+        "betting",
+        "sportsbook",
+        "gambling",
+        "poker",
+        "slots",
+        "lottery",
+        "wager",
+        "bingo",
+        "online casino",
+        "fantasy sports",
+        "prediction market"
+      ],
+      "verification_url": "https://support.google.com/adspolicy/answer/176019",
+      "policy_note": "Gambling + games policy update March 2026 adds account-health eligibility. Prediction Markets US only with CFTC DCM authorization."
+    },
+    {
+      "name": "crypto",
+      "tokens": [
+        "crypto",
+        "cryptocurrency",
+        "bitcoin",
+        "btc",
+        "ethereum",
+        "eth",
+        "blockchain",
+        "nft",
+        "defi",
+        "stablecoin",
+        "crypto wallet",
+        "crypto exchange",
+        "web3",
+        "token sale",
+        "ico"
+      ],
+      "verification_url": "https://support.google.com/adspolicy/answer/9870661",
+      "policy_note": "Crypto exchange + wallet ads expanded to Indonesia (OJK licence) Feb 2026. US still requires FinCEN MSB + state licensure."
+    }
+  ]
+}

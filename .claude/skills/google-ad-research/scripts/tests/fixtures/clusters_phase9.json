@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "clustered_at": "2026-05-14T00:00:00Z",
+    "method": "llm-driven",
+    "model": "fixture",
+    "ranked_input": "ranked-enriched.json",
+    "total_keywords": 11,
+    "total_clusters": 4
+  },
+  "clusters": [
+    {
+      "name": "same_day_delivery_transactional",
+      "intent": "transactional",
+      "keywords": [
+        {"keyword": "Same-Day Grocery Delivery", "score": 71},
+        {"keyword": "order groceries online uk", "score": 68},
+        {"keyword": "grocery delivery near me", "score": 62}
+      ]
+    },
+    {
+      "name": "grocery_comparison_commercial",
+      "intent": "commercial",
+      "keywords": [
+        {"keyword": "best grocery delivery uk", "score": 64},
+        {"keyword": "ocado vs tesco delivery", "score": 58},
+        {"keyword": "grocery delivery comparison", "score": 52}
+      ]
+    },
+    {
+      "name": "grocery_delivery_basics_informational",
+      "intent": "informational",
+      "keywords": [
+        {"keyword": "how does grocery delivery work", "score": 41},
+        {"keyword": "what is same day grocery delivery", "score": 38},
+        {"keyword": "grocery delivery tips", "score": 34}
+      ]
+    },
+    {
+      "name": "brand_destinations_navigational",
+      "intent": "navigational",
+      "keywords": [
+        {"keyword": "tesco groceries website", "score": 70},
+        {"keyword": "ocado login", "score": 67},
+        {"keyword": "sainsburys groceries app", "score": 55}
+      ]
+    }
+  ],
+  "orphans": [
+    {"keyword": "uncategorised orphan keyword", "score": 22}
+  ]
+}
