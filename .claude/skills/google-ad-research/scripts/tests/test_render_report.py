@@ -532,3 +532,124 @@ def test_no_forecast_section_when_empty_dict(run_dir, ranked_data, clusters_data
         forecast={},
     )
     assert "Budget Forecast" not in md
+
+
+# ===========================================================================
+# Phase 9 Plan 04 — Task 3 tests
+#   CMPL-03: ⚠ Compliance Required block above Ranked Keywords when matched
+# ===========================================================================
+
+
+def _sample_compliance() -> dict:
+    """Compliance-flags.json shape with one matched vertical."""
+    return {
+        "matched_verticals": [
+            {
+                "name": "medical",
+                "evidence_tokens": ["clinic", "physician"],
+                "evidence_sources": {
+                    "brief": ["clinic", "physician"],
+                    "keywords": [],
+                },
+                "matched_keyword_count": 3,
+                "verification_url": "https://support.google.com/adspolicy/answer/176031",
+                "policy_note": (
+                    "Healthcare advertisers may require LegitScript certification. "
+                    "Verify before launching."
+                ),
+            }
+        ]
+    }
+
+
+def test_compliance_block_renders_when_matched(run_dir, ranked_data, clusters_data,
+                                                competitor_intel_data, negatives_data,
+                                                brief_text):
+    """CMPL-03: '⚠ Compliance Required' block renders when matched_verticals non-empty."""
+    from render_report import render_full_report
+
+    md = render_full_report(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+        compliance=_sample_compliance(),
+    )
+    assert "⚠ Compliance Required" in md
+    # Vertical name (case-insensitive match — title or lowercase both OK)
+    assert "medical" in md.lower()
+    # Verification URL surfaces in the block
+    assert "https://support.google.com/adspolicy/answer/176031" in md
+
+
+def test_compliance_block_position(run_dir, ranked_data, clusters_data,
+                                    competitor_intel_data, negatives_data,
+                                    brief_text):
+    """CMPL-03 contract: compliance block precedes the Ranked Keywords table."""
+    from render_report import render_full_report
+
+    md = render_full_report(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+        compliance=_sample_compliance(),
+    )
+    idx_compliance = md.index("⚠ Compliance Required")
+    idx_ranked = md.index("## Ranked Keywords")
+    idx_clusters = md.index("## Ad Group Clusters")
+    assert idx_compliance < idx_ranked
+    assert idx_compliance < idx_clusters
+
+
+def test_no_compliance_block_when_clean(run_dir, ranked_data, clusters_data,
+                                         competitor_intel_data, negatives_data,
+                                         brief_text):
+    """CMPL-03 graceful degrade: no compliance kwarg → block NOT in report."""
+    from render_report import render_full_report
+
+    md = render_full_report(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+    )
+    assert "Compliance Required" not in md
+
+
+def test_no_compliance_block_when_empty_array(run_dir, ranked_data, clusters_data,
+                                               competitor_intel_data, negatives_data,
+                                               brief_text):
+    """CMPL-03: compliance={'matched_verticals': []} → block NOT in report."""
+    from render_report import render_full_report
+
+    md = render_full_report(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+        compliance={"matched_verticals": []},
+    )
+    assert "Compliance Required" not in md
+
+
+def test_compliance_block_escapes_policy_note(run_dir, ranked_data, clusters_data,
+                                               competitor_intel_data, negatives_data,
+                                               brief_text):
+    """CMPL-03: pipe characters in policy_note are escaped (table-safe)."""
+    from render_report import render_full_report
+
+    pipe_compliance = {
+        "matched_verticals": [
+            {
+                "name": "medical",
+                "evidence_tokens": ["clinic"],
+                "evidence_sources": {"brief": ["clinic"], "keywords": []},
+                "matched_keyword_count": 1,
+                "verification_url": "https://example.com",
+                "policy_note": "danger | pipe | injection text",
+            }
+        ]
+    }
+    md = render_full_report(
+        ranked_data, clusters_data, competitor_intel_data,
+        negatives_data, brief_text, run_dir,
+        compliance=pipe_compliance,
+    )
+    # Compliance block present
+    assert "⚠ Compliance Required" in md
+    # Find the rendered policy_note line — must show escaped pipes (\|), not raw pipes,
+    # because escape_md_cell was applied.
+    assert r"\|" in md

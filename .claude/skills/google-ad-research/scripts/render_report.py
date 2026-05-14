@@ -472,6 +472,54 @@ def render_negatives_sync_section(sync: dict) -> str:
     return "".join(parts)
 
 
+def render_compliance_warning(compliance: dict | None) -> str:
+    """Render the ⚠ Compliance Required block (CMPL-03) as markdown blockquote.
+
+    Returns an empty string when compliance is None or matched_verticals is
+    empty / absent — caller can append unconditionally; graceful-degrade is
+    built in. Pipe characters and other table-hostile content in policy_note
+    + evidence_tokens are sanitised via escape_md_cell so downstream tooling
+    that reads the markdown line-by-line stays safe.
+
+    Block sits immediately after the header + HOW_TO_READ and BEFORE all
+    other sections (above Niche Pulse, Account Perf, Clusters, Negatives,
+    and the Ranked Keywords table) — surfaced before any keyword work so
+    the operator addresses verification first.
+    """
+    if not compliance or not isinstance(compliance, dict):
+        return ""
+    matched = compliance.get("matched_verticals") or []
+    if not matched:
+        return ""
+
+    parts = [
+        "> ## ⚠ Compliance Required\n",
+        ">\n",
+        f"> This campaign matches **{len(matched)}** regulated vertical(s). "
+        f"Verify compliance before launching.\n",
+        ">\n",
+    ]
+    for v in matched:
+        name = v.get("name", "") or ""
+        tokens = v.get("evidence_tokens", []) or []
+        kw_count = v.get("matched_keyword_count", 0)
+        url = v.get("verification_url", "") or ""
+        note = v.get("policy_note", "") or ""
+
+        parts.append(f"> **{escape_md_cell(name.title())}**\n")
+        if tokens:
+            token_str = ", ".join(f"`{escape_md_cell(t)}`" for t in tokens)
+            parts.append(f"> - Evidence tokens: {token_str}\n")
+        parts.append(f"> - Matched keywords: {kw_count}\n")
+        if url:
+            parts.append(f"> - Verification: <{url}>\n")
+        if note:
+            parts.append(f"> - Policy note: {escape_md_cell(note, max_len=400)}\n")
+        parts.append(">\n")
+
+    return "".join(parts)
+
+
 def render_forecast_section(forecast: dict | None) -> str:
     """Render the Budget Forecast section (FRCS-04 + FRCS-05) as markdown.
 
@@ -689,6 +737,13 @@ def render_full_report(
         header,
         HOW_TO_READ,
     ]
+    # Compliance warning ABOVE all other sections (CMPL-03) — operator's
+    # first signal before they look at keywords / clusters / negatives. Empty
+    # string when matched_verticals is empty/absent (graceful degrade).
+    compliance_md = render_compliance_warning(compliance)
+    if compliance_md:
+        sections.append("\n")
+        sections.append(compliance_md)
     # Niche pulse first (action this week)
     pulse_md = render_niche_pulse_section(niche_pulse or {})
     if pulse_md:
