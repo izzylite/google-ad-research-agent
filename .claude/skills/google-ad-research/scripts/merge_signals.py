@@ -59,6 +59,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from lib.canon import canonicalise  # noqa: E402
 
+# Phase 11 plan 11-01 — geographic city filter helpers consumed by merge.
+# `_parse_optional_geo_focus` is the GEO-01 helper that lives in run_init.py.
+from run_init import _parse_optional_geo_focus  # noqa: E402
+
 # US state ambiguity — when brief location names a state, drop keywords
 # containing other state's tokens. Prevents "Lake Worth, FL" → Texas drift.
 US_STATE_TOKENS = {
@@ -114,6 +118,129 @@ VALID_SOURCES = frozenset({
 })
 
 _PUNCT_STRIP = re.compile(r"[^\w\s]")
+
+# ---------------------------------------------------------------------------
+# Phase 11 plan 11-01 — city-level geo filter (GEO-03 / GEO-04)
+# ---------------------------------------------------------------------------
+
+# Path resolution: scripts/ → ../references/us-cities.json. Tests may
+# monkeypatch this constant (or pass --us-cities-path) to swap in the fixture.
+_US_CITIES_DATA_PATH: Path = (
+    Path(__file__).resolve().parent.parent / "references" / "us-cities.json"
+)
+
+_COUNTY_SUFFIX_RE: re.Pattern[str] = re.compile(r"\s+county\s*$", re.IGNORECASE)
+
+# State name → 2-letter USPS code, lowercase. Used by `_infer_state_code`.
+_STATE_NAME_TO_CODE: dict[str, str] = {
+    "alabama": "al", "alaska": "ak", "arizona": "az", "arkansas": "ar",
+    "california": "ca", "colorado": "co", "connecticut": "ct", "delaware": "de",
+    "district of columbia": "dc", "florida": "fl", "georgia": "ga", "hawaii": "hi",
+    "idaho": "id", "illinois": "il", "indiana": "in", "iowa": "ia",
+    "kansas": "ks", "kentucky": "ky", "louisiana": "la", "maine": "me",
+    "maryland": "md", "massachusetts": "ma", "michigan": "mi", "minnesota": "mn",
+    "mississippi": "ms", "missouri": "mo", "montana": "mt", "nebraska": "ne",
+    "nevada": "nv", "new hampshire": "nh", "new jersey": "nj", "new mexico": "nm",
+    "new york": "ny", "north carolina": "nc", "north dakota": "nd", "ohio": "oh",
+    "oklahoma": "ok", "oregon": "or", "pennsylvania": "pa", "rhode island": "ri",
+    "south carolina": "sc", "south dakota": "sd", "tennessee": "tn", "texas": "tx",
+    "utah": "ut", "vermont": "vt", "virginia": "va", "washington": "wa",
+    "west virginia": "wv", "wisconsin": "wi", "wyoming": "wy",
+}
+_STATE_CODES_2: frozenset[str] = frozenset(_STATE_NAME_TO_CODE.values())
+
+
+def _load_us_cities(path: Path | None = None) -> dict[str, dict[str, str]]:
+    """Load us-cities.json. Returns {state_code_lower: {city_lower: county_lower}}.
+
+    Empty dict if file absent or unparseable — allows backward compat (no filter
+    fires) and easy test injection.
+    """
+    p = path or _US_CITIES_DATA_PATH
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (FileNotFoundError, OSError, json.JSONDecodeError):
+        return {}
+
+
+def _strip_county_suffix(name: str) -> str:
+    """Normalize a geo_focus entry to match us-cities.json county values.
+
+    'Palm Beach County' → 'palm beach'
+    'Tarrant County'    → 'tarrant'
+    'Lake Worth'        → 'lake worth' (no suffix to strip)
+    """
+    return _COUNTY_SUFFIX_RE.sub("", name.strip()).strip().lower()
+
+
+def _build_city_filter(
+    state_code: str,
+    geo_focus: list[str],
+    us_cities: dict[str, dict[str, str]],
+) -> dict[str, set[str]]:
+    """Return {'in': <cities in focus>, 'out': <cities not in focus>} for state.
+
+    A city is 'in focus' if either the city name itself OR its county appears
+    in geo_focus (case-insensitive; ' county' suffix stripped from geo_focus
+    entries before lookup — Pitfall 5 hierarchy).
+
+    Backward compat: empty geo_focus OR no cities for state → both sets empty
+    (the filter is effectively inactive).
+    """
+    state_cities = us_cities.get(state_code.lower(), {}) if state_code else {}
+    if not geo_focus or not state_cities:
+        return {"in": set(), "out": set()}
+    focus_norm = {_strip_county_suffix(g) for g in geo_focus if g and g.strip()}
+    if not focus_norm:
+        return {"in": set(), "out": set()}
+    in_focus: set[str] = set()
+    out_of_focus: set[str] = set()
+    for city, county in state_cities.items():
+        city_l = city.lower()
+        county_l = (county or "").lower()
+        if city_l in focus_norm or (county_l and county_l in focus_norm):
+            in_focus.add(city_l)
+        else:
+            out_of_focus.add(city_l)
+    return {"in": in_focus, "out": out_of_focus}
+
+
+def _keyword_drifts_city(text: str, city_filter: dict[str, set[str]]) -> bool:
+    """True iff `text` contains any out-of-focus city name (multi-word substring match).
+
+    Empty city_filter['out'] → False (filter inactive, backward compat).
+    Case-insensitive. Uses literal substring match because city names are
+    multi-word (e.g., 'west palm beach', 'boca raton') and regex word-boundary
+    matching would mis-handle multi-token cities.
+    """
+    out = city_filter.get("out") if city_filter else None
+    if not out or not text:
+        return False
+    lower = text.lower()
+    return any(c in lower for c in out)
+
+
+def _infer_state_code(brief_text: str) -> str:
+    """Best-effort: pick a 2-letter US state code from a brief markdown.
+
+    Strategy:
+      1. Match a full state name in brief_text (case-insensitive) — most specific.
+      2. Fall back to a 2-letter uppercase code on a word boundary (`\bFL\b`).
+    Returns "" when nothing matches.
+    """
+    if not brief_text:
+        return ""
+    lower = brief_text.lower()
+    # Sort longest-first so "new york" wins over "new" or "york" partials.
+    for name in sorted(_STATE_NAME_TO_CODE, key=len, reverse=True):
+        if name in lower:
+            return _STATE_NAME_TO_CODE[name]
+    # Uppercase 2-letter fallback — case-sensitive on the ORIGINAL text to avoid
+    # false positives on common lowercase words ("or", "in", "ok", "hi", "ma").
+    for code in _STATE_CODES_2:
+        if re.search(rf"\b{code.upper()}\b", brief_text):
+            return code
+    return ""
 
 
 # ---------------------------------------------------------------------------
@@ -305,19 +432,35 @@ def _keyword_drifts_geo(text: str, allowed_states: set[str]) -> bool:
 
 
 def merge_raw_files(raw_dir: Path,
-                    *, allowed_states: set[str] | None = None) -> dict[str, dict]:
+                    *, allowed_states: set[str] | None = None,
+                    city_filter: dict[str, set[str]] | None = None,
+                    dropped_counter: dict[str, int] | None = None,
+                    ) -> dict[str, dict]:
     """Read all raw/*.json files and merge signals into a dict keyed by lemma_hash.
 
     Args:
         raw_dir: directory containing serper.json, tavily-*.json, websearch-baseline.json.
         allowed_states: when non-empty, drop keywords containing US state
             tokens not in this set (geo-drift filter).
+        city_filter: optional {'in': set, 'out': set} from `_build_city_filter`.
+            When 'out' is non-empty, keywords containing any of those city
+            names are dropped (GEO-03 Pitfall 5 hierarchy applied via the
+            filter construction, not here).
+        dropped_counter: optional dict the function increments to record
+            keyword drops per filter ('city', 'state'); enables telemetry in
+            stdout JSON.
 
     Returns:
         {lemma_hash: {"canonical": str, "lemma_hash": str, "variants": set, "sources": list}}
     """
     groups: dict[str, dict] = {}
     allowed_states = allowed_states or set()
+    city_filter = city_filter or {"in": set(), "out": set()}
+    if dropped_counter is None:
+        dropped_counter = {"city": 0, "state": 0}
+    else:
+        dropped_counter.setdefault("city", 0)
+        dropped_counter.setdefault("state", 0)
 
     def _add(text: str, attr: dict) -> None:
         """Canonicalise text and add attribution to the appropriate group."""
@@ -329,6 +472,13 @@ def merge_raw_files(raw_dir: Path,
 
         # Drop keywords whose only US-state reference is wrong-geo
         if _keyword_drifts_geo(text, allowed_states):
+            dropped_counter["state"] += 1
+            return
+
+        # Drop keywords mentioning a city outside the brief's geo_focus
+        # (city filter inactive when geo_focus empty — backward compat).
+        if _keyword_drifts_city(text, city_filter):
+            dropped_counter["city"] += 1
             return
 
         try:
@@ -418,6 +568,13 @@ def main_with_args(argv: list[str]) -> int:
         type=Path,
         help="Absolute path to the sealed run folder.",
     )
+    parser.add_argument(
+        "--us-cities-path",
+        type=Path,
+        default=None,
+        help="Override path to us-cities.json (tests inject fixture subset). "
+             "Defaults to references/us-cities.json relative to the script. GEO-04.",
+    )
     args = parser.parse_args(argv)
 
     run_dir: Path = args.run_dir
@@ -430,18 +587,47 @@ def main_with_args(argv: list[str]) -> int:
         log.error(f"raw/ subdirectory not found in {run_dir}")
         return 3
 
-    # Detect target US state(s) from brief.md to filter wrong-geo drift.
+    # Read brief.md once — drives BOTH the state-level filter AND the
+    # Phase 11 city-level filter (GEO-03).
     brief_path = run_dir / "brief.md"
-    allowed_states: set[str] = set()
+    brief_text = ""
     if brief_path.exists():
         try:
-            allowed_states = _build_state_filter(brief_path.read_text(encoding="utf-8"))
+            brief_text = brief_path.read_text(encoding="utf-8")
         except OSError:
-            pass
+            brief_text = ""
+
+    # Existing state-level filter (pre-Phase-11 behaviour preserved).
+    allowed_states = _build_state_filter(brief_text)
     if allowed_states:
         log.info(f"Geo-drift filter active: keep states {sorted(allowed_states)}")
 
-    groups = merge_raw_files(raw_dir, allowed_states=allowed_states)
+    # Phase 11 — city-level filter wiring (GEO-01 → GEO-03 → GEO-04).
+    geo_focus = _parse_optional_geo_focus(brief_text)
+    state_code = _infer_state_code(brief_text)
+    # Tests may monkeypatch _US_CITIES_DATA_PATH; honour --us-cities-path first.
+    us_cities_path = args.us_cities_path or _US_CITIES_DATA_PATH
+    us_cities = _load_us_cities(us_cities_path)
+    city_filter = _build_city_filter(state_code, geo_focus, us_cities)
+    if geo_focus and city_filter["out"]:
+        log.info(
+            f"City filter active: state={state_code!r} "
+            f"in-focus={len(city_filter['in'])} "
+            f"out-of-focus={len(city_filter['out'])} cities"
+        )
+    elif geo_focus:
+        log.info(
+            f"City filter inactive (no cities matched): state={state_code!r} "
+            f"geo_focus={geo_focus}"
+        )
+
+    dropped_counter: dict[str, int] = {"city": 0, "state": 0}
+    groups = merge_raw_files(
+        raw_dir,
+        allowed_states=allowed_states,
+        city_filter=city_filter,
+        dropped_counter=dropped_counter,
+    )
     if not groups:
         log.warning("No keywords extracted — keywords.json will be empty")
 
@@ -463,6 +649,14 @@ def main_with_args(argv: list[str]) -> int:
         "keywords_count": len(keywords),
         "source_diversity_avg": round(diversity_avg, 3),
         "variants_merged": variants_merged,
+        # GEO-* telemetry (empty when filter inactive — backward compat for
+        # downstream Phase 3 consumers that don't read these keys).
+        "geo_focus": geo_focus,
+        "state_code": state_code,
+        "cities_in_focus": sorted(city_filter["in"]),
+        "cities_filtered_out": sorted(city_filter["out"]),
+        "keywords_dropped_city_filter": dropped_counter["city"],
+        "keywords_dropped_state_filter": dropped_counter["state"],
     }))
     return 0
 
