@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Phases
-status: unknown
-stopped_at: Completed 10-00-PLAN.md (Wave 0 RED scaffolding for Operator Launch Kit). Tasks 1+2 committed (815988c + 3bdbcc7). 202 tests collected (up from 159); 149 GREEN legacy, 43 Phase 10 RED stubs SKIPPED via MODULE_INCOMPLETE / hasattr guards, 0 collection errors, 0 regressions. Wave 1 (plans 10-01 + 10-02) ready to start in parallel.
-last_updated: "2026-05-14T20:14:30.912Z"
+milestone: v1.2
+milestone_name: account-structure-mapping
+status: defining_requirements
+stopped_at: Milestone v1.2 started — Phase 11 (geo refinement + ad-group mapping) ahead
+last_updated: "2026-05-14T22:00:00.000Z"
 progress:
-  total_phases: 9
-  completed_phases: 8
-  total_plans: 38
-  completed_plans: 38
+  total_phases: 11
+  completed_phases: 10
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # State: Google Ad Research Agent
@@ -20,18 +20,20 @@ progress:
 
 **Core value:** From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session.
 
-**Current focus:** Milestone v1.1 — Operator-Ready Output. Phase 9 (Campaign Economics + Compliance) plans 6/6 executed; awaiting verifier+commit by orchestrator before Phase 9 closes. Phase 10 (Operator Launch Kit) is next.
+**Current focus:** Milestone v1.2 — Account-Structure Mapping. Phase 11 (geo county/city refinement + ad-group mapping to existing client structure). Defining requirements.
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
-| Phase | 10 — Operator Launch Kit (plan 00 complete; Wave 1 next) |
-| Plan | 10-00 complete — Wave 0 RED scaffolding shipped (fixtures + golden CSVs + export_csv stub + test scaffolding) |
-| Status | Wave 0 complete — 202 tests collected (was 159); 149 GREEN legacy, 43 Phase 10 RED stubs SKIPPED on hasattr / MODULE_INCOMPLETE guards, 0 collection errors. Wave 1 (plan 10-01 + 10-02) ready to start in parallel. |
-| Last activity | 2026-05-14 — 10-00 complete (Tasks 1+2 committed 815988c + 3bdbcc7); zero deviations |
+| Phase | 11 — Account-Structure Mapping (not yet planned) |
+| Plan | — |
+| Status | Defining requirements |
+| Last activity | 2026-05-14 — Milestone v1.2 started after team feedback (Palm Beach County focus + reuse existing ad groups) |
 
 ## Previous Milestone
+
+v1.1 — Operator-Ready Output (2 phases 9-10, 23 requirements). Shipped 2026-05-14. Editor CSV exports, max-CPC bid suggestions, budget forecasts, Next Steps checklist, compliance flags.
 
 v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-08. End-to-end runnable: brief intake → signals → ranking → clustering → competitor intel → negatives/report → niche pulse → account data + Ahrefs enrichment.
 

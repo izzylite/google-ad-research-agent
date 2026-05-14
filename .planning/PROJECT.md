@@ -8,7 +8,19 @@ Internal Claude Code skill for a centralized PPC operator. Operator pastes a cam
 
 From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session, without the operator leaving the chat.
 
-## Current Milestone: v1.1 Operator-Ready Output
+## Current Milestone: v1.2 Account-Structure Mapping
+
+**Goal:** Skill output respects the client's existing Google Ads account — narrows research to specific counties/cities in the brief, and maps our generated keywords TO the client's existing ad group structure instead of inventing new groups.
+
+**Target features:**
+- Optional county/city `geo_focus` list in brief; SERP queries + keyword filter narrow to scope
+- US cities/counties reference data file for out-of-scope keyword filter
+- `ad_group_match.py` maps our ranked keywords to existing account ad groups (Phase 8 perf data)
+- Match confidence per keyword (high/medium/low); low-confidence flagged for new ad group
+- `export_csv.py` writes existing ad group names when mapping covers keyword; unmapped → new cluster
+- Next Steps checklist reorders to "Add to existing ad groups" when mapping coverage >50%
+
+## Previous Milestone: v1.1 Operator-Ready Output
 
 **Goal:** Turn the report from a data dump into a campaign launch kit — junior PPC managers can move from report.md to a live, compliant Google Ads campaign with starter bids, budget bands, and a step-by-step checklist.
 
@@ -34,16 +46,22 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - ✓ Four-section markdown + JSON twin + HTML report, sealed run folder, browsable INDEX — v1.0
 - ✓ Niche Pulse sidecar — 7-day news harvest with trending themes + regulatory alerts — v1.0
 - ✓ Account Data + Volume Enrichment sidecar — Ahrefs volume/CPC/KD + Google Ads search terms/perf/negatives sync — v1.0
+- ✓ Editor CSV export (positives/negatives/ad_groups, Editor v2.x format) — v1.1
+- ✓ Max-CPC bid suggestions (intent-weighted from Ahrefs CPC) — v1.1
+- ✓ Budget forecast per cluster (low/mid/high bands, methodology disclaimer) — v1.1
+- ✓ Operator Next Steps checklist (bespoke substitution + HTML localStorage checkboxes) — v1.1
+- ✓ Compliance flags w/ CMPL-05 reorder (regulated-vertical verification at step 1) — v1.1
 
 ### Active
 
-<!-- v1.1 scope. Building toward these. -->
+<!-- v1.2 scope. Building toward these. -->
 
-- [ ] CSV export in Google Ads Editor format — positives.csv, negatives.csv, ad_groups.csv with match types + max CPC
-- [ ] Max-CPC bid suggestion column per keyword — Ahrefs CPC × intent multiplier (transactional 1.2x, commercial 0.8x, informational 0.4x)
-- [ ] Budget forecast per cluster — est. daily clicks + spend low/mid/high bands using volume × intent-CTR × suggested CPC
-- [ ] Operator Next-Steps checklist section in report.md — ordered ops list from campaign creation through launch
-- [ ] Compliance flags — detect regulated verticals (medical/legal/finance/gambling/crypto) and render warning block with verification path
+- [ ] Geographic refinement via brief `geo_focus` list (counties/cities under top-level location)
+- [ ] US cities/counties reference data file (operator-editable, JSON)
+- [ ] SERP query geo-biasing + out-of-scope city filter at merge stage
+- [ ] Ad-group mapping script reads existing account perf, maps our keywords to existing ad groups
+- [ ] Match confidence per keyword (high/medium/low); unmapped fall back to cluster
+- [ ] export_csv + Next Steps integrate mapping: respect existing structure when present
 
 ### Out of Scope
 
@@ -87,5 +105,8 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | Intent-weighted bid multipliers (1.2x / 0.8x / 0.4x) | Junior asks "what bid?" — defensible starting point from Ahrefs CPC anchored by buyer-stage; transactional aggressive, informational conservative | — Pending |
 | Compliance flag heuristics, not full policy engine | Detect 5 high-friction verticals (medical/legal/finance/gambling/crypto) by keyword token match; deeper Google Ads policy automation deferred — pointer to verification path is enough for junior | — Pending |
 
+| Geo narrowing via brief `geo_focus` list — v1.2 | Team feedback: research returned Lake Worth FL keywords from across Florida; need county/city precision. Brief field + US-cities reference data scan keeps it simple. | — Pending |
+| Ad-group mapping respects client structure — v1.2 | Junior PPC manager paste-experience: current export creates new ad groups (theme_intent slugs) instead of reusing client's existing ad groups. Mapping script reads Phase 8 perf data + writes existing names to CSV. | — Pending |
+
 ---
-*Last updated: 2026-05-14 after milestone v1.1 start*
+*Last updated: 2026-05-14 after milestone v1.2 start*
