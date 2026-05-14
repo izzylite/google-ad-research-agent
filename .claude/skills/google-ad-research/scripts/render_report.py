@@ -755,8 +755,15 @@ def _parse_brief_fields(brief_text: str) -> dict[str, str]:
     """
     fields = ["industry", "product", "location", "language", "audience"]
     result: dict[str, str] = {}
+    # Brief template (SKILL.md Step 4) emits `**Field:** value`. Older Phase 6
+    # code used `\*\*(\w+)\*\*:` (asterisks BEFORE colon), which never matches
+    # the template — leaving location/industry empty for all downstream
+    # consumers (GEO-05 callout, Next Steps location substitution,
+    # report.json.brief). Accept both forms for robustness.
     for line in brief_text.splitlines():
-        m = re.search(r"\*\*(\w+)\*\*:\s*(.+)", line)
+        m = re.search(r"\*\*(\w+):\*\*\s*(.+)", line) or re.search(
+            r"\*\*(\w+)\*\*:\s*(.+)", line
+        )
         if m:
             key = m.group(1).lower()
             value = m.group(2).strip()
