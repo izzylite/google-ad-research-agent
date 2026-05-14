@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: Completed 09-05-PLAN.md (SKILL.md Phase 9 pointer + references/phase9-economics-compliance.md rubric + end-to-end smoke approved on .runs/2026-05-08T081041Z-primary-urgent-care-car-accident-lake-worth/). All 6 visual checks green; 56/56 Phase 9 tests GREEN; 0 v1.0 regressions. Phase 9 plans 6/6 complete — awaiting verifier+commit by orchestrator before Phase 9 marked Complete on ROADMAP. BIDS-03 + FRCS-04 + FRCS-05 + CMPL-03 marked complete.
-last_updated: "2026-05-14T18:51:54.394Z"
+stopped_at: Completed 10-00-PLAN.md (Wave 0 RED scaffolding for Operator Launch Kit). Tasks 1+2 committed (815988c + 3bdbcc7). 202 tests collected (up from 159); 149 GREEN, 43 Phase 10 RED stubs SKIPPED via MODULE_INCOMPLETE / hasattr guards; zero collection errors; zero regressions. Wave 1 (plan 10-01 + 10-02) ready to start in parallel.
+last_updated: "2026-05-14T20:10:00Z"
 progress:
-  total_phases: 9
-  completed_phases: 7
-  total_plans: 33
-  completed_plans: 33
+  total_phases: 10
+  completed_phases: 8
+  total_plans: 34
+  completed_plans: 34
 ---
 
 # State: Google Ad Research Agent
@@ -26,10 +26,10 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | 9 — Campaign Economics and Compliance (plans 6/6 complete, awaiting verifier) |
-| Plan | 09-05 complete — Phase 9 closeout pending verifier run |
-| Status | Wave 3 closeout — SKILL.md Phase 9 pointer (497 lines) + references/phase9-economics-compliance.md (209 lines) shipped; end-to-end smoke approved on real run-folder; 56/56 Phase 9 tests GREEN, 0 v1.0 regressions |
-| Last activity | 2026-05-14 — 09-05 complete (Tasks 1+2 committed dd94a8b + 24dd777; Task 3 human-verify approved); BIDS-03 + FRCS-04 + FRCS-05 + CMPL-03 marked complete |
+| Phase | 10 — Operator Launch Kit (plan 00 complete; Wave 1 next) |
+| Plan | 10-00 complete — Wave 0 RED scaffolding shipped (fixtures + golden CSVs + export_csv stub + test scaffolding) |
+| Status | Wave 0 complete — 202 tests collected (was 159); 149 GREEN legacy, 43 Phase 10 RED stubs SKIPPED on hasattr / MODULE_INCOMPLETE guards, 0 collection errors. Wave 1 (plan 10-01 + 10-02) ready to start in parallel. |
+| Last activity | 2026-05-14 — 10-00 complete (Tasks 1+2 committed 815988c + 3bdbcc7); zero deviations |
 
 ## Previous Milestone
 
@@ -39,11 +39,12 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 
 | Metric | Value |
 |--------|-------|
-| Phases planned | 9 / 10 |
-| Phases complete | 8 / 10 (Phase 9 plans 6/6 done, awaiting verifier) |
-| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) |
+| Phases planned | 10 / 10 |
+| Phases complete | 8 / 10 (Phase 9 plans 6/6 done; Phase 10 plan 00/?? scaffolding shipped) |
+| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) + 1 (v1.1 Phase 10 Wave 0) |
 | v1.0 requirements complete | 52 / 52 |
-| v1.1 requirements complete | 13 / 23 (BIDS 4/4, FRCS 5/5, CMPL 4/5 — CMPL-05 mapped to Phase 10) |
+| v1.1 requirements complete | 13 / 23 (BIDS 4/4, FRCS 5/5, CMPL 4/5 — CMPL-05 mapped to Phase 10; EXPT-* / STEP-* RED-scaffolded in 10-00, GREEN in Wave 1+) |
+| Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
 | Phase 02-signal-collection P02 | 8min | 2 tasks | 2 files |
@@ -172,6 +173,12 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 09]: [09-05] references/phase9-economics-compliance.md (209 lines) mirrors phase8-account-data.md structure — When-to-run, Prerequisites, Step 36-40, Anti-patterns, Failure modes, Downstream contract — the explicit Phase 10 downstream-contract section is the upstream API spec for the Phase 10 planner (suggested_max_cpc_micros, campaign_totals.daily_spend_mid_usd, matched_verticals[].verification_url)
 - [Phase 09]: [09-05] End-to-end smoke reused real Phase 8 run-folder (.runs/2026-05-08T081041Z-primary-urgent-care-car-accident-lake-worth) — exercises all three bid-suggest paths (direct cpc / cluster-median fallback / no_cpc_data flagged) and triggers compliance block naturally (medical + legal verticals matched). All 6 visual + suite checks green; 56/56 Phase 9 tests GREEN; 0 v1.0 regressions
 - [Phase 09]: [09-05] Daily Clicks column in report.md renders raw Python floats (e.g., 0.44000000000000006) — cosmetic only, JSON contract correct, USD columns format correctly via _micros_to_usd. Deferred to Phase 10 / cleanup plan; not blocking Phase 9 closeout
+- [Phase 10]: [10-00] Stub-then-guard pattern (mirrors Phase 9 09-01 / 09-03) — export_csv.py ships in Wave 0 with locked header constants (POSITIVES_HEADERS / NEGATIVES_HEADERS / AD_GROUPS_HEADERS), TIER_TO_LEVEL map, MATCH_TYPE_TITLECASE map, and a NotImplementedError-raising main(). Tests `try: import export_csv` succeeds; `MODULE_INCOMPLETE = not hasattr(export_csv, "write_positives")` is the GREEN signal. Strictly better than absent-module guarding because Wave 1 inherits header strings as single source of truth.
+- [Phase 10]: [10-00] Per-function hasattr skip-guard on test_render_report.py extension (vs file-level pytestmark) — necessary because the file already hosts 23 GREEN Phase 6+9 tests. `_skip_unless_next_steps()` / `_skip_unless_export_section()` helpers wrap each new test so legacy GREEN keeps running while new Phase 10 RED stubs skip individually.
+- [Phase 10]: [10-00] Byte-exact golden CSV fixtures (golden_positives.csv / golden_negatives.csv / golden_ad_groups.csv) — generated via `csv.DictWriter(lineterminator="\r\n", quoting=csv.QUOTE_MINIMAL)`, encoding='utf-8' (no BOM). Single `assert got == golden` catches BOM drift + CRLF drift + header-cell drift + column-order drift + cell-value drift in one shot. Strongest Nyquist signal for Editor-importable v2.x format.
+- [Phase 10]: [10-00] Deterministic Campaign literal 'Phase 10 Test Brief' — derived from fixture run-dir name `2026-05-14T120000Z-phase-10-test-brief` → `_derive_brief_slug` → title-cased. Locked in goldens so Wave 1's slug-derivation cannot drift; tests read constant via module attribute, not by recomputing.
+- [Phase 10]: [10-00] Informational cluster (grocery_delivery_basics_informational) in clusters_phase10.json intentionally seeded with all-null cpc_micros — exercises the BIDS-02 fallback path AND the 0.00-not-blank Default Max CPC rule (Pitfall 10) without needing a synthetic test-only cluster.
+- [Phase 10]: [10-00] compliance_two_verticals fixture has 2 matched verticals (medical + legal) so CMPL-05 ONE-combined-step rule can be asserted directly via `len(verification_steps) == 1` rather than inferred.
 
 ### Open Questions / Todos
 
@@ -189,11 +196,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-14T18:43:14Z
+**Last session:** 2026-05-14T20:10:00Z
 
-**Stopped at:** Completed 09-05-PLAN.md (SKILL.md Phase 9 pointer + references/phase9-economics-compliance.md rubric + end-to-end smoke approved on .runs/2026-05-08T081041Z-primary-urgent-care-car-accident-lake-worth/). All 6 visual checks green; 56/56 Phase 9 tests GREEN; 0 v1.0 regressions. Phase 9 plans 6/6 complete — awaiting verifier+commit by orchestrator before Phase 9 marked Complete on ROADMAP. BIDS-03 + FRCS-04 + FRCS-05 + CMPL-03 marked complete.
+**Stopped at:** Completed 10-00-PLAN.md (Wave 0 RED scaffolding for Operator Launch Kit). Tasks 1+2 committed (815988c + 3bdbcc7). 202 tests collected (up from 159); 149 GREEN legacy, 43 Phase 10 RED stubs SKIPPED via MODULE_INCOMPLETE / hasattr guards, 0 collection errors, 0 regressions. Wave 1 (plans 10-01 + 10-02) ready to start in parallel.
 
-**Next session:** Run `/gsd:verify-phase 9` to close out Phase 9, then `/gsd:plan-phase 10` to decompose Phase 10 (Operator Launch Kit — EXPT + STEP, 9 requirements including the deferred CMPL-05 checklist reorder).
+**Next session:** Execute 10-01 (`export_csv.py` write_positives / write_negatives / write_ad_groups + CLI — flips 23 EXPT cases GREEN) and 10-02 (`render_report.render_next_steps_section` + `build_report_json` `next_steps` kwarg — flips STEP-01..04 + CMPL-05 GREEN) in parallel. They share no mutated files.
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
