@@ -51,9 +51,7 @@ def _skip_unless_build_mapping() -> None:
 
 @pytest.mark.skipif(not IMPORT_OK, reason="ad_group_match stub not yet shipped")
 def test_module_imports():
-    """Stub imports cleanly; locked constants intact; main() absent (NotImplementedError)."""
-    # Re-import in case pytestmark above attempted to skip the module — we
-    # explicitly opt-in this single test.
+    """Module imports cleanly; locked constants + Wave-1 public surface intact."""
     import ad_group_match as agm
     assert agm._THRESHOLDS == {"high": 0.7, "medium": 0.4}
     assert "near" in agm._STOPWORDS
@@ -61,13 +59,15 @@ def test_module_imports():
     assert "best" in agm._STOPWORDS
     assert "top" in agm._STOPWORDS
     assert agm._DEFAULT_INTENT_MISMATCH_MULTIPLIER == 0.5
-    # Wave 1 deliverables MUST be absent today.
-    assert not hasattr(agm, "build_mapping")
-    # main() should raise NotImplementedError mentioning Wave 1 / plan 11-02.
-    with pytest.raises(NotImplementedError) as exc_info:
-        agm.main_with_args([])
-    msg = str(exc_info.value)
-    assert "Wave 1" in msg or "11-02" in msg
+    # Wave 1 (plan 11-02) public surface — all helpers exposed.
+    assert hasattr(agm, "build_mapping")
+    assert hasattr(agm, "_tokens")
+    assert hasattr(agm, "_jaccard")
+    assert hasattr(agm, "_classify")
+    assert hasattr(agm, "_intent_match_multiplier")
+    assert hasattr(agm, "_infer_ad_group_intent")
+    assert hasattr(agm, "_build_ad_group_index")
+    assert callable(agm.main_with_args)
 
 
 # ---------------------------------------------------------------------------
