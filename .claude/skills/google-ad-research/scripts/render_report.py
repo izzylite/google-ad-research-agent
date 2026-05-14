@@ -106,6 +106,29 @@ USAGE_PULSE_COMPETITOR_NEWS = (
     "scandals are conquesting opportunities — increase bids on their brand "
     "terms with comparison ad copy."
 )
+USAGE_ENRICHED = (
+    "**How to use:** real Ahrefs data — monthly volume, CPC, Keyword "
+    "Difficulty (KD), and parent topic. Bid first on transactional/commercial "
+    "rows with `volume ≥ 100` and `KD ≤ 30`. Skip rows where Ahrefs returned "
+    "no data — they're too niche to have measurable search volume. Use "
+    "`parent_topic` to spot which of our LLM clusters Ahrefs would group "
+    "differently."
+)
+USAGE_ACCOUNT_PERF = (
+    "**How to use:** what your account actually did in the last 30 days. "
+    "**Converted search terms** are gold — bid harder on those keywords or "
+    "create dedicated ad groups. **Lossy search terms** (clicks but no "
+    "conversions) are negative keyword candidates — review before adding. "
+    "**Top by ROAS** tells you which campaigns to scale, **top by CPA** "
+    "shows which are most efficient at conversion."
+)
+USAGE_NEG_SYNC = (
+    "**How to use:** `already_in_account` rows are negatives your account "
+    "already excludes — no action. `new_candidate` rows are missing — add "
+    "**Strong** tier to all campaigns now, review **Considered** + "
+    "**Investigate** before adding. Saves duplicate work between research "
+    "and account audit."
+)
 USAGE_PULSE_NEGATIVES = (
     "**How to use:** quick-add candidates for your negative keyword list. "
     "Unlike the main negatives section, these are reactive — driven by news "
@@ -291,6 +314,145 @@ def render_niche_pulse_section(pulse: dict) -> str:
     return "".join(parts)
 
 
+def render_enriched_keyword_table(ranked: list[dict], top_n: int = 100) -> str:
+    """Volume-enriched keyword table. Used when at least one row has Ahrefs data."""
+    rows = []
+    for r in ranked[:top_n]:
+        vol = r.get("volume")
+        cpc_micros = r.get("cpc_micros")
+        cpc = f"${(cpc_micros / 10_000 / 100):.2f}" if cpc_micros else "—"
+        kd = r.get("difficulty")
+        parent = r.get("parent_topic") or ""
+        rows.append([
+            escape_md_cell(r["keyword"]),
+            escape_md_cell(r["intent"]),
+            r["match_type"],
+            f"{vol:,}" if vol is not None else "—",
+            cpc,
+            f"{kd}" if kd is not None else "—",
+            escape_md_cell(parent),
+            str(r["source_diversity"]),
+            str(r["score"]),
+        ])
+    headers = [
+        "Keyword", "Intent", "Match", "Vol/mo", "CPC", "KD",
+        "Parent Topic", "Src Div", "Score",
+    ]
+    return tabulate(rows, headers=headers, tablefmt="github")
+
+
+def render_account_perf_section(perf: dict) -> str:
+    """Render the Account Performance section (markdown)."""
+    if not perf or not isinstance(perf, dict):
+        return ""
+    parts = [
+        f"## Account Performance — last {perf.get('horizon_days', 30)} days\n\n",
+        USAGE_ACCOUNT_PERF, "\n",
+    ]
+    t = perf.get("totals", {})
+    cpa = t.get("blended_cpa_usd")
+    roas = t.get("blended_roas")
+    cpa_str = f"${cpa:.2f}" if cpa else "—"
+    roas_str = f"{roas:.2f}x" if roas else "—"
+    parts.append(
+        f"\n**Totals:** spend ${t.get('spend_usd', 0):,.2f} · "
+        f"clicks {t.get('clicks', 0):,} · "
+        f"conversions {t.get('conversions', 0)} · "
+        f"blended CPA {cpa_str} · "
+        f"blended ROAS {roas_str}\n"
+    )
+
+    converted = perf.get("converted_search_terms", [])
+    parts.append(f"\n### Converted search terms ({len(converted)})\n")
+    if not converted:
+        parts.append("\n_No converted search terms in this window — too few "
+                     "conversions tracked in active campaigns._\n")
+    else:
+        rows = [[
+            escape_md_cell(t["search_term"]),
+            f"{t['conversions']:.1f}",
+            t["clicks"],
+            f"${t['cost_usd']:.2f}",
+            escape_md_cell(t["campaign_name"]),
+        ] for t in converted[:15]]
+        parts.append("\n")
+        parts.append(tabulate(
+            rows, headers=["Search Term", "Conv", "Clicks", "Cost", "Campaign"],
+            tablefmt="github",
+        ))
+        parts.append("\n")
+
+    lossy = perf.get("lossy_search_terms", [])
+    parts.append(f"\n### Lossy search terms — negative keyword candidates ({len(lossy)})\n")
+    if not lossy:
+        parts.append("\n_No lossy terms detected._\n")
+    else:
+        rows = [[
+            escape_md_cell(t["search_term"]),
+            t["clicks"],
+            f"${t['cost_usd']:.2f}",
+            escape_md_cell(t["campaign_name"]),
+        ] for t in lossy[:15]]
+        parts.append("\n")
+        parts.append(tabulate(
+            rows, headers=["Search Term", "Clicks", "Cost", "Campaign"],
+            tablefmt="github",
+        ))
+        parts.append("\n")
+
+    by_roas = perf.get("top_by_roas", [])
+    parts.append(f"\n### Top campaigns by ROAS ({len(by_roas)})\n")
+    if not by_roas:
+        parts.append("\n_No campaigns with positive ROAS in window._\n")
+    else:
+        rows = [[
+            escape_md_cell(c["name"]),
+            c["status"],
+            f"${c['cost_usd']:.2f}",
+            c["clicks"],
+            f"{c['conversions']:.1f}",
+            f"{c['roas']:.2f}x",
+        ] for c in by_roas[:10]]
+        parts.append("\n")
+        parts.append(tabulate(
+            rows, headers=["Campaign", "Status", "Spend", "Clicks", "Conv", "ROAS"],
+            tablefmt="github",
+        ))
+        parts.append("\n")
+
+    return "".join(parts)
+
+
+def render_negatives_sync_section(sync: dict) -> str:
+    """Render the Negative Keyword Sync section."""
+    if not sync or not isinstance(sync, dict):
+        return ""
+    stats = sync.get("stats", {})
+    parts = [
+        f"## Negative Keyword Sync\n\n",
+        USAGE_NEG_SYNC, "\n",
+        f"\n**Stats:** our list = {stats.get('our_total', 0)} · "
+        f"already in account = {stats.get('already_covered', 0)} · "
+        f"new to add = **{stats.get('new_to_add', 0)}** "
+        f"(Strong {stats.get('new_strong', 0)}, "
+        f"Considered {stats.get('new_considered', 0)}, "
+        f"Investigate {stats.get('new_investigate', 0)})\n",
+    ]
+    by_tier = sync.get("new_by_tier", {})
+    for tier in ("Strong", "Considered", "Investigate"):
+        items = by_tier.get(tier, [])
+        parts.append(f"\n### New {tier} negatives to add ({len(items)})\n")
+        if not items:
+            parts.append("\n_None._\n")
+            continue
+        for n in items:
+            kw = escape_md_cell(n["keyword"])
+            cat = n.get("category", "")
+            just = escape_md_cell(n.get("justification", ""))
+            parts.append(f"- `{kw}` · _{cat}_ — {just}\n")
+    return "".join(parts)
+
+
 def render_negatives_section(negatives: list[dict]) -> str:
     """Render the Negative Keywords section with Strong/Considered/Investigate tiers."""
     by_tier: dict[str, list[dict]] = {t: [] for t in TIER_ORDER}
@@ -380,6 +542,8 @@ def render_full_report(
     *,
     top_n: int = 100,
     niche_pulse: dict | None = None,
+    account_perf: dict | None = None,
+    negatives_sync: dict | None = None,
 ) -> str:
     """Return full report.md content as a string."""
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -396,14 +560,29 @@ def render_full_report(
     # negatives), reference data last (full ranked keyword table, full pulse
     # tables, competitor LP details). Operator scrolls less to find what to
     # do this week.
+    # Detect whether Ahrefs enrichment is present (any row w/ a volume value)
+    has_enrichment = any(
+        r.get("volume") is not None for r in ranked
+    )
+
     sections = [
         header,
         HOW_TO_READ,
     ]
+    # Niche pulse first (action this week)
     pulse_md = render_niche_pulse_section(niche_pulse or {})
     if pulse_md:
         sections.append("\n")
         sections.append(pulse_md)
+    # Account perf next (real campaign data, also action-this-week)
+    if account_perf:
+        sections.append("\n")
+        sections.append(render_account_perf_section(account_perf))
+    # Negatives sync (action: what to add to account)
+    if negatives_sync:
+        sections.append("\n")
+        sections.append(render_negatives_sync_section(negatives_sync))
+    # Ad groups + negatives (evergreen)
     sections.extend([
         "\n",
         render_clusters_section(clusters_data),
@@ -411,11 +590,22 @@ def render_full_report(
         render_negatives_section(negatives),
         "\n",
         render_competitor_section(competitor_intel),
-        "\n## Ranked Keywords\n\n",
-        USAGE_KEYWORDS, "\n\n",
-        render_keyword_table(ranked, top_n=top_n),
-        "\n\n",
     ])
+    # Volume-enriched table replaces the plain ranked table when present
+    if has_enrichment:
+        sections.extend([
+            "\n## Ranked Keywords — Volume-Enriched\n\n",
+            USAGE_ENRICHED, "\n\n",
+            render_enriched_keyword_table(ranked, top_n=top_n),
+            "\n\n",
+        ])
+    else:
+        sections.extend([
+            "\n## Ranked Keywords\n\n",
+            USAGE_KEYWORDS, "\n\n",
+            render_keyword_table(ranked, top_n=top_n),
+            "\n\n",
+        ])
     return "".join(sections)
 
 
@@ -566,6 +756,22 @@ primarily sorted by <code>source_diversity</code>. Paste keywords into Google
 Keyword Planner for actual volume + CPC.
 </div>
 
+<section id="account-perf">
+  <h2>Account Performance <span class="cluster-meta" id="perfMeta"></span></h2>
+  <div class="usage"><strong>How to use:</strong> what your account actually did. <strong>Converted search terms</strong> are gold — bid harder. <strong>Lossy search terms</strong> (clicks no conv) = negative candidates. <strong>Top by ROAS</strong> = scale candidates.</div>
+  <div id="perfContent">
+    <p style="color:#666;font-size:13px;">No account-perf.json — run Phase 8 perf_fetch + perf_synth.</p>
+  </div>
+</section>
+
+<section id="negatives-sync">
+  <h2>Negative Keyword Sync <span class="cluster-meta" id="negSyncMeta"></span></h2>
+  <div class="usage"><strong>How to use:</strong> cross-references our generated negatives vs your account's existing negative list. <strong>New candidates</strong> are what to add to the account — Strong tier first.</div>
+  <div id="negSyncContent">
+    <p style="color:#666;font-size:13px;">No negatives-sync.json — run Phase 8 perf_synth.</p>
+  </div>
+</section>
+
 <section id="niche-pulse">
   <h2>Niche Pulse <span class="cluster-meta" id="pulseMeta"></span></h2>
   <div class="usage"><strong>What this is:</strong> news-derived signals from the last 7 days. Time-sensitive (1-4 week shelf life). NOT merged into the main keyword ranking. The four sub-sections below each have their own action — start with <strong>Highlights</strong>.</div>
@@ -634,10 +840,14 @@ Keyword Planner for actual volume + CPC.
   </div>
   <table id="kwTable">
     <thead>
-      <tr>
+      <tr id="kwHeaderRow">
         <th data-sort="string">Keyword</th>
         <th data-sort="string">Intent</th>
-        <th data-sort="string">Match Type</th>
+        <th data-sort="string">Match</th>
+        <th data-sort="number" data-enriched>Vol/mo</th>
+        <th data-sort="number" data-enriched>CPC</th>
+        <th data-sort="number" data-enriched>KD</th>
+        <th data-sort="string" data-enriched>Parent Topic</th>
         <th data-sort="string">Cluster</th>
         <th data-sort="number">Signals</th>
         <th data-sort="number">Src Div</th>
@@ -664,19 +874,90 @@ function renderKeywords() {{
   const filter = document.getElementById("kwFilter").value.toLowerCase();
   const intent = document.getElementById("intentFilter").value;
   let rows = REPORT.keywords || [];
+  // Detect Ahrefs enrichment — show/hide enriched columns
+  const enriched = rows.some(r => r.volume !== undefined && r.volume !== null);
+  document.querySelectorAll("#kwTable th[data-enriched]").forEach(th => {{
+    th.style.display = enriched ? "" : "none";
+  }});
   if (filter)  rows = rows.filter(r => (r.keyword||"").toLowerCase().includes(filter));
   if (intent)  rows = rows.filter(r => r.intent === intent);
-  tbody.innerHTML = rows.map(r => `
-    <tr>
+  tbody.innerHTML = rows.map(r => {{
+    const cpc = r.cpc_micros ? `$${{(r.cpc_micros / 1_000_000).toFixed(2)}}` : "—";
+    const vol = r.volume != null ? r.volume.toLocaleString() : "—";
+    const kd  = r.difficulty != null ? r.difficulty : "—";
+    const pt  = r.parent_topic ? htmlEscape(r.parent_topic) : "—";
+    const enrichedCols = enriched
+      ? `<td>${{vol}}</td><td>${{cpc}}</td><td>${{kd}}</td><td>${{pt}}</td>`
+      : "";
+    return `<tr>
       <td>${{htmlEscape(r.keyword)}}</td>
       <td><span class="intent-tag intent-${{r.intent}}">${{r.intent}}</span></td>
       <td>${{r.match_type}}</td>
+      ${{enrichedCols}}
       <td>${{r.cluster_id ? `<code>${{r.cluster_id}}</code>` : ""}}</td>
       <td>${{r.signal_count}}</td>
       <td>${{r.source_diversity}}</td>
       <td>${{r.score}}</td>
-    </tr>`).join("");
+    </tr>`;
+  }}).join("");
   document.getElementById("kwCount").textContent = `${{rows.length}} of ${{(REPORT.keywords||[]).length}} keywords`;
+}}
+
+function renderAccountPerf() {{
+  const perf = REPORT.account_perf || {{}};
+  const meta = document.getElementById("perfMeta");
+  const content = document.getElementById("perfContent");
+  if (!perf || !perf.synthesized_at) return;
+  const t = perf.totals || {{}};
+  meta.textContent = `last ${{perf.horizon_days||30}} days · $${{(t.spend_usd||0).toLocaleString()}} spend · ${{t.conversions||0}} conv`;
+  const tbl = (rows, headers, fmt) => {{
+    if (!rows.length) return "<p style='color:#666;font-size:13px'>None.</p>";
+    return `<table style="margin-bottom:12px"><thead><tr>${{headers.map(h => `<th>${{h}}</th>`).join("")}}</tr></thead><tbody>${{rows.map(r => `<tr>${{fmt(r).map(c => `<td>${{c}}</td>`).join("")}}</tr>`).join("")}}</tbody></table>`;
+  }};
+  let html = `<div style="background:#ecfdf5;border-left:4px solid #10b981;padding:10px 14px;margin-bottom:12px;border-radius:4px;font-size:13px">
+    <strong>Totals:</strong> spend $${{(t.spend_usd||0).toLocaleString()}} · clicks ${{(t.clicks||0).toLocaleString()}} · conv ${{t.conversions||0}} · blended CPA ${{t.blended_cpa_usd ? '$'+t.blended_cpa_usd : '—'}} · ROAS ${{t.blended_roas ? t.blended_roas+'x' : '—'}}
+  </div>`;
+
+  const conv = perf.converted_search_terms || [];
+  html += `<details open><summary>Converted search terms <span class="cluster-meta">${{conv.length}}</span></summary>` + tbl(conv.slice(0,15),
+    ["Search Term","Conv","Clicks","Cost","Campaign"],
+    r => [htmlEscape(r.search_term), r.conversions.toFixed(1), r.clicks, `$${{r.cost_usd.toFixed(2)}}`, htmlEscape(r.campaign_name)]
+  ) + `</details>`;
+
+  const lossy = perf.lossy_search_terms || [];
+  html += `<details><summary>Lossy search terms — negative candidates <span class="cluster-meta">${{lossy.length}}</span></summary>` + tbl(lossy.slice(0,15),
+    ["Search Term","Clicks","Cost","Campaign"],
+    r => [htmlEscape(r.search_term), r.clicks, `$${{r.cost_usd.toFixed(2)}}`, htmlEscape(r.campaign_name)]
+  ) + `</details>`;
+
+  const roas = perf.top_by_roas || [];
+  html += `<details><summary>Top campaigns by ROAS <span class="cluster-meta">${{roas.length}}</span></summary>` + tbl(roas.slice(0,10),
+    ["Campaign","Status","Spend","Clicks","Conv","ROAS"],
+    r => [htmlEscape(r.name), r.status, `$${{r.cost_usd.toFixed(2)}}`, r.clicks, r.conversions.toFixed(1), `${{r.roas.toFixed(2)}}x`]
+  ) + `</details>`;
+
+  content.innerHTML = html;
+}}
+
+function renderNegativesSync() {{
+  const sync = REPORT.negatives_sync || {{}};
+  const meta = document.getElementById("negSyncMeta");
+  const content = document.getElementById("negSyncContent");
+  if (!sync || !sync.synthesized_at) return;
+  const s = sync.stats || {{}};
+  meta.textContent = `${{s.our_total||0}} ours · ${{s.already_covered||0}} already in account · ${{s.new_to_add||0}} new to add`;
+  const by_tier = sync.new_by_tier || {{}};
+  let html = `<div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:10px 14px;margin-bottom:12px;border-radius:4px;font-size:13px">
+    <strong>Stats:</strong> our list = ${{s.our_total||0}} · already in account = ${{s.already_covered||0}} · new to add = <strong>${{s.new_to_add||0}}</strong> (Strong ${{s.new_strong||0}}, Considered ${{s.new_considered||0}}, Investigate ${{s.new_investigate||0}})
+  </div>`;
+  for (const tier of ["Strong","Considered","Investigate"]) {{
+    const items = by_tier[tier] || [];
+    html += `<details${{tier==='Strong'?' open':''}}><summary>New <span class="tier-${{tier}}">${{tier}}</span> negatives <span class="cluster-meta">${{items.length}}</span></summary>`;
+    if (!items.length) html += "<p style='color:#666;font-size:13px'>None.</p>";
+    else html += "<ul>" + items.map(n => `<li><code>${{htmlEscape(n.keyword)}}</code> <span class="cluster-meta">${{htmlEscape(n.category||'')}}</span> — ${{htmlEscape(n.justification||'')}}</li>`).join("") + "</ul>";
+    html += "</details>";
+  }}
+  content.innerHTML = html;
 }}
 
 function renderClusters() {{
@@ -884,7 +1165,8 @@ document.getElementById("intentFilter").addEventListener("change", renderKeyword
 document.getElementById("negFilter").addEventListener("input", renderNegatives);
 document.getElementById("negTierFilter").addEventListener("change", renderNegatives);
 
-renderKeywords(); renderClusters(); renderCompetitors(); renderNichePulse(); renderNegatives();
+renderKeywords(); renderClusters(); renderCompetitors(); renderNichePulse();
+renderAccountPerf(); renderNegativesSync(); renderNegatives();
 makeSortable("kwTable"); makeSortable("negTable");
 </script>
 </body>
@@ -901,6 +1183,8 @@ def build_report_json(
     run_dir: Path,
     *,
     niche_pulse: dict | None = None,
+    account_perf: dict | None = None,
+    negatives_sync: dict | None = None,
 ) -> dict:
     """Return canonical v1 report.json dict (not serialized)."""
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -935,6 +1219,8 @@ def build_report_json(
         "competitor_intel": competitor_intel,
         "negatives": negatives,
         "niche_pulse": niche_pulse or {},
+        "account_perf": account_perf or {},
+        "negatives_sync": negatives_sync or {},
     }
 
 
@@ -962,9 +1248,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"ERROR: {name} not found in {run_dir}", file=sys.stderr)
             return 3
 
-    # Load required inputs
+    # Load required inputs — prefer ranked-enriched.json over ranked.json
+    enriched_path = run_dir / "ranked-enriched.json"
+    ranked_path = enriched_path if enriched_path.exists() else (run_dir / "ranked.json")
     try:
-        ranked = json.loads((run_dir / "ranked.json").read_text(encoding="utf-8"))
+        ranked = json.loads(ranked_path.read_text(encoding="utf-8"))
         clusters_data = json.loads((run_dir / "clusters.json").read_text(encoding="utf-8"))
         negatives = json.loads((run_dir / "negatives.json").read_text(encoding="utf-8"))
         brief_text = (run_dir / "brief.md").read_text(encoding="utf-8")
@@ -991,14 +1279,37 @@ def main(argv: list[str] | None = None) -> int:
         except (json.JSONDecodeError, OSError):
             niche_pulse = None
 
+    # Load optional account perf + negatives sync (Phase 8 sidecars)
+    account_perf: dict | None = None
+    perf_path = run_dir / "account-perf.json"
+    if perf_path.exists():
+        try:
+            account_perf = json.loads(perf_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            account_perf = None
+
+    negatives_sync: dict | None = None
+    sync_path = run_dir / "negatives-sync.json"
+    if sync_path.exists():
+        try:
+            negatives_sync = json.loads(sync_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            negatives_sync = None
+
     # Render
     report_md = render_full_report(
         ranked, clusters_data, competitor_intel, negatives,
-        brief_text, run_dir, top_n=args.top_n, niche_pulse=niche_pulse,
+        brief_text, run_dir, top_n=args.top_n,
+        niche_pulse=niche_pulse,
+        account_perf=account_perf,
+        negatives_sync=negatives_sync,
     )
     report_json = build_report_json(
         ranked, clusters_data, competitor_intel, negatives,
-        brief_text, run_dir, niche_pulse=niche_pulse,
+        brief_text, run_dir,
+        niche_pulse=niche_pulse,
+        account_perf=account_perf,
+        negatives_sync=negatives_sync,
     )
 
     report_html = render_html_report(report_json)

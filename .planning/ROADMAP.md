@@ -133,6 +133,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 5. Competitor Ad Copy and LP Extraction | 3/3 | Complete    | 2026-05-08 |
 | 6. Negatives, Report Assembly, and Persistence | 6/6 | Complete    | 2026-05-08 |
 | 7. Niche Pulse | 2/2 | Complete    | 2026-05-08 |
+| 8. Account Data + Volume Enrichment | 8/8 | Complete    | 2026-05-08 |
 
 ## Coverage Map
 

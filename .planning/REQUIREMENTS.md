@@ -69,6 +69,17 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **PRST-01**: Each run is an isolated dated folder containing `brief.md`, `report.md`, `report.json`, `raw/`
 - [x] **PRST-02**: `.runs/INDEX.md` lists past runs (date, brief slug, status) for operator browsing
 
+### Account Data + Volume Enrichment (Phase 8)
+
+- [x] **AHRF-01**: `volume_enrich.py` calls Ahrefs `/v3/keywords-explorer/overview` for all ranked keywords and adds `volume`, `cpc_micros`, `difficulty`, `parent_topic` columns to a new `ranked-enriched.json`
+- [x] **AHRF-02**: Ahrefs requests batch keywords (single call per ≤100) to minimize unit cost; failures surface in stderr but don't abort
+- [x] **AHRF-03**: HTML + markdown report show enriched columns when present; fall back to source-diversity ranking when absent
+- [x] **GADS-01**: `perf_fetch.py` pulls `search_term_view` (last 30 days) via Google Ads API and persists `raw/google-ads-search-terms.json`
+- [x] **GADS-02**: `perf_fetch.py` pulls campaign + ad_group performance (cost, clicks, conversions) and persists `raw/google-ads-perf.json`
+- [x] **GADS-03**: `perf_fetch.py` pulls existing negative keywords (`campaign_criterion` + `ad_group_criterion`) and persists `raw/google-ads-negatives.json`
+- [x] **GADS-04**: `perf_synth.py` cross-references our `negatives.json` against existing account negatives and flags each as `already_in_account` or `new_candidate`
+- [x] **GADS-05**: Report includes new sections: Volume-Enriched Keywords (replaces ranked table when enrichment present), Real Search Terms, Account Performance, Negative Sync
+
 ### Niche Pulse (Phase 7 — time-sensitive sidecar)
 
 - [x] **PULSE-01**: `pulse_fetch.py` calls Serper `/news` endpoint per seed keyword with `tbs=qdr:w` (last 7 days) and persists `raw/serper-news.json`

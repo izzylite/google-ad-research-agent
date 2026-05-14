@@ -483,3 +483,9 @@ Phase 5 (competitor intel) begins at Step 18 below.
 ## Phase 7: Niche Pulse (optional, time-sensitive sidecar)
 
 > See `.claude/skills/google-ad-research/references/phase7-niche-pulse.md` for full step instructions (Steps 27-30). Load it with the Read tool when entering Phase 7. Phase 7 is optional — ask the operator before running. It surfaces trending news themes, regulatory alerts, competitor news, and trending negative candidates from the last 7 days. Costs ~12 Serper + ~12 Tavily credits per run. Does NOT merge into the main `keywords.json` — produces its own `niche-pulse.json`.
+
+---
+
+## Phase 8: Account Data + Volume Enrichment (optional, account-aware sidecar)
+
+> See `.claude/skills/google-ad-research/references/phase8-account-data.md` for full step instructions (Steps 31-35). Load it with the Read tool when entering Phase 8. Phase 8 is optional — ask the operator before running. It enriches the keyword table with Ahrefs volume / CPC / KD / parent_topic, pulls real search terms and campaign performance from the Google Ads account, and cross-references generated negatives against existing account negatives. Requires `AHREFS_API_KEY` + Google Ads OAuth creds in `.env`. Costs ~73 Ahrefs units + free Google Ads quota per run. Produces `ranked-enriched.json`, `account-perf.json`, `negatives-sync.json` alongside existing artifacts.
