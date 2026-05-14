@@ -489,3 +489,9 @@ Phase 5 (competitor intel) begins at Step 18 below.
 ## Phase 8: Account Data + Volume Enrichment (optional, account-aware sidecar)
 
 > See `.claude/skills/google-ad-research/references/phase8-account-data.md` for full step instructions (Steps 31-35). Load it with the Read tool when entering Phase 8. Phase 8 is optional — ask the operator before running. It enriches the keyword table with Ahrefs volume / CPC / KD / parent_topic, pulls real search terms and campaign performance from the Google Ads account, and cross-references generated negatives against existing account negatives. Requires `AHREFS_API_KEY` + Google Ads OAuth creds in `.env`. Costs ~73 Ahrefs units + free Google Ads quota per run. Produces `ranked-enriched.json`, `account-perf.json`, `negatives-sync.json` alongside existing artifacts.
+
+---
+
+## Phase 9: Campaign Economics and Compliance (optional, launch-kit prep)
+
+> See `.claude/skills/google-ad-research/references/phase9-economics-compliance.md` for full step instructions (Steps 36-40). Load it with the Read tool when entering Phase 9. Phase 9 is optional in the v1.0 workflow but **mandatory for Phase 10 (Operator Launch Kit)** — it adds Suggested Max CPC per keyword, per-cluster + campaign-level budget forecast bands, and a regulated-vertical compliance scan. Pure-compute phase — no API costs. Requires Phase 8 (`ranked-enriched.json` with `cpc_micros`) to have run. Produces an additive mutation of `ranked-enriched.json` plus two new sidecars (`forecast.json`, `compliance-flags.json`).
