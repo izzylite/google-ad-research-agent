@@ -148,6 +148,13 @@ _EXPORT_FILE_DESCRIPTIONS: list[tuple[str, str]] = [
     ("ad_groups.csv", "ad group definitions with Default Max CPC."),
 ]
 
+# ADGM-06: strict `>` threshold for the Next Steps step-3 rewrite. When
+# ad_group_mapping.mapping_coverage_pct exceeds this value, step 3 is
+# rewritten from "Create ad groups: ..." to "Add keywords to existing ad
+# groups: ...". 50.0 exactly does NOT trigger the rewrite (Pitfall 7 /
+# Open-Q 4 strict-greater-than gate). Single source of truth for tuning.
+_COVERAGE_REWRITE_PCT: float = 50.0
+
 # STEP-01: locked 8-step ops template. Step numbers derived from list
 # position at render time (CMPL-05 prepends a verification step when
 # compliance is non-empty — never hardcode step numbers in these strings).
@@ -547,6 +554,43 @@ def render_compliance_warning(compliance: dict | None) -> str:
     return "".join(parts)
 
 
+def render_geographic_focus_section(brief_fields: dict[str, str]) -> str:
+    """GEO-05: render the '## Geographic Focus' callout for geo-targeted briefs.
+
+    Returns markdown with the location → focus line, or '' when geo_focus is
+    empty (graceful degrade — caller appends unconditionally). Pipes / angle
+    brackets / smart quotes routed through escape_md_cell for HTML safety
+    inside the rendered markdown.
+
+        ## Geographic Focus
+
+        **Location:** Florida → **Focus:** Palm Beach County, Lake Worth
+    """
+    geo_focus = (brief_fields or {}).get("geo_focus", "").strip()
+    if not geo_focus:
+        return ""
+    location = (brief_fields or {}).get("location", "").strip() or "(location unset)"
+    return (
+        "## Geographic Focus\n\n"
+        f"**Location:** {escape_md_cell(location)} → "
+        f"**Focus:** {escape_md_cell(geo_focus)}\n\n"
+    )
+
+
+def _load_ad_group_mapping_for_render(run_dir: Path) -> dict | None:
+    """Mirror of export_csv._load_ad_group_mapping (kept module-local to avoid
+    cross-script imports). Returns None when ad-group-mapping.json is absent
+    or unparseable — backward compat: render proceeds with standard step-3.
+    """
+    mapping_path = run_dir / "ad-group-mapping.json"
+    if not mapping_path.exists():
+        return None
+    try:
+        return json.loads(mapping_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
 def _fmt_clicks(v) -> str:
     """Format daily click counts. Integers render as-is; floats round to 1dp
     and drop trailing `.0` so 6.0 → '6', 0.7333 → '0.7'."""
@@ -701,9 +745,13 @@ def _build_cluster_index(clusters_data: dict) -> dict[str, str]:
 
 
 def _parse_brief_fields(brief_text: str) -> dict[str, str]:
-    """Extract industry, product, location, language, audience from brief.md markdown.
+    """Extract industry, product, location, language, audience, geo_focus from brief.md.
 
     Looks for "**Field:** value" pattern (case-insensitive field matching).
+    GEO-05 extension: also reads the optional `**Geo focus:**` list-item line
+    (e.g. `- **Geo focus:** Palm Beach County, Lake Worth`) and exposes the
+    comma-joined raw value under key `"geo_focus"`. Empty string when absent
+    (graceful degrade — Phase 11 callers omit the section).
     """
     fields = ["industry", "product", "location", "language", "audience"]
     result: dict[str, str] = {}
@@ -714,6 +762,15 @@ def _parse_brief_fields(brief_text: str) -> dict[str, str]:
             value = m.group(2).strip()
             if key in fields:
                 result[key] = value
+
+    # GEO-05: optional "**Geo focus:**" line. Tolerates leading list markers
+    # (-, *) and whitespace so both bare and bulleted forms parse identically.
+    geo_match = re.search(
+        r"^[-*\s]*\*\*Geo\s*focus:\*\*\s*(.+)$",
+        brief_text,
+        re.IGNORECASE | re.MULTILINE,
+    )
+    result["geo_focus"] = geo_match.group(1).strip() if geo_match else ""
     return result
 
 
@@ -779,8 +836,9 @@ def render_next_steps_section(
     forecast: dict | None,
     compliance: dict | None,
     clusters_data: dict,
+    ad_group_mapping: dict | None = None,
 ) -> tuple[str, list[dict]]:
-    """Render the Next Steps checklist (STEP-01..04 + CMPL-05).
+    """Render the Next Steps checklist (STEP-01..04 + CMPL-05 + ADGM-06).
 
     Returns (markdown_string, step_list) where step_list is the canonical
     ordered list of step dicts shared by report.md, report.json, and the
@@ -790,6 +848,13 @@ def render_next_steps_section(
 
     Rules:
         - 8 standard ops steps from the locked template.
+        - ADGM-06: if ad_group_mapping is supplied AND its
+          mapping_coverage_pct is strictly greater than _COVERAGE_REWRITE_PCT
+          (50.0), step 3 is rewritten from "Create ad groups: ..." to
+          "Add keywords to existing ad groups: <name> (<N> kw), ...".
+          Groups ordered by descending match count, alphabetical tie-break.
+          The rewrite happens BEFORE the compliance prepend so it always
+          targets the original template index 2 (not the post-prepend index).
         - If compliance.matched_verticals is non-empty, prepend ONE combined
           verification step (multi-vertical -> ONE step, not N).
         - Step IDs = sha1(text)[:8] — stable across renders for HTML
@@ -825,6 +890,33 @@ def render_next_steps_section(
         raise KeyError(
             f"_STANDARD_NEXT_STEPS_TEMPLATE drift: missing substitution {exc}"
         ) from exc
+
+    # ADGM-06: conditional step-3 rewrite when mapping coverage exceeds threshold.
+    # Applied to the static template index (2) BEFORE compliance prepend, so
+    # the original "Create ad groups" slot is targeted regardless of CMPL-05.
+    if ad_group_mapping:
+        try:
+            coverage = float(
+                ad_group_mapping.get("mapping_coverage_pct", 0.0) or 0.0
+            )
+        except (TypeError, ValueError):
+            coverage = 0.0
+        if coverage > _COVERAGE_REWRITE_PCT:
+            from collections import Counter
+            by_ag: Counter[str] = Counter()
+            for m in ad_group_mapping.get("matches", []) or []:
+                if m.get("confidence") not in {"high", "medium"}:
+                    continue
+                name = m.get("existing_ad_group")
+                if name:
+                    by_ag[name] += 1
+            if by_ag:
+                # Descending by count, alphabetical tie-break for stable output.
+                ordered = sorted(by_ag.items(), key=lambda kv: (-kv[1], kv[0]))
+                add_to = ", ".join(f"{name} ({n} kw)" for name, n in ordered)
+                steps_text[2] = (
+                    f"Add keywords to existing ad groups: {add_to}."
+                )
 
     matched_verticals = (compliance or {}).get("matched_verticals") or []
     if matched_verticals:
@@ -895,6 +987,14 @@ def render_full_report(
         header,
         HOW_TO_READ,
     ]
+    # GEO-05: Geographic Focus callout sits between header/HOW_TO_READ and
+    # the compliance warning so operators see the geo targeting context
+    # before any keyword work. Empty string when brief has no Geo focus line.
+    brief_fields_for_geo = _parse_brief_fields(brief_text)
+    geo_md = render_geographic_focus_section(brief_fields_for_geo)
+    if geo_md:
+        sections.append("\n")
+        sections.append(geo_md)
     # Compliance warning ABOVE all other sections (CMPL-03) — operator's
     # first signal before they look at keywords / clusters / negatives. Empty
     # string when matched_verticals is empty/absent (graceful degrade).
@@ -956,10 +1056,12 @@ def render_full_report(
         sections.append("\n")
         sections.append(export_md)
 
-    # Next Steps (Phase 10 STEP-01..04 + CMPL-05) — LAST section.
+    # Next Steps (Phase 10 STEP-01..04 + CMPL-05; Phase 11 ADGM-06) — LAST section.
     brief_fields = _parse_brief_fields(brief_text)
+    ad_group_mapping = _load_ad_group_mapping_for_render(run_dir)
     next_steps_md, _ = render_next_steps_section(
-        brief_fields, forecast, compliance, clusters_data
+        brief_fields, forecast, compliance, clusters_data,
+        ad_group_mapping=ad_group_mapping,
     )
     sections.append("\n")
     sections.append(next_steps_md)
@@ -1680,7 +1782,35 @@ def build_report_json(
         if isinstance(matched, list):
             compliance_list = matched
 
-    return {
+    # GEO-05: geographic_focus surfaces brief's location + parsed geo_focus
+    # tokens. Always present (empty focus list when brief has no Geo line).
+    geo_focus_raw = (brief_fields.get("geo_focus") or "").strip()
+    geo_focus_list = [
+        s.strip() for s in geo_focus_raw.split(",") if s.strip()
+    ] if geo_focus_raw else []
+    geographic_focus_obj = {
+        "location": brief_fields.get("location", ""),
+        "focus": geo_focus_list,
+    }
+
+    # ADGM-06: ad_group_mapping_summary surfaces only when the sidecar exists.
+    # Schema mirrors the operator-facing telemetry: coverage_pct + per-tier
+    # counts. Absent key when no mapping (Phase-8-absent or pre-Phase-11 runs).
+    ad_group_mapping = _load_ad_group_mapping_for_render(run_dir)
+    ad_group_mapping_summary: dict | None = None
+    if ad_group_mapping:
+        counts = {"high": 0, "medium": 0, "low": 0}
+        for m in ad_group_mapping.get("matches", []) or []:
+            tier = m.get("confidence", "low")
+            counts[tier] = counts.get(tier, 0) + 1
+        ad_group_mapping_summary = {
+            "coverage_pct": ad_group_mapping.get("mapping_coverage_pct", 0.0),
+            "matched_high": counts.get("high", 0),
+            "matched_medium": counts.get("medium", 0),
+            "unmapped": counts.get("low", 0),
+        }
+
+    report = {
         "meta": {
             "run_id": run_id,
             "brief_slug": brief_slug,
@@ -1703,13 +1833,18 @@ def build_report_json(
         "negatives_sync": negatives_sync or {},
         "forecast": forecast or {},
         "compliance": compliance_list,
+        "geographic_focus": geographic_focus_obj,
         "next_steps": next_steps if next_steps is not None else (
             render_next_steps_section(
-                brief_fields, forecast, compliance, clusters_data
+                brief_fields, forecast, compliance, clusters_data,
+                ad_group_mapping=ad_group_mapping,
             )[1]
         ),
         "exports": exports if exports is not None else list_export_paths(run_dir),
     }
+    if ad_group_mapping_summary is not None:
+        report["ad_group_mapping_summary"] = ad_group_mapping_summary
+    return report
 
 
 # ---------------------------------------------------------------------------
@@ -1803,11 +1938,15 @@ def main(argv: list[str] | None = None) -> int:
         except (json.JSONDecodeError, OSError):
             compliance = None
 
-    # Phase 10 STEP-01..04 + CMPL-05 — compute Next Steps once, share between
-    # report.md (via render_full_report internally) and report.json/HTML.
+    # Phase 10 STEP-01..04 + CMPL-05 + Phase 11 ADGM-06 — compute Next Steps
+    # once, share between report.md (via render_full_report internally) and
+    # report.json/HTML. Mapping is read from the run_dir sidecar; absence
+    # falls back to the standard step-3 ("Create ad groups: ...").
     brief_fields_for_steps = _parse_brief_fields(brief_text)
+    ad_group_mapping_for_steps = _load_ad_group_mapping_for_render(run_dir)
     _, next_steps_list = render_next_steps_section(
-        brief_fields_for_steps, forecast, compliance, clusters_data
+        brief_fields_for_steps, forecast, compliance, clusters_data,
+        ad_group_mapping=ad_group_mapping_for_steps,
     )
     # Phase 10 EXPT-05 — Export Files list (relative POSIX paths).
     exports_list = list_export_paths(run_dir)
