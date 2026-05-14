@@ -98,11 +98,11 @@ Milestone v1.1 — campaign launch kit additions. Builds on v1.0 artifacts (rank
 
 ### Editor CSV Export
 
-- [ ] **EXPT-01**: `export_csv.py` writes `{run_dir}/export/positives.csv` with columns `Campaign, Ad Group, Keyword, Match Type, Max CPC, Final URL` in Google Ads Editor import format (UTF-8, comma-delimited, quoted strings)
-- [ ] **EXPT-02**: `export_csv.py` writes `{run_dir}/export/negatives.csv` with columns `Campaign, Ad Group, Keyword, Match Type, Level` (Level = `campaign` | `ad_group`); Strong tier → campaign level, Considered/Investigate → ad_group level
-- [ ] **EXPT-03**: `export_csv.py` writes `{run_dir}/export/ad_groups.csv` with columns `Campaign, Ad Group, Status, Default Max CPC` for ad group creation
-- [ ] **EXPT-04**: Editor-importable verification — CSV passes `csv.DictReader` round-trip and column headers exactly match Google Ads Editor v2.x spec (no BOM, CRLF line endings)
-- [ ] **EXPT-05**: `render_report.py` adds "Export Files" section linking to each CSV; `report.json` lists export file paths in stable `exports[]` array
+- [x] **EXPT-01**: `export_csv.py` writes `{run_dir}/export/positives.csv` with columns `Campaign, Ad Group, Keyword, Match Type, Max CPC, Final URL` in Google Ads Editor import format (UTF-8, comma-delimited, quoted strings)
+- [x] **EXPT-02**: `export_csv.py` writes `{run_dir}/export/negatives.csv` with columns `Campaign, Ad Group, Keyword, Match Type, Level` (Level = `campaign` | `ad_group`); Strong tier → campaign level, Considered/Investigate → ad_group level
+- [x] **EXPT-03**: `export_csv.py` writes `{run_dir}/export/ad_groups.csv` with columns `Campaign, Ad Group, Status, Default Max CPC` for ad group creation
+- [x] **EXPT-04**: Editor-importable verification — CSV passes `csv.DictReader` round-trip and column headers exactly match Google Ads Editor v2.x spec (no BOM, CRLF line endings)
+- [x] **EXPT-05**: `render_report.py` adds "Export Files" section linking to each CSV; `report.json` lists export file paths in stable `exports[]` array
 
 ### Max-CPC Bid Suggestions
 
@@ -121,10 +121,10 @@ Milestone v1.1 — campaign launch kit additions. Builds on v1.0 artifacts (rank
 
 ### Operator Next-Steps Checklist
 
-- [ ] **STEP-01**: `render_report.py` appends a `## Next Steps` section to `report.md` containing an ordered ops checklist: (1) create campaign in <location/language>, (2) set daily budget to <mid forecast>, (3) create ad groups <names from clusters>, (4) paste positives.csv via Editor, (5) paste negatives.csv at campaign level for Strong tier, (6) write 3 RSAs per ad group using competitor headline/CTA/offer examples, (7) set max CPC per keyword from suggested values, (8) review compliance flags before enabling
-- [ ] **STEP-02**: Checklist substitutes brief values (location, language, audience, budget) and forecast values (mid spend) into the template so each run reads as bespoke instructions, not boilerplate
-- [ ] **STEP-03**: HTML report renders the checklist with copy-able command snippets and checkboxes that persist via localStorage so operator can track progress within a session
-- [ ] **STEP-04**: report.json `next_steps[]` array carries the ordered step list for downstream tooling
+- [x] **STEP-01**: `render_report.py` appends a `## Next Steps` section to `report.md` containing an ordered ops checklist: (1) create campaign in <location/language>, (2) set daily budget to <mid forecast>, (3) create ad groups <names from clusters>, (4) paste positives.csv via Editor, (5) paste negatives.csv at campaign level for Strong tier, (6) write 3 RSAs per ad group using competitor headline/CTA/offer examples, (7) set max CPC per keyword from suggested values, (8) review compliance flags before enabling
+- [x] **STEP-02**: Checklist substitutes brief values (location, language, audience, budget) and forecast values (mid spend) into the template so each run reads as bespoke instructions, not boilerplate
+- [x] **STEP-03**: HTML report renders the checklist with copy-able command snippets and checkboxes that persist via localStorage so operator can track progress within a session
+- [x] **STEP-04**: report.json `next_steps[]` array carries the ordered step list for downstream tooling
 
 ### Compliance Flags
 
@@ -228,16 +228,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMPL-02 | Phase 9 | Complete |
 | CMPL-03 | Phase 9 | Complete |
 | CMPL-04 | Phase 9 | Complete |
-| CMPL-05 | Phase 9 | Complete |
-| EXPT-01 | Phase 10 | Pending |
-| EXPT-02 | Phase 10 | Pending |
-| EXPT-03 | Phase 10 | Pending |
-| EXPT-04 | Phase 10 | Pending |
-| EXPT-05 | Phase 10 | Pending |
-| STEP-01 | Phase 10 | Pending |
-| STEP-02 | Phase 10 | Pending |
-| STEP-03 | Phase 10 | Pending |
-| STEP-04 | Phase 10 | Pending |
+| CMPL-05 | Phase 10 | Complete |
+| EXPT-01 | Phase 10 | Complete |
+| EXPT-02 | Phase 10 | Complete |
+| EXPT-03 | Phase 10 | Complete |
+| EXPT-04 | Phase 10 | Complete |
+| EXPT-05 | Phase 10 | Complete |
+| STEP-01 | Phase 10 | Complete |
+| STEP-02 | Phase 10 | Complete |
+| STEP-03 | Phase 10 | Complete |
+| STEP-04 | Phase 10 | Complete |
 
 **Coverage:**
 - v1.0 requirements: 52 total (35 originally mapped + 9 PULSE + 8 AHRF/GADS added during v1.0)

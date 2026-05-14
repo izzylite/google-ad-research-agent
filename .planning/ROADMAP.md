@@ -135,7 +135,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 
 - [x] **Phase 9: Campaign Economics and Compliance** — Enrich existing v1.0 artifacts with starter-bid suggestions, per-cluster budget forecast bands, and regulated-vertical compliance flags. All output enriches `ranked-enriched.json`/`clusters.json` and writes new `forecast.json` + `compliance-flags.json` sidecars.
  (completed 2026-05-14)
-- [ ] **Phase 10: Operator Launch Kit** — Consume the enriched data from Phase 9 to emit Editor-importable CSVs and a bespoke Next-Steps checklist that walks a junior PPC manager from `report.md` to a live campaign.
+- [x] **Phase 10: Operator Launch Kit** — Consume the enriched data from Phase 9 to emit Editor-importable CSVs and a bespoke Next-Steps checklist that walks a junior PPC manager from `report.md` to a live campaign. (completed 2026-05-14)
 
 ## v1.1 Phase Details
 
@@ -167,7 +167,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. `report.md` ends with a "Next Steps" section containing an ordered 8-step ops checklist whose values (location, language, audience, daily-budget mid-forecast number, ad-group names from clusters) are substituted from the brief and Phase 9 forecast — each run reads as bespoke instructions, never as boilerplate.
   4. When `compliance-flags.json` is non-empty, the Next-Steps checklist promotes "Complete <vertical> verification at <URL> before launching" from step 8 to step 1 and renumbers the remaining steps, so the operator cannot accidentally launch ahead of regulated-vertical verification.
   5. The HTML report renders the checklist with copy-able command snippets and localStorage-backed checkboxes so the operator can track per-session progress; `report.json` carries the ordered list as a `next_steps[]` array and the CSV file paths as an `exports[]` array for downstream tooling.
-**Plans:** 1/5 plans executed
+**Plans:** 5/5 plans complete
 - [x] 10-00-PLAN.md — Wave 0: test scaffolding (test_export_csv.py + test_render_report.py extension + 11 fixtures including 3 byte-exact golden CSVs + export_csv.py MODULE_MISSING stub) — completed 2026-05-14
 - [ ] 10-01-PLAN.md — Wave 1: export_csv.py (EXPT-01..04 — single script writing positives.csv + negatives.csv + ad_groups.csv with UTF-8 no-BOM + CRLF byte contract)
 - [ ] 10-02-PLAN.md — Wave 1: render_report.py Next Steps section + report.json next_steps[] + HTML checkbox state (STEP-01..04 + CMPL-05)
@@ -187,7 +187,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 7. Niche Pulse | 2/2 | Complete    | 2026-05-08 |
 | 8. Account Data + Volume Enrichment | 8/8 | Complete    | 2026-05-08 |
 | 9. Campaign Economics and Compliance | 6/6 | Complete    | 2026-05-14 |
-| 10. Operator Launch Kit | 1/5 | In Progress | — |
+| 10. Operator Launch Kit | 5/5 | Complete    | 2026-05-14 |
 
 ## Coverage Map
 

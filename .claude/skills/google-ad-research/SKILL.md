@@ -495,3 +495,6 @@ Phase 5 (competitor intel) begins at Step 18 below.
 ## Phase 9: Campaign Economics and Compliance (optional, launch-kit prep)
 
 > See `.claude/skills/google-ad-research/references/phase9-economics-compliance.md` for full step instructions (Steps 36-40). Load it with the Read tool when entering Phase 9. Phase 9 is optional in the v1.0 workflow but **mandatory for Phase 10 (Operator Launch Kit)** — it adds Suggested Max CPC per keyword, per-cluster + campaign-level budget forecast bands, and a regulated-vertical compliance scan. Pure-compute phase — no API costs. Requires Phase 8 (`ranked-enriched.json` with `cpc_micros`) to have run. Produces an additive mutation of `ranked-enriched.json` plus two new sidecars (`forecast.json`, `compliance-flags.json`).
+
+## Phase 10: Operator Launch Kit (optional, campaign-launch artifacts)
+> See `.claude/skills/google-ad-research/references/phase10-operator-launch-kit.md` for full step instructions (Steps 41-43). Optional; turns report into ready-to-import campaign. Emits 3 Editor v2.x CSVs (`positives.csv`, `negatives.csv`, `ad_groups.csv`) + appends bespoke Next Steps checklist. Pure compute, no API costs. Requires Phase 9. Produces `{run_dir}/export/*.csv` + extends `report.md`/`report.json`/`report.html`.
