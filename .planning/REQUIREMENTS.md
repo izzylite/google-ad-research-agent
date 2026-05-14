@@ -132,7 +132,7 @@ Milestone v1.1 — campaign launch kit additions. Builds on v1.0 artifacts (rank
 - [x] **CMPL-02**: Token lists are stored in `references/compliance-verticals.json` (data, not code) so operator can extend without code change; each vertical entry has `tokens[]`, `verification_url`, and `policy_note`
 - [x] **CMPL-03**: Report renders a "⚠ Compliance Required" block above the Ranked Keywords table when any vertical matches; HTML uses warning-yellow background; markdown uses block quote with `⚠` prefix
 - [x] **CMPL-04**: report.json `compliance[]` array lists matched verticals; build_report_json signature extends with `compliance` kwarg; absent → empty array
-- [ ] **CMPL-05**: Next-Steps checklist (STEP-01) reorders step 8 to step 1 when compliance flags present — "Complete <vertical> verification at <URL> before launching"; the rest of the checklist remains in order
+- [x] **CMPL-05**: Next-Steps checklist (STEP-01) reorders step 8 to step 1 when compliance flags present — "Complete <vertical> verification at <URL> before launching"; the rest of the checklist remains in order
 
 ## v2 Requirements
 
@@ -228,7 +228,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMPL-02 | Phase 9 | Complete |
 | CMPL-03 | Phase 9 | Complete |
 | CMPL-04 | Phase 9 | Complete |
-| CMPL-05 | Phase 9 | Pending |
+| CMPL-05 | Phase 9 | Complete |
 | EXPT-01 | Phase 10 | Pending |
 | EXPT-02 | Phase 10 | Pending |
 | EXPT-03 | Phase 10 | Pending |
