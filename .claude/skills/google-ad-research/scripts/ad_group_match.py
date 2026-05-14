@@ -258,11 +258,139 @@ def build_mapping(
     }
 
 
-def main_with_args(argv: list[str]) -> int:  # pragma: no cover — Task 3 fills in
-    raise NotImplementedError(
-        "ad_group_match.py CLI implemented in plan 11-02 Task 3 (Wave 1). "
-        "See .planning/phases/11-account-structure-mapping/11-02-PLAN.md"
+import argparse
+import json
+from pathlib import Path
+
+# stderr logging — reuse the project-wide configure_logger when available
+try:
+    from lib.log import configure_logger  # type: ignore
+except ImportError:  # pragma: no cover — defensive fallback for ad-hoc invocation
+    import logging
+
+    def configure_logger(name: str, level: str = "INFO"):
+        logging.basicConfig(stream=sys.stderr, level=level)
+        return logging.getLogger(name)
+
+
+def main_with_args(argv: list[str]) -> int:
+    """CLI entry. --run-dir required. Phase 8 absent → exit 0 with skipped sidecar."""
+    parser = argparse.ArgumentParser(
+        description="Map ranked keywords to existing Google Ads ad groups (ADGM-01..04).",
     )
+    parser.add_argument("--run-dir", required=True, type=Path)
+    args = parser.parse_args(argv)
+
+    log = configure_logger("ad_group_match")
+    run_dir: Path = args.run_dir
+
+    if not run_dir.exists():
+        print(
+            json.dumps({"error": f"--run-dir does not exist: {run_dir}"}),
+            file=sys.stderr,
+        )
+        return 3
+
+    raw_dir = run_dir / "raw"
+    perf_path = raw_dir / "google-ads-perf.json"
+    terms_path = raw_dir / "google-ads-search-terms.json"
+    ranked_path = run_dir / "ranked-enriched.json"
+    if not ranked_path.exists():
+        ranked_path = run_dir / "ranked.json"
+
+    if not ranked_path.exists():
+        print(
+            json.dumps({
+                "error": f"ranked.json/ranked-enriched.json absent in {run_dir}",
+            }),
+            file=sys.stderr,
+        )
+        return 3
+
+    try:
+        ranked_raw = json.loads(ranked_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        print(
+            json.dumps({"error": f"ranked.json unparseable: {exc}"}),
+            file=sys.stderr,
+        )
+        return 3
+
+    # ranked.json schema: list[dict] OR {"keywords": [...]}
+    if isinstance(ranked_raw, dict):
+        ranked = ranked_raw.get("keywords", []) or []
+    else:
+        ranked = ranked_raw or []
+
+    mapping_path = run_dir / "ad-group-mapping.json"
+
+    # ADGM-01: graceful skip when Phase 8 artifacts are absent (Pitfall 6)
+    if not perf_path.exists() or not terms_path.exists():
+        log.info("Phase 8 artifacts absent — skipping ad-group mapping")
+        mapping = {
+            "matches": [],
+            "unmapped_count": len(ranked),
+            "mapping_coverage_pct": 0.0,
+            "computed_at": _now_iso_z(),
+            "skipped_reason": "phase8_artifacts_absent",
+        }
+        try:
+            mapping_path.write_text(
+                json.dumps(mapping, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+        except (PermissionError, OSError) as exc:
+            print(
+                json.dumps({"error": f"write failed: {exc}"}),
+                file=sys.stderr,
+            )
+            return 2
+        print(json.dumps({
+            "mapping_path": str(mapping_path),
+            "skipped": True,
+            "coverage_pct": 0.0,
+        }))
+        return 0
+
+    # Happy path — load Phase 8 raws and compute the mapping
+    try:
+        perf = json.loads(perf_path.read_text(encoding="utf-8"))
+        search_terms = json.loads(terms_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        print(
+            json.dumps({"error": f"Phase 8 raw unparseable: {exc}"}),
+            file=sys.stderr,
+        )
+        return 3
+
+    mapping = build_mapping(ranked, perf, search_terms)
+
+    try:
+        # ensure_ascii=False so Unicode dashes write byte-for-byte (Pitfall 2)
+        mapping_path.write_text(
+            json.dumps(mapping, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    except (PermissionError, OSError) as exc:
+        print(
+            json.dumps({"error": f"write failed: {exc}"}),
+            file=sys.stderr,
+        )
+        return 2
+
+    # Stdout summary (one JSON line)
+    confidence_counts = {"high": 0, "medium": 0, "low": 0}
+    for m in mapping["matches"]:
+        confidence_counts[m["confidence"]] += 1
+    print(json.dumps({
+        "mapping_path": str(mapping_path),
+        "total_ranked": len(mapping["matches"]),
+        "matched_high": confidence_counts["high"],
+        "matched_medium": confidence_counts["medium"],
+        "unmapped": confidence_counts["low"],
+        "coverage_pct": mapping["mapping_coverage_pct"],
+    }))
+    return 0
 
 
 def main() -> int:  # pragma: no cover
