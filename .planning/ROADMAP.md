@@ -174,6 +174,22 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - [ ] 10-03-PLAN.md — Wave 2: render_report.py Export Files section + report.json exports[] (EXPT-05) + E2E integration test
 - [ ] 10-04-PLAN.md — Wave 3: SKILL.md pointer + references/phase10-operator-launch-kit.md + human-verify Editor import smoke
 
+---
+
+## Milestone v1.2: Account-Structure Mapping
+
+### Phase 11: Account-Structure Mapping
+**Goal:** Skill output respects the client's existing Google Ads account. Brief narrows research to specific counties/cities via optional `geo_focus` field; out-of-scope city tokens drop from the keyword pool; `ad_group_match.py` maps our ranked keywords to existing account ad groups (Phase 8 perf data), and `export_csv.py` writes existing ad group names when matched, preserving the client's structure.
+**Depends on:** Phase 10 (export_csv.py — extends with mapping read), Phase 8 (raw/google-ads-perf.json), Phase 9 (suggested_max_cpc_micros — unchanged), Phase 1-2 (brief intake + serp_fetch — extends with geo_focus).
+**Requirements:** GEO-01, GEO-02, GEO-03, GEO-04, GEO-05, ADGM-01, ADGM-02, ADGM-03, ADGM-04, ADGM-05, ADGM-06
+**Success Criteria** (what must be TRUE):
+  1. The operator passes a brief with optional `geo_focus: ["Palm Beach County", "Lake Worth"]` (or skips the field for backward compat); `serp_fetch.py` includes the geo tokens in query strings to bias SERP locality.
+  2. `merge_signals.py` drops keywords containing US-city tokens NOT in `geo_focus` within the same state, scoped via `references/us-cities.json` data file — Lake Worth FL run no longer surfaces "Tampa" or "Jacksonville" results.
+  3. `ad_group_match.py` reads `raw/google-ads-perf.json` + `raw/google-ads-search-terms.json` and emits `ad-group-mapping.json` with per-keyword `{existing_ad_group, confidence}` tier (high/medium/low).
+  4. When mapping covers >50% of keywords, `export_csv.py` writes existing ad group names in the `Ad Group` column for matched rows; ad_groups.csv lists only NEW ad groups (preserves existing names, no Editor duplicate-name errors).
+  5. Report Next Steps section conditionally rewrites step 3 to "Add keywords to existing ad groups: <names>" instead of "Create ad groups: <new names>" when mapping coverage > 50%.
+**Plans:** TBD
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -188,6 +204,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 8. Account Data + Volume Enrichment | 8/8 | Complete    | 2026-05-08 |
 | 9. Campaign Economics and Compliance | 6/6 | Complete    | 2026-05-14 |
 | 10. Operator Launch Kit | 5/5 | Complete    | 2026-05-14 |
+| 11. Account-Structure Mapping | 0/0 | Not started | — |
 
 ## Coverage Map
 
@@ -202,9 +219,10 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 7 | PULSE-01..09 | 9 |
 | 9 | BIDS-01, BIDS-02, BIDS-03, BIDS-04, FRCS-01, FRCS-02, FRCS-03, FRCS-04, FRCS-05, CMPL-01, CMPL-02, CMPL-03, CMPL-04, CMPL-05 | 14 |
 | 10 | EXPT-01, EXPT-02, EXPT-03, EXPT-04, EXPT-05, STEP-01, STEP-02, STEP-03, STEP-04 | 9 |
-| **Total** | | **67 / 67** |
+| 11 | GEO-01, GEO-02, GEO-03, GEO-04, GEO-05, ADGM-01, ADGM-02, ADGM-03, ADGM-04, ADGM-05, ADGM-06 | 11 |
+| **Total** | | **78 / 78** |
 
-No orphans. No duplicates. Every v1 + v1.1 requirement maps to exactly one phase.
+No orphans. No duplicates. Every v1 + v1.1 + v1.2 requirement maps to exactly one phase.
 
 ## Phase Ordering Rationale
 

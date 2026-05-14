@@ -134,6 +134,27 @@ Milestone v1.1 — campaign launch kit additions. Builds on v1.0 artifacts (rank
 - [x] **CMPL-04**: report.json `compliance[]` array lists matched verticals; build_report_json signature extends with `compliance` kwarg; absent → empty array
 - [x] **CMPL-05**: Next-Steps checklist (STEP-01) reorders step 8 to step 1 when compliance flags present — "Complete <vertical> verification at <URL> before launching"; the rest of the checklist remains in order
 
+## v1.2 Requirements (Account-Structure Mapping)
+
+Milestone v1.2 — Phase 11 only. Team feedback driven: research narrows to specific counties/cities + reuses client's existing ad group structure.
+
+### Geographic Refinement
+
+- [ ] **GEO-01**: Brief intake accepts optional `geo_focus` field — comma-separated list of counties/cities within the top-level location (e.g., "Palm Beach County, Lake Worth, West Palm Beach"). Skill prompts conditionally when location is at state level + operator hints at locality.
+- [ ] **GEO-02**: `serp_fetch.py` includes `geo_focus` tokens in query strings to bias SERP locality (e.g., "car accident doctor Palm Beach County" instead of "car accident doctor"); appended to existing seed phrases when geo_focus present.
+- [ ] **GEO-03**: `merge_signals.py` adds an out-of-scope-city filter — drops keywords containing US-city/county tokens NOT in `geo_focus` (within the same state); scope-aware to avoid false positives (e.g., "Boca Raton" dropped from Lake Worth run, "Tampa" dropped from Palm Beach County run).
+- [ ] **GEO-04**: `references/us-cities.json` reference data file (operator-editable, ~30KB) lists US cities and counties per state for the GEO-03 filter scan. Sourced from US Census place data; subset to top 5000 cities (covers >95% of likely false-positive tokens).
+- [ ] **GEO-05**: `render_report.py` adds a "Geographic Focus" callout under the Header section showing top-level location + geo_focus list (e.g., "Florida → Palm Beach County, Lake Worth"). Empty geo_focus → callout omitted gracefully.
+
+### Ad-Group Mapping (existing client structure)
+
+- [ ] **ADGM-01**: `ad_group_match.py` reads `raw/google-ads-perf.json` (Phase 8 GADS-02 output) + `raw/google-ads-search-terms.json` (GADS-01) to extract a `{existing_ad_group → [member_keywords]}` index. Skip silently when Phase 8 not run.
+- [ ] **ADGM-02**: For each ranked-enriched keyword, compute similarity to each existing ad group via token overlap + intent class match; pick highest-scoring match above a configurable threshold (default 0.4).
+- [ ] **ADGM-03**: Confidence tier per match — `high` (>= 0.7), `medium` (0.4-0.7), `low` (< 0.4 = no match, fallback to new cluster). Threshold values in a single config block, frozenset-asserted.
+- [ ] **ADGM-04**: Emits `ad-group-mapping.json` sidecar: `{matches: [{keyword, existing_ad_group, confidence, reason}], unmapped_count, mapping_coverage_pct}`.
+- [ ] **ADGM-05**: `export_csv.py` reads `ad-group-mapping.json` when present; positives.csv `Ad Group` column = existing ad group name for matched keywords, cluster slug for unmapped. ad_groups.csv lists only NEW ad groups (skip existing ones to avoid Editor duplicate-name errors).
+- [ ] **ADGM-06**: `render_report.py` Next Steps section conditionally rewrites when mapping coverage > 50% — "Add keywords to existing ad groups: <names>" replaces "Create ad groups: <new names>"; existing ad groups listed by name with keyword count.
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -238,14 +259,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STEP-02 | Phase 10 | Complete |
 | STEP-03 | Phase 10 | Complete |
 | STEP-04 | Phase 10 | Complete |
+| GEO-01 | Phase 11 | Pending |
+| GEO-02 | Phase 11 | Pending |
+| GEO-03 | Phase 11 | Pending |
+| GEO-04 | Phase 11 | Pending |
+| GEO-05 | Phase 11 | Pending |
+| ADGM-01 | Phase 11 | Pending |
+| ADGM-02 | Phase 11 | Pending |
+| ADGM-03 | Phase 11 | Pending |
+| ADGM-04 | Phase 11 | Pending |
+| ADGM-05 | Phase 11 | Pending |
+| ADGM-06 | Phase 11 | Pending |
 
 **Coverage:**
-- v1.0 requirements: 52 total (35 originally mapped + 9 PULSE + 8 AHRF/GADS added during v1.0)
-- v1.0 mapped to phases: 52 (Phases 1-8)
-- v1.1 requirements: 23 total (BIDS-01..04, FRCS-01..05, CMPL-01..05, EXPT-01..05, STEP-01..04)
-- v1.1 mapped to phases: 23 (Phase 9: 14 reqs, Phase 10: 9 reqs)
-- Unmapped: 0 v1.0 / 0 v1.1
-- Orphaned: 0 — every requirement maps to exactly one phase
+- v1.0 requirements: 52 total (mapped to Phases 1-8, all complete)
+- v1.1 requirements: 23 total (Phase 9: 14, Phase 10: 9, all complete)
+- v1.2 requirements: 11 total (GEO×5, ADGM×6) — Phase 11
+- v1.2 mapped to phases: 11 (Phase 11)
+- Unmapped: 0
+- Orphaned: 0
 
 ---
 *Requirements defined: 2026-05-08*
