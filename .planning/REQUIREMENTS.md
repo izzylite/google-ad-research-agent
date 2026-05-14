@@ -281,4 +281,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-08*
-*Last updated: 2026-05-14 — Phase 9 plans 6/6 executed; BIDS + FRCS + CMPL-01..04 marked Complete (CMPL-05 deferred to Phase 10 STEP-01 checklist reorder)*
+*Last updated: 2026-05-15 — Phase 11 plans 5/5 executed; all 11 v1.2 requirements (GEO-01..05 + ADGM-01..06) marked Complete. Milestone v1.2 shipped. Total requirements: 78/78 Complete (52 v1.0 + 23 v1.1 + 11 v1.2).*

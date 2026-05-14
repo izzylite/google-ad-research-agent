@@ -1,35 +1,35 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Phases
-status: unknown
-stopped_at: "Completed 11-03-PLAN.md (Wave 2 export_csv + render_report integrations). 2 tasks committed (8bca0f3 + c8514a7). Suite: 239 passed / 0 skipped (full deps); 9 Phase 11 Wave 2 RED stubs flipped GREEN (4 ADGM-05 + 2 GEO-05 + 3 ADGM-06), zero regressions. Wave 2 complete — Wave 3 plan 11-04 (SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify smoke) now unblocked."
-last_updated: "2026-05-14T23:21:13.848Z"
+milestone: v1.2
+milestone_name: Account-Structure Mapping
+status: complete
+stopped_at: "Completed 11-04-PLAN.md — Phase 11 closed; milestone v1.2 complete. 2 task commits (6aed701 + f16ef49) + 1 auto-fix commit (16f5d5d, render_report regex). E2E smoke approved against real Phase 8 urgent-care data: 239 tests GREEN, SKILL.md 499/500, references/phase11 240 lines, coverage 0.0% mathematically correct, ADGM-06 rewrite NOT firing at ≤50% (correct), CMPL-05 compliance-first reorder confirmed. All 11 v1.2 requirements (GEO-01..05 + ADGM-01..06) marked Complete."
+last_updated: "2026-05-15T00:35:00.000Z"
 progress:
-  total_phases: 10
-  completed_phases: 8
-  total_plans: 43
-  completed_plans: 42
+  total_phases: 11
+  completed_phases: 11
+  total_plans: 48
+  completed_plans: 48
 ---
 
 # State: Google Ad Research Agent
 
-**Last updated:** 2026-05-14
+**Last updated:** 2026-05-15
 
 ## Project Reference
 
 **Core value:** From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session.
 
-**Current focus:** Milestone v1.2 — Account-Structure Mapping. Phase 11 (geo county/city refinement + ad-group mapping to existing client structure). Defining requirements.
+**Current focus:** Milestone v1.2 — Account-Structure Mapping COMPLETE. Phase 11 (geo county/city refinement + ad-group mapping to existing client structure) shipped 2026-05-15. All 11 v1.2 requirements (GEO×5 + ADGM×6) marked Complete.
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
-| Phase | 11 — Account-Structure Mapping (Wave 2 complete: 11-00 + 11-01 + 11-02 + 11-03) |
-| Plan | 4 / 5 (11-00 + 11-01 + 11-02 + 11-03 complete; 11-04 next) |
-| Status | Wave 2 complete — export_csv + render_report integrations shipped; Wave 3 plan 11-04 (SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify smoke) unblocked |
-| Last activity | 2026-05-15 — 11-03 committed (Tasks 1-2: 8bca0f3 / c8514a7); 239 passed / 0 skipped (full deps); 9 Phase 11 Wave 2 RED stubs flipped GREEN (4 ADGM-05 + 2 GEO-05 + 3 ADGM-06); 0 regressions |
+| Phase | 11 — Account-Structure Mapping (COMPLETE; all 5 plans shipped) |
+| Plan | 5 / 5 (11-00 + 11-01 + 11-02 + 11-03 + 11-04 complete) |
+| Status | Phase 11 complete; milestone v1.2 closed. Operator-verified e2e smoke approved against real Phase 8 urgent-care data. SKILL.md 499/500, references/phase11 240 lines, 239 tests GREEN, 0 regressions |
+| Last activity | 2026-05-15 — 11-04 committed (6aed701 + f16ef49) + auto-fix 16f5d5d (render_report regex). E2E smoke approved (coverage 0.0% mathematically correct for narrow vertical; ADGM-06 rewrite NOT firing at ≤50% as designed). All 11 v1.2 requirements Complete in REQUIREMENTS.md |
 
 ## Previous Milestone
 
@@ -42,10 +42,11 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Metric | Value |
 |--------|-------|
 | Phases planned | 11 / 11 |
-| Phases complete | 10 / 11 (v1.0 + v1.1 complete; Phase 11 Wave 0 shipped) |
-| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) + 1 (v1.1 Phase 10) + 3 (v1.2 Phase 11: Wave 0 + 11-01 + 11-02) |
+| Phases complete | 11 / 11 (v1.0 + v1.1 + v1.2 all complete) |
+| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) + 5 (v1.1 Phase 10) + 5 (v1.2 Phase 11) = 43 |
 | v1.0 requirements complete | 52 / 52 |
-| v1.1 requirements complete | 13 / 23 (BIDS 4/4, FRCS 5/5, CMPL 4/5 — CMPL-05 mapped to Phase 10; EXPT-* / STEP-* RED-scaffolded in 10-00, GREEN in Wave 1+) |
+| v1.1 requirements complete | 23 / 23 (BIDS 4/4, FRCS 5/5, CMPL 5/5, EXPT 5/5, STEP 4/4) |
+| v1.2 requirements complete | 11 / 11 (GEO 5/5, ADGM 6/6) |
 | Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
@@ -78,6 +79,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 11 P01 | 8 | 4 tasks | 6 files |
 | Phase 11 P02 | 6 | 3 tasks | 2 files |
 | Phase 11 P03 | 9 | 2 tasks | 3 files |
+| Phase 11 P04 | ~25min | 3 tasks (2 docs + 1 auto-fix + 1 human-verify) | 3 files (1 created + 2 modified) |
 
 ### Execution History
 
@@ -201,6 +203,10 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 11]: [Phase 11-03] Mapped keywords override cluster assignment entirely (not just relabel): _build_positives_rows emits a row for any keyword the mapping resolves to an existing AG, even when the LLM clusterer orphaned it. Without this, mapping could only relabel rows our clusterer already happened to group — partially defeating the ADGM-05 contract.
 - [Phase 11]: [Phase 11-03] ADGM-06 step-3 rewrite applied BEFORE CMPL-05 compliance prepend so it targets the static template index 2 (the 'Create ad groups: ...' slot) regardless of compliance state. Reversing the order would force the rewrite to chase a moving index after compliance shifts steps down by 1.
 - [Phase 11]: [Phase 11-03] _stage_mapping_run test helper augments ranked-enriched + clusters with mapping keywords when a mapping fixture is supplied (Rule-1 deviation). Original Wave-0 fixtures had zero keyword overlap between grocery ranked rows and accident-doctor mapping entries, making the existing-AG assertion structurally unachievable.
+- [Phase 11]: [Phase 11-04] Phase 11 step rubric (Steps 44-47) lives ONLY in references/phase11-account-structure-mapping.md (240 lines); SKILL.md gets a single pointer line. Mirrors Phase 5/7/8/9/10 precedent. Final SKILL.md = 499 / 500 (under by 1 after Phase 11 wiring + compaction of blank lines between Phase 9 and Phase 10 pointers).
+- [Phase 11]: [Phase 11-04] render_report._parse_brief_fields regex (auto-fix during e2e smoke) extended to accept BOTH `**Field:**` and `**Field**:` forms — colon can be inside OR outside the bold markers. Discovered when smoke brief used the colon-outside form and Geographic Focus section silently dropped. Rule 1 (bug) fix, no architectural change. Commit 16f5d5d.
+- [Phase 11]: [Phase 11-04] Coverage 0.0% on real urgent-care account (73 keywords vs 83-token search-term bag, all jaccards below 0.4) is MATHEMATICALLY CORRECT, not a bug. Anti-pattern documented in references/phase11 explicitly covers narrow-vertical low coverage. ADGM-06 strict > 50.0 threshold confirmed honored — Next Steps step 4 stayed at default "Create ad groups" template instead of rewriting to "Add keywords to existing ad groups: ...".
+- [Phase 11]: [Phase 11-04] CMPL-05 compliance-first reorder verified end-to-end against real account: Next Steps step 1 = compliance verification (medical + legal verticals matched in urgent-care brief). ADGM-06 rewrite would have targeted step 4 (post-CMPL-05 prepend) had coverage been > 50%. Order of operations (ADGM-06 before CMPL-05 prepend, per plan 11-03 decision) holds in production.
 
 ### Open Questions / Todos
 
@@ -218,11 +224,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-14T23:21:03.211Z
+**Last session:** 2026-05-15T00:35:00.000Z
 
-**Stopped at:** Completed 11-03-PLAN.md (Wave 2 export_csv + render_report integrations). 2 tasks committed (8bca0f3 + c8514a7). Suite: 239 passed / 0 skipped (full deps); 9 Phase 11 Wave 2 RED stubs flipped GREEN (4 ADGM-05 + 2 GEO-05 + 3 ADGM-06), zero regressions. Wave 2 complete — Wave 3 plan 11-04 (SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify smoke) now unblocked.
+**Stopped at:** Completed 11-04-PLAN.md — Phase 11 closeout + milestone v1.2 ship. 2 task commits (6aed701 references/phase11 + f16ef49 SKILL.md wiring) + 1 auto-fix commit (16f5d5d render_report regex). E2E smoke approved against real Phase 8 urgent-care data: 239 tests GREEN, SKILL.md 499/500, references/phase11 240 lines, coverage 0.0% mathematically correct, ADGM-06 rewrite NOT firing at ≤50% (correct), CMPL-05 compliance-first reorder confirmed at step 1. All 11 v1.2 requirements (GEO-01..05 + ADGM-01..06) marked Complete in REQUIREMENTS.md.
 
-**Next session:** Execute Phase 11 Wave 2 — plan 11-03 (export_csv reads ad-group-mapping.json for positives Ad Group resolution + ad_groups.csv exclusion of existing — ADGM-05; render_report Next Steps step 3 rewrites when coverage_pct > 50.0 — ADGM-06). Then Wave 3 plan 11-04 (SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify smoke).
+**Next session:** Milestone v1.2 complete. All 11 / 11 phases shipped (v1.0 + v1.1 + v1.2). No active phase. Options: (1) Define v1.3 milestone scope, (2) Address open-question/todos list (composite ranking calibration, Tavily credit metrics, match-type recommendation validation, v1.1 bid multiplier calibration, FRCS ratio tuning), (3) Triage v2 backlog (VOLM-*, VPRS-*, TOOL-*).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`

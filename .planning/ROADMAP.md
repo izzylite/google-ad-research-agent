@@ -179,7 +179,13 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 
 ## Milestone v1.2: Account-Structure Mapping
 
+**Started:** 2026-05-14
+**Goal:** Skill output respects the client's existing Google Ads account.
+**Granularity:** standard (1 phase for 11 requirements)
+**Coverage:** 11/11 v1.2 requirements mapped (100%)
+
 ### Phase 11: Account-Structure Mapping
+**Status:** Complete (shipped 2026-05-15)
 **Goal:** Skill output respects the client's existing Google Ads account. Brief narrows research to specific counties/cities via optional `geo_focus` field; out-of-scope city tokens drop from the keyword pool; `ad_group_match.py` maps our ranked keywords to existing account ad groups (Phase 8 perf data), and `export_csv.py` writes existing ad group names when matched, preserving the client's structure.
 **Depends on:** Phase 10 (export_csv.py — extends with mapping read), Phase 8 (raw/google-ads-perf.json), Phase 9 (suggested_max_cpc_micros — unchanged), Phase 1-2 (brief intake + serp_fetch — extends with geo_focus).
 **Requirements:** GEO-01, GEO-02, GEO-03, GEO-04, GEO-05, ADGM-01, ADGM-02, ADGM-03, ADGM-04, ADGM-05, ADGM-06
@@ -189,12 +195,12 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. `ad_group_match.py` reads `raw/google-ads-perf.json` + `raw/google-ads-search-terms.json` and emits `ad-group-mapping.json` with per-keyword `{existing_ad_group, confidence}` tier (high/medium/low).
   4. When mapping covers >50% of keywords, `export_csv.py` writes existing ad group names in the `Ad Group` column for matched rows; ad_groups.csv lists only NEW ad groups (preserves existing names, no Editor duplicate-name errors).
   5. Report Next Steps section conditionally rewrites step 3 to "Add keywords to existing ad groups: <names>" instead of "Create ad groups: <new names>" when mapping coverage > 50%.
-**Plans:** 4/5 plans executed
-- [ ] 11-00-PLAN.md — Wave 0: test scaffolding (test_geo_filter.py + test_ad_group_match.py + 5 extended test files + 7 fixtures + ad_group_match.py MODULE_INCOMPLETE stub)
-- [ ] 11-01-PLAN.md — Wave 1: geo plumbing (us-cities.json data + run_init geo_focus helper + serp_fetch --geo-focus + merge_signals city filter)
-- [ ] 11-02-PLAN.md — Wave 1: ad_group_match.py full implementation (build_mapping + Jaccard × intent match + confidence tiers + sidecar + graceful Phase-8-absent skip)
-- [ ] 11-03-PLAN.md — Wave 2: integrations (export_csv mapping-aware + render_report Geographic Focus + Next Steps step-3 rewrite)
-- [ ] 11-04-PLAN.md — Wave 3: SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify e2e smoke
+**Plans:** 5/5 plans complete
+- [x] 11-00-PLAN.md — Wave 0: test scaffolding (test_geo_filter.py + test_ad_group_match.py + 5 extended test files + 7 fixtures + ad_group_match.py MODULE_INCOMPLETE stub)
+- [x] 11-01-PLAN.md — Wave 1: geo plumbing (us-cities.json data + run_init geo_focus helper + serp_fetch --geo-focus + merge_signals city filter)
+- [x] 11-02-PLAN.md — Wave 1: ad_group_match.py full implementation (build_mapping + Jaccard × intent match + confidence tiers + sidecar + graceful Phase-8-absent skip)
+- [x] 11-03-PLAN.md — Wave 2: integrations (export_csv mapping-aware + render_report Geographic Focus + Next Steps step-3 rewrite)
+- [x] 11-04-PLAN.md — Wave 3: SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify e2e smoke
 
 ## Progress
 
@@ -210,7 +216,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 8. Account Data + Volume Enrichment | 8/8 | Complete    | 2026-05-08 |
 | 9. Campaign Economics and Compliance | 6/6 | Complete    | 2026-05-14 |
 | 10. Operator Launch Kit | 5/5 | Complete    | 2026-05-14 |
-| 11. Account-Structure Mapping | 4/5 | In Progress|  |
+| 11. Account-Structure Mapping | 5/5 | Complete   | 2026-05-14 |
 
 ## Coverage Map
 
@@ -249,3 +255,4 @@ No orphans. No duplicates. Every v1 + v1.1 + v1.2 requirement maps to exactly on
 *Phase 5 plans drafted: 2026-05-08*
 *Phase 6 plans drafted: 2026-05-08*
 *v1.1 milestone phases (9-10) added: 2026-05-14*
+*v1.2 milestone phase 11 shipped: 2026-05-15*
