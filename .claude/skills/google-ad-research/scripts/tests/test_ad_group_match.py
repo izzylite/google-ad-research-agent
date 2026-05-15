@@ -25,12 +25,22 @@ if str(SCRIPTS_DIR) not in sys.path:
 try:
     import ad_group_match  # noqa: F401
     MODULE_INCOMPLETE = not hasattr(ad_group_match, "build_mapping")
+    PHASE16_INCOMPLETE = not hasattr(ad_group_match, "_build_ag_token_bag")
     IMPORT_OK = True
 except ImportError:
     MODULE_INCOMPLETE = True
+    PHASE16_INCOMPLETE = True
     IMPORT_OK = False
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def _skip_unless_phase16() -> None:
+    """Per-function guard for Phase 16 tests — skips at Wave 0 stub-time."""
+    if PHASE16_INCOMPLETE:
+        pytest.skip(
+            "Phase 16 _build_ag_token_bag not yet implemented (plan 16-01)"
+        )
 
 
 def _skip_unless_build_mapping() -> None:
@@ -333,3 +343,133 @@ def test_unicode_dashes_preserved(tmp_path):
         if "Accident Exams – Lake Worth" == m["existing_ad_group"]
     ]
     assert en_dashed, "existing_ad_group lost en-dash byte fidelity"
+
+
+# ---------------------------------------------------------------------------
+# ADGM-07..11 — Phase 16 token-bag enrichment
+# ---------------------------------------------------------------------------
+
+def test_lake_worth_coverage_floor(tmp_path):
+    """ADGM-11 — Lake Worth golden run yields mapping_coverage_pct >= 50%."""
+    _skip_unless_phase16()
+    run_dir = tmp_path / "2026-05-15T120000Z-lake-worth-golden"
+    (run_dir / "raw").mkdir(parents=True)
+    (run_dir / "ranked-enriched.json").write_text(
+        (FIXTURES / "ranked_lake_worth.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    for src, dst in [
+        ("google-ads-perf-lake-worth.json", "google-ads-perf.json"),
+        ("google-ads-search-terms-lake-worth.json", "google-ads-search-terms.json"),
+        ("google-ads-keywords-lake-worth.json", "google-ads-keywords.json"),
+    ]:
+        (run_dir / "raw" / dst).write_text(
+            (FIXTURES / src).read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+    rc = ad_group_match.main_with_args(["--run-dir", str(run_dir)])
+    assert rc == 0
+    out = json.loads((run_dir / "ad-group-mapping.json").read_text(encoding="utf-8"))
+    golden = json.loads(
+        (FIXTURES / "golden_mapping_lake_worth.json").read_text(encoding="utf-8")
+    )
+    assert out["mapping_coverage_pct"] >= golden["mapping_coverage_pct_floor"], (
+        f"Phase 16 coverage {out['mapping_coverage_pct']}% < floor "
+        f"{golden['mapping_coverage_pct_floor']}% — token-bag enrichment regression"
+    )
+
+
+def test_backward_compat_keywords_absent(tmp_path):
+    """ADGM-08 — keywords.json absent → graceful degrade (<=30% coverage)."""
+    _skip_unless_phase16()
+    run_dir = tmp_path / "2026-05-15T120000Z-no-keywords-fallback"
+    (run_dir / "raw").mkdir(parents=True)
+    (run_dir / "ranked-enriched.json").write_text(
+        (FIXTURES / "ranked_lake_worth.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    # Stage perf + search-terms — but NOT keywords.json
+    (run_dir / "raw" / "google-ads-perf.json").write_text(
+        (FIXTURES / "google-ads-perf-lake-worth.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    (run_dir / "raw" / "google-ads-search-terms.json").write_text(
+        (FIXTURES / "google-ads-search-terms-lake-worth.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    rc = ad_group_match.main_with_args(["--run-dir", str(run_dir)])
+    assert rc == 0
+    out = json.loads((run_dir / "ad-group-mapping.json").read_text(encoding="utf-8"))
+    # Without kw_criteria, bag = ag_name ∪ search-terms only. Ceiling at 30%.
+    assert 0.0 <= out["mapping_coverage_pct"] <= 30.0, (
+        f"Backward-compat path should NOT inflate coverage; got "
+        f"{out['mapping_coverage_pct']}%"
+    )
+
+
+def test_reason_field_per_source_attribution(tmp_path):
+    """ADGM-09 — match.reason carries name=/kw-criterion=/search-term= substrings."""
+    _skip_unless_phase16()
+    run_dir = tmp_path / "2026-05-15T120000Z-reason-shape"
+    (run_dir / "raw").mkdir(parents=True)
+    (run_dir / "ranked-enriched.json").write_text(
+        (FIXTURES / "ranked_lake_worth.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    for src, dst in [
+        ("google-ads-perf-lake-worth.json", "google-ads-perf.json"),
+        ("google-ads-search-terms-lake-worth.json", "google-ads-search-terms.json"),
+        ("google-ads-keywords-lake-worth.json", "google-ads-keywords.json"),
+    ]:
+        (run_dir / "raw" / dst).write_text(
+            (FIXTURES / src).read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+    ad_group_match.main_with_args(["--run-dir", str(run_dir)])
+    out = json.loads((run_dir / "ad-group-mapping.json").read_text(encoding="utf-8"))
+    high_med = [m for m in out["matches"] if m["confidence"] in ("high", "medium")]
+    assert high_med, "expected at least one high/medium match on Lake Worth golden"
+    sample = high_med[0]["reason"]
+    assert "name=" in sample, f"reason missing per-source attribution: {sample!r}"
+    assert "kw-criterion=" in sample, f"reason missing per-source attribution: {sample!r}"
+    assert "search-term=" in sample, f"reason missing per-source attribution: {sample!r}"
+
+
+def test_token_bag_unions_all_three_sources():
+    """ADGM-07 — _build_ag_token_bag unions ag_name ∪ kw_criteria ∪ search_terms."""
+    _skip_unless_phase16()
+    bag = ad_group_match._build_ag_token_bag(
+        ag_name="Accident Exams – Lake Worth",
+        kw_criteria=[
+            {"ad_group_name": "Accident Exams – Lake Worth",
+             "ad_group_criterion": {"keyword": {"text": "auto accident doctor"}}}
+        ],
+        search_terms=[
+            {"ad_group_name": "Accident Exams – Lake Worth",
+             "search_term": "car crash clinic", "clicks": 10, "impressions": 100}
+        ],
+    )
+    # AG name contributes: accident, exams, lake, worth (stopword filter active)
+    # kw_criteria contributes: auto, accident, doctor
+    # search_terms contributes: car, crash, clinic
+    assert {"accident", "exams", "lake", "worth"} <= bag, "AG name tokens missing"
+    assert {"auto", "doctor"} <= bag, "kw_criterion tokens missing"
+    assert {"car", "crash", "clinic"} <= bag, "search-term tokens missing"
+
+
+def test_thresholds_recalibrated_below_phase11():
+    """ADGM-10 sentinel — fails loud if Wave 2 reverts the calibration delta.
+
+    Phase 11 ships 0.7/0.4. Phase 16 must tighten — exact values land via
+    empirical calibration in plan 16-01. This sentinel just asserts the
+    delta was applied (high < 0.7) so silent revert is caught. NO skip guard —
+    must run TODAY against the Wave-0 stub and FAIL loudly to confirm TDD wiring.
+    """
+    assert ad_group_match._THRESHOLDS["high"] < 0.7, (
+        f"Phase 16 ADGM-10 calibration not applied; high still at "
+        f"{ad_group_match._THRESHOLDS['high']}"
+    )
+    assert ad_group_match._THRESHOLDS["medium"] < 0.4, (
+        f"Phase 16 ADGM-10 calibration not applied; medium still at "
+        f"{ad_group_match._THRESHOLDS['medium']}"
+    )
