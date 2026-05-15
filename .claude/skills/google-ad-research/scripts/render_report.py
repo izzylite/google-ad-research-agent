@@ -45,7 +45,7 @@ HOW_TO_READ = """\
 It is NOT search volume. Do not treat a higher signal_count as "more searches per month."
 
 **source_diversity** is the number of distinct signal sources (WebSearch, Serper organic,
-Serper PAA, Serper related, Tavily) that surfaced the keyword. Higher diversity = more
+Serper PAA, Serper related, Serper ads) that surfaced the keyword. Higher diversity = more
 reliable signal. The ranking is primarily sorted by source_diversity.
 
 To estimate actual search volume, paste the keyword list into Google Keyword Planner.
@@ -226,12 +226,68 @@ def render_clusters_section(clusters_data: dict) -> str:
     return "".join(parts)
 
 
-def render_competitor_section(competitor_intel: dict) -> str:
+def _load_competitor_landing_pages(run_dir: Path) -> dict:
+    """Load raw/competitor-landing-pages.json (Phase 12 WFCH-02).
+
+    Returns {} if file absent — graceful degrade. Wave 0
+    test_competitor_section_joins_webfetch_results asserts on
+    hasattr(render_report, '_load_competitor_landing_pages') to lift its
+    skip-guard, so this symbol is the sentinel that wires WFCH-02.
+    """
+    path = run_dir / "raw" / "competitor-landing-pages.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def _normalise_domain(domain: str | None) -> str:
+    """Case-insensitive + leading-www-strip for JOIN matching."""
+    if not domain:
+        return ""
+    return domain.lower().removeprefix("www.")
+
+
+def _join_advertisers_with_landing_pages(
+    advertisers: list[dict],
+    cluster_name: str,
+    landing_pages_doc: dict,
+) -> list[dict]:
+    """Per (cluster, domain) JOIN — overlay headline/cta/offer onto Serper advertiser entries.
+
+    Each output entry is the original Serper advertiser dict augmented with optional
+    `headline`, `cta`, `offer`, `extract_status` keys when a matching landing-pages
+    record exists. Domain match is case-insensitive with `www.` stripped on both sides.
+    """
+    lp_cluster = landing_pages_doc.get("clusters", {}).get(cluster_name, {})
+    lp_advertisers = lp_cluster.get("advertisers", [])
+    lp_by_domain = {_normalise_domain(a.get("domain")): a for a in lp_advertisers}
+
+    out = []
+    for adv in advertisers:
+        joined = dict(adv)
+        lp = lp_by_domain.get(_normalise_domain(adv.get("domain")))
+        if lp:
+            joined["headline"] = lp.get("headline")
+            joined["cta"] = lp.get("cta")
+            joined["offer"] = lp.get("offer")
+            joined["extract_status"] = lp.get("extract_status")
+        out.append(joined)
+    return out
+
+
+def render_competitor_section(competitor_intel: dict, run_dir: Path | None = None) -> str:
     """Render the Competitor Ad Copy section.
 
-    When advertiser titles/descriptions are missing (LLM extraction not yet
-    populated, or competitor LP yielded no extractable headlines), fall back
-    to the domain + URL so the operator at least sees WHO is competing.
+    When `raw/competitor-landing-pages.json` (Phase 12 WFCH-02) is present, the
+    section JOINs WebFetch-extracted headline/CTA/offer onto each Serper advertiser
+    by (cluster_name, domain). Falls back to Serper ad title/description for
+    advertisers without a landing-pages entry, or when `extract_status == "failed"`.
+
+    `run_dir` is optional for backward compatibility: when omitted, no JOIN is
+    attempted and the legacy Serper-only rendering applies.
     """
     parts = ["## Competitor Ad Copy\n\n", USAGE_COMPETITORS, "\n"]
     clusters = competitor_intel.get("clusters", {})
@@ -239,29 +295,62 @@ def render_competitor_section(competitor_intel: dict) -> str:
         parts.append("\n_No competitor ad copy extracted for this run._\n")
         return "".join(parts)
 
+    landing_pages = _load_competitor_landing_pages(run_dir) if run_dir else {}
+
     for cluster_name, cluster_data in clusters.items():
         escaped_name = escape_md_cell(cluster_name)
         source_label = cluster_data.get("advertiser_source", "ads")
         parts.append(f"\n### {escaped_name}  \n_(source: {source_label})_\n")
         ads = cluster_data.get("ads", [])
         advertisers = cluster_data.get("advertisers", [])
+        if advertisers and landing_pages:
+            advertisers = _join_advertisers_with_landing_pages(
+                advertisers, cluster_name, landing_pages,
+            )
 
-        # Prefer advertisers (richer data — has Tavily-extracted LP content)
+        # Prefer advertisers (richer data — JOINed with WebFetch LP content when present)
         if advertisers:
             for adv in advertisers:
                 title = (adv.get("ad_title") or adv.get("title") or "").strip()
                 desc = (adv.get("ad_description") or adv.get("description") or "").strip()
                 domain = adv.get("domain", "") or ""
                 url = adv.get("url", "") or ""
-                # Headline fallback chain: ad_title → domain → "(no headline)"
-                headline = title if title else (domain if domain else "(no headline extracted)")
-                parts.append(f"- **{escape_md_cell(headline)}**\n")
-                if desc:
-                    parts.append(f"  - {escape_md_cell(desc)}\n")
-                if domain and title:  # only show domain separately if title was real
-                    parts.append(f"  - Domain: `{escape_md_cell(domain)}`\n")
-                if url:
-                    parts.append(f"  - URL: <{escape_md_cell(url)}>\n")
+                # WebFetch-extracted fields (present after WFCH-02 JOIN)
+                headline_lp = (adv.get("headline") or "").strip()
+                cta = (adv.get("cta") or "").strip()
+                offer = (adv.get("offer") or "").strip()
+                extract_status = adv.get("extract_status")
+
+                if headline_lp:
+                    # Landing-page headline wins as the bold line; CTA + offer
+                    # render as sub-bullets. Serper title (ad copy) shown below
+                    # for additional context.
+                    parts.append(f"- **{escape_md_cell(headline_lp)}**\n")
+                    if cta:
+                        parts.append(f"  - CTA: {escape_md_cell(cta)}\n")
+                    if offer:
+                        parts.append(f"  - Offer: {escape_md_cell(offer)}\n")
+                    if title:
+                        parts.append(f"  - Ad title: {escape_md_cell(title)}\n")
+                    if desc:
+                        parts.append(f"  - Ad description: {escape_md_cell(desc)}\n")
+                    if domain:
+                        parts.append(f"  - Domain: `{escape_md_cell(domain)}`\n")
+                    if url:
+                        parts.append(f"  - URL: <{escape_md_cell(url)}>\n")
+                else:
+                    # No WebFetch landing-page data — fall back to ad title/description.
+                    # Headline fallback chain: ad_title → domain → "(no headline)"
+                    headline = title if title else (domain if domain else "(no headline extracted)")
+                    parts.append(f"- **{escape_md_cell(headline)}**\n")
+                    if desc:
+                        parts.append(f"  - {escape_md_cell(desc)}\n")
+                    if extract_status == "failed":
+                        parts.append("  - _(landing page extraction failed)_\n")
+                    if domain and title:  # only show domain separately if title was real
+                        parts.append(f"  - Domain: `{escape_md_cell(domain)}`\n")
+                    if url:
+                        parts.append(f"  - URL: <{escape_md_cell(url)}>\n")
         elif ads:
             for ad in ads:
                 title = (ad.get("title") or "").strip()
@@ -1160,7 +1249,7 @@ def render_full_report(
         "\n",
         render_negatives_section(negatives),
         "\n",
-        render_competitor_section(competitor_intel),
+        render_competitor_section(competitor_intel, run_dir),
     ])
     # Volume-enriched table replaces the plain ranked table when present
     if has_enrichment:
@@ -1202,8 +1291,8 @@ def render_html_report(report_json: dict) -> str:
     Embeds report_json as a JS object so the page can offer CSV export of
     every section without round-tripping back to disk.
 
-    Security: API responses (Tavily/Serper) may contain arbitrary remote
-    content including `</script>` strings. Escape so the embedded JSON
+    Security: API responses (Serper) and WebFetch extracts may contain arbitrary
+    remote content including `</script>` strings. Escape so the embedded JSON
     cannot break out of the script tag (XSS hardening).
     """
     payload = json.dumps(report_json, ensure_ascii=False)
@@ -1338,7 +1427,7 @@ code {{ background: #f3f4f6; padding: 1px 4px; border-radius: 3px;
 <strong>How to read this:</strong> <code>signal_count</code> is NOT search volume —
 it counts how many source fragments mentioned the keyword.
 <code>source_diversity</code> is the number of distinct signal sources (WebSearch,
-Serper organic / PAA / related / ads, Tavily) that surfaced it. The ranking is
+Serper organic / PAA / related / ads) that surfaced it. The ranking is
 primarily sorted by <code>source_diversity</code>. Paste keywords into Google
 Keyword Planner for actual volume + CPC.
 </div>
@@ -1716,7 +1805,7 @@ function renderNichePulse() {{
 
   // Trending themes
   html += `<details><summary>Trending Themes <span class="cluster-meta">${{themes.length}}</span></summary>`;
-  html += `<div class="usage" style="margin-top:8px"><strong>How to use:</strong> opportunity candidates with 1-4 week shelf life. High mention counts across BOTH sources (serper-news + tavily-news) are real; single-source themes are noisier. For each one worth pursuing, add a phrase-match keyword to a dedicated 'trending' ad group with its own budget cap so the spike doesn't blow up your CPA.</div>`;
+  html += `<div class="usage" style="margin-top:8px"><strong>How to use:</strong> opportunity candidates with 1-4 week shelf life. High mention counts (>=3 from Serper news) are real; single-mention themes are noisier. For each one worth pursuing, add a phrase-match keyword to a dedicated 'trending' ad group with its own budget cap so the spike doesn't blow up your CPA.</div>`;
   if (!themes.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No repeated themes in window.</p>";
   else {{
     html += "<ul>";

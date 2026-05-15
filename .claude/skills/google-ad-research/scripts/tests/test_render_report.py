@@ -1214,8 +1214,10 @@ def test_competitor_section_joins_webfetch_results(tmp_path: Path) -> None:
         }),
         encoding="utf-8",
     )
+    # negatives.json is a flat list of {keyword, tier, category, justification}
+    # dicts (per the Phase 6 contract that render_negatives_section consumes).
     (run_dir / "negatives.json").write_text(
-        json.dumps({"strong": [], "considered": [], "investigate": []}),
+        json.dumps([]),
         encoding="utf-8",
     )
 
