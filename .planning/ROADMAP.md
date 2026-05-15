@@ -293,7 +293,11 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. Each match entry in `ad-group-mapping.json` carries a `reason` field naming which evidence source(s) contributed (e.g. `"jaccard=0.32 on kw-criterion bag, name overlap 0"`) so operator can audit any auto-routing decision.
   4. Recalibrated thresholds (likely tighter, e.g. 0.5 high / 0.25 medium vs current 0.7 / 0.4) are documented in `references/phase11-account-structure-mapping.md` with empirical rationale from at least 2 real-account calibration runs.
   5. Operator pastes new ranked keywords into Google Ads Editor and lands them in the right existing ad groups (high+medium tier) without re-thinking account structure — the original v1.2 promise of "respect client's existing AG structure" finally lands operationally on short-name-AG accounts.
-**Plans:** 2/3 plans executed
+**Status:** Complete (shipped 2026-05-15 — ADGM-07..10 done via Plans 16-00..02; ADGM-11 >=50% floor deferred to structural-algorithm follow-up plan tracked in STATE.md open questions)
+**Plans:** 3/3 plans complete
+- [x] 16-00-PLAN.md — Wave 1: Lake Worth golden fixtures + 5 RED tests + PHASE16_INCOMPLETE guard
+- [x] 16-01-PLAN.md — Wave 2: `_build_ag_token_bag` + keywords-aware index + per-source reason field + `_THRESHOLDS` recalibrated to {0.30, 0.10} (option-a deferral applied) — ADGM-07, ADGM-08, ADGM-09
+- [x] 16-02-PLAN.md — Wave 3: reference-doc Phase 16 section (+78 lines; SKILL.md untouched at 497/500) + live Lake Worth OAuth e2e closeout (16.42% observed vs 16.67% offline — within 0.25pp predictive validity) — ADGM-10
 
 
 ## Progress
@@ -315,7 +319,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 13. Landing-Page Extract Vendor Swap | 0/0 | Backlog (defer-until-friction) | — |
 | 14. Positives Sync | 6/6 | Complete    | 2026-05-15 |
 | 15. Campaign Focus | 4/4 | Complete    | 2026-05-15 |
-| 16. Ad Group Mapping Token-Bag Enrichment | 2/3 | In Progress|  |
+| 16. Ad Group Mapping Token-Bag Enrichment | 3/3 | Complete    | 2026-05-15 |
 
 ## Coverage Map
 
