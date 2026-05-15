@@ -107,6 +107,55 @@ Surface to operator:
 - Count of lossy search terms (review them as additional negative
   candidates)
 
+## Step 34a: LLM re-tag for positives-sync (POS-06)
+
+**Trigger condition:** Runs ONLY when `{run_dir}/positives-sync.json` exists AND
+Phase 14 is enabled (i.e., `perf_synth.py` produced the file in Step 34).
+Skips silently otherwise — graceful no-op when Phase 14 was bypassed (no
+Google Ads OAuth, or `raw/google-ads-keywords.json` absent).
+
+**What Claude does:** Read `{run_dir}/positives-sync.json` plus
+`{run_dir}/ranked-enriched.json` (fallback `ranked.json`) and — if present —
+`{run_dir}/competitor-intel.json`. Re-classify borderline cases the
+script-only `cross_ref_positives` cross-reference missed (token reorder,
+match-type drift, semantic synonyms) using the 5 anchor examples below.
+Write the refined buckets back to `{run_dir}/positives-sync.json` with the
+Write tool, overwriting the script-only output.
+
+The script catches the ~80% of cases plain string-norm dedup handles
+correctly. This LLM step catches the remaining ~20% — the operator-visible
+failure mode if skipped.
+
+**Borderline cases LLM must catch (anchor examples):**
+
+1. **Token reorder** — `urgent care lake worth` (ranked) vs `lake worth urgent care` (active) → re-tag to `already_active`.
+2. **Match-type drift** — ranked exact `pip insurance clinic` vs account broad `pip clinic` → re-tag to `covered_by_broad`.
+3. **Semantic synonym** — ranked `open 24 hours` vs account `24 hour clinic` (both transactional) → re-tag to `already_active`.
+4. **Narrowing opportunity** — ranked exact `car accident chiropractor` vs account broad `car accident` → re-tag to `covered_by_broad` AND flag in justification: "Exact narrows targeting — operator review".
+5. **Locale variant** — ranked Spanish `clinica de accidente` vs account English `accident clinic` → STAY `new_to_add` (locale gap is a legitimate net-new opportunity).
+
+**LLM output contract (Write tool to {run_dir}/positives-sync.json):**
+
+- Preserve all top-level keys from the input file (`synthesized_at`, `our_total`, `existing_total`, `stats`).
+- Only re-distribute entries BETWEEN the 4 existing bucket arrays: `already_active`, `paused_in_account`, `covered_by_broad`, `new_to_add`. Do NOT introduce new bucket names.
+- For each re-tagged entry, append a `"retag_reason"` field with one of the 5 anchor case labels (e.g., `"token_reorder"`, `"match_type_drift"`, `"semantic_synonym"`, `"narrowing_opportunity"`).
+- Recompute the `stats` block to reflect the new bucket counts. Total entries must remain unchanged (no kw added or dropped).
+- Untouched entries: leave verbatim.
+
+**Anti-patterns:**
+
+- **Don't invent new bucket names.** The 4 buckets are locked — re-tag entries between them; do NOT create `maybe_active` or similar.
+- **Don't drop entries.** Re-tagging must preserve total kw count. Operator-side audit relies on the count staying constant.
+- **Don't re-tag without evidence.** Each re-tagged entry must have a `retag_reason` matching one of the 5 anchor cases. If a case doesn't fit any, leave the entry alone.
+- **Don't run on briefs without `positives-sync.json`.** Phase 14 graceful-skip (POS-05) means absent file = nothing to re-tag. Halt the step silently.
+
+**Downstream contract:** After this step, re-invoke `render_report.py`
+(Step 35) so `report.md` / `report.html` / `report.json` pick up the refined
+buckets. `export/positives.csv` consumes the same refined
+`positives-sync.json` automatically on the next `export_csv.py` invocation
+(no separate re-run needed for the CSV — `render_report.py` is the only
+script that has to re-read the refined sidecar).
+
 ## Step 35: Re-render report
 
 ```bash
