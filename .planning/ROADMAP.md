@@ -257,7 +257,13 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. Operator runs the skill on an account without Google Ads OAuth (`raw/google-ads-keywords.json` absent); Phase 14 graceful-skips with no errors — Positives Sync section omitted from the report and `positives.csv` falls back to the full ranked list.
   4. Operator opens `report.md` and `report.html` and sees a `## Positives Sync` section that mirrors the existing negatives-sync UX: stats line (our_total / already_active / paused_in_account / covered_by_broad / new_to_add) above an enumerated `new_to_add` list (with category + justification per row) and collapsible / count-only views for the other 3 buckets.
   5. Borderline semantic-dupe keywords (e.g. `urgent care lake worth` ranked vs `lake worth urgent care` active in account, or ranked-exact `auto accident doctor` covered by account-broad `accident doctor`) get re-tagged from `new_to_add` → `already_active` (or `covered_by_broad`) by the SKILL.md LLM re-tag step after script dedup — script + LLM tandem catches both string-norm hits and the ~20% of cases plain hashing misses.
-**Plans:** TBD — to be drafted via `/gsd:plan-phase 14`.
+**Plans:** 6/6 plans drafted
+- [ ] 14-00-PLAN.md — Wave 1: RED test scaffolding (test_perf_synth + test_perf_fetch + test_render_report + test_export_csv extensions + 4 fixtures including golden_positives_sync.json + golden_positives_new_to_add.csv) — POS-07
+- [ ] 14-01-PLAN.md — Wave 2: perf_fetch.py fetch_keyword_view + raw/google-ads-keywords.json writer — POS-01
+- [ ] 14-02-PLAN.md — Wave 3: perf_synth.py cross_ref_positives + positives-sync.json 4-bucket writer + graceful skip — POS-02, POS-05, POS-07
+- [ ] 14-03-PLAN.md — Wave 4: render_report.py render_positives_sync_section (md + HTML + JSON twin) — POS-03, POS-05
+- [ ] 14-04-PLAN.md — Wave 4: export_csv.py positives-sync filter + --include-existing flag — POS-04, POS-05
+- [ ] 14-05-PLAN.md — Wave 5: SKILL.md Step 34a pointer + references/phase8-account-data.md LLM re-tag rubric + end-to-end human-verify — POS-06
 
 ## Progress
 
@@ -276,7 +282,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 11. Account-Structure Mapping | 5/5 | Complete    | 2026-05-14 |
 | 12. Source Consolidation (Drop Tavily) | 6/6 | Complete    | 2026-05-15 |
 | 13. Landing-Page Extract Vendor Swap | 0/0 | Backlog (defer-until-friction) | — |
-| 14. Positives Sync | 0/0 | Not started (defining plan) | — |
+| 14. Positives Sync | 0/6 | Plans drafted (defining execution) | — |
 
 ## Coverage Map
 
