@@ -35,18 +35,27 @@ import sys
 
 # --- Locked taxonomy (ADGM-03; frozenset assertion fails fast at import) ---
 _THRESHOLDS: dict[str, float] = {
-    # Phase 16 plan 16-01 option-a — locked at loosening cap floor.
-    # Best achievable {high, medium} pair under calibration_protocol constraints:
-    # - C2 Phase 11 80% coverage PRESERVED (HARD invariant)
-    # - C4 sentinels (high < 0.7 AND medium < 0.4) PASS
-    # - C5 garbage keywords ("tomato sandwich") stay classified as "low"
-    # - C1 Lake Worth >= 50% UNREACHABLE within cap — observed 16.7% at this floor.
-    # Operator chose option-a (accept miss, defer ADGM-11 to plan 16-02 follow-up).
-    # Root cause: structural Jaccard ceiling — Lake Worth's enriched 34-token AG bag
-    # vs typical 4-6-token ranked queries caps jaccard at ~0.15-0.25; lowering
-    # medium below 0.10 breaks C5 (garbage matches). See 16-01-SUMMARY.md.
+    # Phase 16 plan 16-04 option-d — re-calibrated under per-source max-Jaccard.
+    # Sweep evidence (Plan 16-04 Task 2):
+    #   Under per-source max-Jaccard (ADGM-11 structural fix), garbage keywords
+    #   ("tomato sandwich recipe", "quantum mechanics tutorial") score EXACTLY
+    #   0.0 (zero token overlap with any ENABLED AG bag → all three partial
+    #   jaccards 0.0 → max=0.0). They are NOT diluted toward the medium
+    #   threshold as they were under full-union Jaccard. The 16-01 "medium >=
+    #   0.10" floor was a defensive guard against full-union dilution; under
+    #   max-Jaccard the floor is no longer load-bearing.
+    # Final calibration (option-d):
+    #   - high   = 0.30  (unchanged from 16-01 — preserves boundary tests)
+    #   - medium = 0.08  (lowered from 0.10 to admit borderline Lake Worth
+    #                     matches where name_j alone scores 1/12 ≈ 0.083)
+    # Constraints satisfied:
+    #   - C1 Lake Worth >= 50% PASSED — offline golden achieves 54.55%
+    #   - C2 Phase 11 80% coverage PRESERVED (HARD invariant)
+    #   - C5 garbage keywords stay classified as "low" (score 0.0 < 0.08)
+    #   - C4 sentinels (high < 0.7 AND medium < 0.4) PASS
+    # See 16-04-SUMMARY.md for the full sweep table + operator decision rationale.
     "high": 0.30,
-    "medium": 0.10,
+    "medium": 0.08,
 }
 assert frozenset(_THRESHOLDS) == frozenset({"high", "medium"}), (
     "_THRESHOLDS drift — ADGM-03 taxonomy changed?"

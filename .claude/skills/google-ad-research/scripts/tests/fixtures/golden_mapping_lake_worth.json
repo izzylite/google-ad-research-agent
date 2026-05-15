@@ -3,6 +3,6 @@
     "Accident Exams – Lake Worth"
   ],
   "mapping_coverage_pct_floor": 50.0,
-  "notes": "Generated 2026-05-15 from Lake Worth real run (.runs/2026-05-15T153121Z-car-accident-injury-care-services). Real account has 1 ENABLED AG (Accident Exams – Lake Worth) + 2 PAUSED (AG1/AG2). Phase 11 today yields 0% coverage because search-term-only bag is missing kw_criteria. Phase 16 floor: >=50% high+medium after _build_ag_token_bag unions kw_criteria + AG name tokens + top-N search terms. Floor not equality — Wave 2 calibration may yield 55-75% depending on threshold tuning.",
+  "notes": "Generated 2026-05-15 from Lake Worth real run (.runs/2026-05-15T153121Z-car-accident-injury-care-services). Real account has 1 ENABLED AG (Accident Exams – Lake Worth) + 2 PAUSED (AG1/AG2). Phase 11 baseline: 0% coverage (search-term-only bag missing kw_criteria). Phase 16 Plan 16-01 (full-union Jaccard at threshold floor {0.30, 0.10}): 16.67% offline / 16.42% live — bag-vs-query token-count asymmetry caps jaccard. Phase 16 Plan 16-04 ships per-source max-Jaccard (ADGM-11 structural fix) + threshold recalibration to {high: 0.30, medium: 0.08} (option-d, sweep evidence: garbage scores exactly 0.0 under max-Jaccard so the 16-01 medium=0.10 dilution-guard floor is no longer load-bearing). Offline observed coverage: 54.55% (7 high + 29 medium / 66 ranked) — clears the >=50% floor by ~4.5pp. Live e2e to be verified on real Lake Worth OAuth account per 16-04 Task 3. Floor stays at 50.0 (>= comparison, not equality — overfit guard).",
   "total_ranked": 66
 }
