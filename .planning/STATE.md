@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Phases
-status: unknown
-stopped_at: "Completed 11-04-PLAN.md — Phase 11 closeout + milestone v1.2 ship. 2 task commits (6aed701 references/phase11 + f16ef49 SKILL.md wiring) + 1 auto-fix commit (16f5d5d render_report regex). E2E smoke approved against real Phase 8 urgent-care data: 239 tests GREEN, SKILL.md 499/500, references/phase11 240 lines, coverage 0.0% mathematically correct, ADGM-06 rewrite NOT firing at ≤50% (correct), CMPL-05 compliance-first reorder confirmed at step 1. All 11 v1.2 requirements (GEO-01..05 + ADGM-01..06) marked Complete in REQUIREMENTS.md."
-last_updated: "2026-05-14T23:39:09.289Z"
+milestone: v1.3
+milestone_name: source-consolidation
+status: defining_requirements
+stopped_at: "Milestone v1.3 started — Phase 12 (drop Tavily, swap to WebFetch + Serper) ahead. Triggered by Tavily quota exhaustion during Lake Worth dogfood re-run."
+last_updated: "2026-05-15T02:00:00.000Z"
 progress:
-  total_phases: 10
-  completed_phases: 9
-  total_plans: 43
-  completed_plans: 43
+  total_phases: 12
+  completed_phases: 11
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # State: Google Ad Research Agent
@@ -20,18 +20,20 @@ progress:
 
 **Core value:** From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session.
 
-**Current focus:** Milestone v1.2 — Account-Structure Mapping COMPLETE. Phase 11 (geo county/city refinement + ad-group mapping to existing client structure) shipped 2026-05-15. All 11 v1.2 requirements (GEO×5 + ADGM×6) marked Complete.
+**Current focus:** Milestone v1.3 — Source Consolidation. Phase 12 (drop Tavily; swap to WebFetch + Serper). Triggered by Tavily quota exhaustion during dogfood re-run.
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
-| Phase | 11 — Account-Structure Mapping (COMPLETE; all 5 plans shipped) |
-| Plan | 5 / 5 (11-00 + 11-01 + 11-02 + 11-03 + 11-04 complete) |
-| Status | Phase 11 complete; milestone v1.2 closed. Operator-verified e2e smoke approved against real Phase 8 urgent-care data. SKILL.md 499/500, references/phase11 240 lines, 239 tests GREEN, 0 regressions |
-| Last activity | 2026-05-15 — 11-04 committed (6aed701 + f16ef49) + auto-fix 16f5d5d (render_report regex). E2E smoke approved (coverage 0.0% mathematically correct for narrow vertical; ADGM-06 rewrite NOT firing at ≤50% as designed). All 11 v1.2 requirements Complete in REQUIREMENTS.md |
+| Phase | 12 — Source Consolidation (not yet planned) |
+| Plan | — |
+| Status | Defining requirements |
+| Last activity | 2026-05-15 — Milestone v1.3 started; v1.2 Account-Structure Mapping closed (78/78 reqs across 11 phases) |
 
 ## Previous Milestone
+
+v1.2 — Account-Structure Mapping (1 phase, 11 reqs). Shipped 2026-05-15. Brief `geo_focus`, us-cities filter, ad_group_match.
 
 v1.1 — Operator-Ready Output (2 phases 9-10, 23 requirements). Shipped 2026-05-14. Editor CSV exports, max-CPC bid suggestions, budget forecasts, Next Steps checklist, compliance flags.
 

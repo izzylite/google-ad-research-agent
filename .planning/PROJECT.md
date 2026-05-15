@@ -8,7 +8,18 @@ Internal Claude Code skill for a centralized PPC operator. Operator pastes a cam
 
 From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session, without the operator leaving the chat.
 
-## Current Milestone: v1.2 Account-Structure Mapping
+## Current Milestone: v1.3 Source Consolidation
+
+**Goal:** Drop Tavily. Replace landing-page extraction with Claude's built-in WebFetch tool. Reduce paid API surface to Serper-only. Two paid quotas (Serper + Ahrefs + Google Ads) shrink to one (Serper + Ahrefs + Google Ads — same minus Tavily).
+
+**Target features:**
+- Tavily removed entirely (script + SDK dep + env key + tests)
+- Phase 5 COMP-03 landing-page extraction switches to WebFetch (built-in, free, mirrors WebSearch baseline pattern)
+- Phase 7 PULSE-02 redundant Tavily news call deprecated; Serper /news (PULSE-01) only
+- Source taxonomy in merge_signals.py drops `tavily-extract`; new `webfetch-landing` source if needed
+- `.env.example` + lib/config.py drop TAVILY_API_KEY
+
+## Previous Milestone: v1.2 Account-Structure Mapping
 
 **Goal:** Skill output respects the client's existing Google Ads account — narrows research to specific counties/cities in the brief, and maps our generated keywords TO the client's existing ad group structure instead of inventing new groups.
 
@@ -51,17 +62,22 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - ✓ Budget forecast per cluster (low/mid/high bands, methodology disclaimer) — v1.1
 - ✓ Operator Next Steps checklist (bespoke substitution + HTML localStorage checkboxes) — v1.1
 - ✓ Compliance flags w/ CMPL-05 reorder (regulated-vertical verification at step 1) — v1.1
+- ✓ Optional brief `geo_focus` (county/city) — narrows research to specific area, drops out-of-scope city keywords — v1.2
+- ✓ us-cities.json reference data file (top 5000 US cities w/ county hierarchy) — v1.2
+- ✓ ad_group_match.py — maps ranked keywords to existing account ad groups w/ confidence tiers — v1.2
+- ✓ export_csv preserves existing ad group names when mapping coverage > 50% — v1.2
 
 ### Active
 
-<!-- v1.2 scope. Building toward these. -->
+<!-- v1.3 scope. Building toward these. -->
 
-- [ ] Geographic refinement via brief `geo_focus` list (counties/cities under top-level location)
-- [ ] US cities/counties reference data file (operator-editable, JSON)
-- [ ] SERP query geo-biasing + out-of-scope city filter at merge stage
-- [ ] Ad-group mapping script reads existing account perf, maps our keywords to existing ad groups
-- [ ] Match confidence per keyword (high/medium/low); unmapped fall back to cluster
-- [ ] export_csv + Next Steps integrate mapping: respect existing structure when present
+- [ ] Drop Tavily entirely — tavily_extract.py + tavily SDK dep + TAVILY_API_KEY + tests removed
+- [ ] WebFetch invoked from SKILL.md Phase 5 step for top 3-5 advertisers per cluster (landing page extraction)
+- [ ] competitor_intel.py drops Tavily code path; keeps Serper requery for ads block
+- [ ] Skill writes WebFetch-extracted headline/CTA/offer to raw/competitor-landing-pages.json via Write tool
+- [ ] pulse_fetch.py drops Tavily news call (Serper /news covers it); PULSE-02 deprecated
+- [ ] Source taxonomy: tavily-extract removed; webfetch-landing added if needed
+- [ ] All 263 tests pass post-removal; pyproject.toml deps cleaned (tavily-python out)
 
 ### Out of Scope
 
@@ -108,5 +124,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | Geo narrowing via brief `geo_focus` list — v1.2 | Team feedback: research returned Lake Worth FL keywords from across Florida; need county/city precision. Brief field + US-cities reference data scan keeps it simple. | — Pending |
 | Ad-group mapping respects client structure — v1.2 | Junior PPC manager paste-experience: current export creates new ad groups (theme_intent slugs) instead of reusing client's existing ad groups. Mapping script reads Phase 8 perf data + writes existing names to CSV. | — Pending |
 
+| Drop Tavily v1.3 | Tavily plan quota exhausted mid-Lake Worth re-run; Serper /webpage covers landing-page extract OR Claude WebFetch covers it free. Reducing paid API surface = fewer quota concerns + one fewer key to manage. WebFetch chosen over Serper /webpage — free (no API credits), mirrors WebSearch baseline pattern, fits single-operator Claude Code workflow. | — Pending |
+
 ---
-*Last updated: 2026-05-14 after milestone v1.2 start*
+*Last updated: 2026-05-15 after milestone v1.3 start*
