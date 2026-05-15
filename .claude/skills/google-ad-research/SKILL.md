@@ -467,7 +467,7 @@ Phase 5 (competitor intel) begins at Step 18 below.
 
 ## Phase 8: Account Data + Volume Enrichment (auto-run when creds present)
 
-> See `.claude/skills/google-ad-research/references/phase8-account-data.md` for full step instructions (Steps 31-35). Load it with the Read tool when entering Phase 8. **Auto-run when `AHREFS_API_KEY` AND Google Ads OAuth creds are present in `.env`** — do NOT prompt the operator. Enriches the keyword table with Ahrefs volume / CPC / KD / parent_topic, pulls real search terms and campaign performance from the Google Ads account, and cross-references generated negatives against existing account negatives. Costs ~73 Ahrefs units + free Google Ads quota per run. Produces `ranked-enriched.json`, `account-perf.json`, `negatives-sync.json` alongside existing artifacts.
+> See `.claude/skills/google-ad-research/references/phase8-account-data.md` for full step instructions (Steps 31-35 + Step 34a LLM re-tag for POS-06 positives sync). Load it with the Read tool when entering Phase 8. **Auto-run when `AHREFS_API_KEY` AND Google Ads OAuth creds are present in `.env`** — do NOT prompt the operator. Enriches the keyword table with Ahrefs volume / CPC / KD / parent_topic, pulls real search terms and campaign performance from the Google Ads account, and cross-references generated negatives against existing account negatives. Costs ~73 Ahrefs units + free Google Ads quota per run. Produces `ranked-enriched.json`, `account-perf.json`, `negatives-sync.json` alongside existing artifacts.
 >
 > **Skip-and-announce conditions (and only these):**
 > - `AHREFS_API_KEY` missing → announce `Phase 8 skipped: AHREFS_API_KEY not set. Add to .env to enable real volume/CPC/KD enrichment. Continuing to Phase 9 is impossible without it.`
