@@ -1,0 +1,60 @@
+{
+  "fetched_at": "2026-05-15T00:00:00Z",
+  "horizon_days": 30,
+  "customer_id": "9999999999",
+  "_notes": [
+    "Mirrors envelope shape of google-ads-search-terms.json + perf-style envelope.",
+    "items[] seeds 4 bucket scenarios + 1 unmatched (sanity: not surfaced in sync).",
+    "Each keyword text aligns with ranked_phase14.json so cross_ref_positives can tag correctly."
+  ],
+  "items": [
+    {
+      "keyword": "urgent care lake worth",
+      "match_type": "EXACT",
+      "status": "ENABLED",
+      "ad_group_id": "1001",
+      "ad_group_name": "Urgent Care - Lake Worth",
+      "campaign_name": "Lake Worth Medical",
+      "impressions": 1200,
+      "clicks": 42,
+      "conversions": 5.0,
+      "cost_micros": 35000000
+    },
+    {
+      "keyword": "auto accident clinic",
+      "match_type": "PHRASE",
+      "status": "PAUSED",
+      "ad_group_id": "1002",
+      "ad_group_name": "Accident - Lake Worth",
+      "campaign_name": "Lake Worth Medical",
+      "impressions": 0,
+      "clicks": 0,
+      "conversions": 0.0,
+      "cost_micros": 0
+    },
+    {
+      "keyword": "pip clinic",
+      "match_type": "BROAD",
+      "status": "ENABLED",
+      "ad_group_id": "1003",
+      "ad_group_name": "PIP - Florida",
+      "campaign_name": "Lake Worth Medical",
+      "impressions": 800,
+      "clicks": 20,
+      "conversions": 2.0,
+      "cost_micros": 18000000
+    },
+    {
+      "keyword": "wellness exam",
+      "match_type": "EXACT",
+      "status": "ENABLED",
+      "ad_group_id": "1004",
+      "ad_group_name": "Wellness - General",
+      "campaign_name": "Wellness Misc",
+      "impressions": 300,
+      "clicks": 6,
+      "conversions": 0.0,
+      "cost_micros": 4000000
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+[
+  {
+    "keyword": "urgent care lake worth",
+    "intent": "transactional",
+    "match_type": "exact",
+    "score": 92,
+    "sources": ["serper-organic", "serper-paa", "websearch-baseline"],
+    "signal_count": 7,
+    "source_diversity": 3,
+    "cpc_micros": 4200000,
+    "suggested_max_cpc_micros": 5040000
+  },
+  {
+    "keyword": "auto accident clinic",
+    "intent": "transactional",
+    "match_type": "phrase",
+    "score": 78,
+    "sources": ["serper-organic", "serper-related"],
+    "signal_count": 4,
+    "source_diversity": 2,
+    "cpc_micros": 5500000,
+    "suggested_max_cpc_micros": 6600000
+  },
+  {
+    "keyword": "pip insurance clinic",
+    "intent": "transactional",
+    "match_type": "exact",
+    "score": 71,
+    "sources": ["serper-organic", "websearch-baseline"],
+    "signal_count": 3,
+    "source_diversity": 2,
+    "cpc_micros": 6100000,
+    "suggested_max_cpc_micros": 7320000
+  },
+  {
+    "keyword": "accident chiropractor lake worth",
+    "intent": "commercial",
+    "match_type": "exact",
+    "score": 64,
+    "sources": ["serper-organic", "serper-ads"],
+    "signal_count": 5,
+    "source_diversity": 2,
+    "cpc_micros": 3900000,
+    "suggested_max_cpc_micros": 3120000
+  },
+  {
+    "keyword": "walk in clinic boca raton",
+    "intent": "transactional",
+    "match_type": "phrase",
+    "score": 58,
+    "sources": ["serper-organic"],
+    "signal_count": 2,
+    "source_diversity": 1,
+    "cpc_micros": 2800000,
+    "suggested_max_cpc_micros": 3360000
+  }
+]
