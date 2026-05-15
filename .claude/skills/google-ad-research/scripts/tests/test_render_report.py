@@ -1317,3 +1317,167 @@ def test_render_positives_sync_section_count_only_for_other_buckets():
     assert "pip insurance clinic" not in md, (
         "covered_by_broad bucket should not enumerate keyword rows inline"
     )
+
+
+# ===========================================================================
+# Phase 15 Wave 0 — Campaign Focus RED stubs (CAMP-01 / CAMP-05 / CAMP-06)
+#
+# Per-function skip guards so Wave 2 plans 15-02 can flip these GREEN
+# one-by-one without re-editing test scaffolding.
+# ===========================================================================
+
+
+def _skip_unless_campaign_focus_section():
+    if MODULE_MISSING:
+        pytest.skip("render_report not yet implemented")
+    if not hasattr(render_report, "render_campaign_focus_section"):
+        pytest.skip("render_campaign_focus_section — Wave 2 plan 15-02")
+
+
+def _skip_unless_brief_parser_has_campaign_focus():
+    """Skip when _parse_brief_fields does not yet emit a `campaign_focus`
+    key for a brief carrying the field.
+
+    `_parse_brief_fields` itself exists today (Phase 11) — guard probes
+    whether the function returns a `campaign_focus` key when the brief
+    has `**Campaign focus:** X`.
+    """
+    if MODULE_MISSING:
+        pytest.skip("render_report not yet implemented")
+    probe = "- **Campaign focus:** X\n"
+    fields = render_report._parse_brief_fields(probe)
+    if "campaign_focus" not in fields:
+        pytest.skip("_parse_brief_fields campaign_focus key — Wave 2 plan 15-02")
+
+
+# ---------------------------------------------------------------------------
+# CAMP-01 — _parse_brief_fields campaign_focus extraction
+# ---------------------------------------------------------------------------
+
+def test_parse_brief_fields_extracts_campaign_focus_single():
+    """CAMP-01: brief with `**Campaign focus:** <name>` parses to raw string."""
+    _skip_unless_brief_parser_has_campaign_focus()
+    brief_text = (FIXTURES_DIR / "brief_with_campaign_focus.md").read_text(encoding="utf-8")
+    fields = render_report._parse_brief_fields(brief_text)
+    assert fields["campaign_focus"] == "Search | Lake Worth Accident Exams | Manual CPC"
+
+
+def test_parse_brief_fields_campaign_focus_absent_returns_empty():
+    """CAMP-01: brief without Campaign focus line → empty string default."""
+    _skip_unless_brief_parser_has_campaign_focus()
+    brief_text = (
+        "# Campaign Brief\n\n"
+        "## Required\n\n"
+        "- **Industry:** Urgent care\n"
+        "- **Product:** Accident & injury care\n"
+        "- **Location:** Florida\n"
+        "- **Language:** en-US\n"
+        "- **Audience:** Adults 25-65\n"
+    )
+    fields = render_report._parse_brief_fields(brief_text)
+    assert fields.get("campaign_focus", "") == ""
+
+
+def test_parse_brief_fields_campaign_focus_pipe_list():
+    """CAMP-01: pipe-list raw value preserved (split-to-list happens in render)."""
+    _skip_unless_brief_parser_has_campaign_focus()
+    brief_text = (
+        "# Campaign Brief\n\n"
+        "## Required\n\n"
+        "- **Industry:** Urgent care\n"
+        "- **Product:** Accident & injury care\n"
+        "- **Location:** Florida\n"
+        "- **Language:** en-US\n"
+        "- **Audience:** Adults 25-65\n\n"
+        "## Optional\n\n"
+        "- **Campaign focus:** A | B | C\n"
+    )
+    fields = render_report._parse_brief_fields(brief_text)
+    assert fields["campaign_focus"] == "A | B | C"
+
+
+# ---------------------------------------------------------------------------
+# CAMP-05 — render_campaign_focus_section
+# ---------------------------------------------------------------------------
+
+def _brief_fields_with_campaign_focus(value: str) -> dict[str, str]:
+    return {
+        "industry": "urgent care",
+        "product": "accident & injury care",
+        "location": "Florida",
+        "language": "en-US",
+        "audience": "adults 25-65 post-accident",
+        "geo_focus": "Palm Beach County, Lake Worth",
+        "campaign_focus": value,
+    }
+
+
+def test_campaign_focus_section_rendered_single():
+    """CAMP-05: single-value campaign_focus renders heading + literal value."""
+    _skip_unless_campaign_focus_section()
+    fields = _brief_fields_with_campaign_focus(
+        "Search | Lake Worth Accident Exams | Manual CPC"
+    )
+    md = render_report.render_campaign_focus_section(fields)
+    assert "## Campaign Focus" in md
+    # Literal campaign name appears in rendered markdown (pipes may be escaped
+    # for table safety — accept either raw or escaped form).
+    assert (
+        "Search | Lake Worth Accident Exams | Manual CPC" in md
+        or "Search \\| Lake Worth Accident Exams \\| Manual CPC" in md
+    )
+
+
+def test_campaign_focus_section_omitted_when_empty():
+    """CAMP-05: empty campaign_focus → empty string or no heading."""
+    _skip_unless_campaign_focus_section()
+    fields = _brief_fields_with_campaign_focus("")
+    md = render_report.render_campaign_focus_section(fields)
+    assert md == "" or "## Campaign Focus" not in md
+
+
+def test_campaign_focus_section_list_form_bulleted():
+    """CAMP-05: pipe-list value → all 3 campaign names appear in rendered md."""
+    _skip_unless_campaign_focus_section()
+    fields = _brief_fields_with_campaign_focus("A | B | C")
+    md = render_report.render_campaign_focus_section(fields)
+    assert "## Campaign Focus" in md
+    # All three names appear (whether bulleted or comma-joined, planner's pick)
+    assert "A" in md
+    assert "B" in md
+    assert "C" in md
+
+
+# ---------------------------------------------------------------------------
+# CAMP-05 — name validation against raw/google-ads-perf.json
+# ---------------------------------------------------------------------------
+
+def test_campaign_focus_typo_warning():
+    """CAMP-05: focus name absent from perf.json campaigns → ⚠ warning."""
+    _skip_unless_campaign_focus_section()
+    fields = _brief_fields_with_campaign_focus("Nonexistent Campaign")
+    perf_path = FIXTURES_DIR / "google-ads-perf-with-campaign.json"
+    md = render_report.render_campaign_focus_section(fields, perf_path=perf_path)
+    assert "⚠" in md
+    assert "Nonexistent Campaign" in md
+    # Warning phrasing — accept either "not found" or "typo"
+    assert ("not found" in md.lower()) or ("typo" in md.lower())
+
+
+def test_campaign_focus_no_warning_when_name_matches():
+    """CAMP-05 happy path: focus name present in perf.json → no warning."""
+    _skip_unless_campaign_focus_section()
+    fields = _brief_fields_with_campaign_focus(
+        "Search | Lake Worth Accident Exams | Manual CPC"
+    )
+    perf_path = FIXTURES_DIR / "google-ads-perf-with-campaign.json"
+    md = render_report.render_campaign_focus_section(fields, perf_path=perf_path)
+    assert "⚠" not in md
+
+
+def test_campaign_focus_no_warning_when_perf_path_absent():
+    """CAMP-05 graceful degrade: perf_path=None → no warning (validation needs file)."""
+    _skip_unless_campaign_focus_section()
+    fields = _brief_fields_with_campaign_focus("Anything Goes")
+    md = render_report.render_campaign_focus_section(fields, perf_path=None)
+    assert "⚠" not in md
