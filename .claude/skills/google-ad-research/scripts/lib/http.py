@@ -1,6 +1,6 @@
 """lib/http.py — shared httpx.Client builder with httpx-retries RetryTransport.
 
-Used by serp_fetch.py (Serper REST). Tavily uses its own SDK-managed client.
+Used by serp_fetch.py + competitor_intel.py + pulse_fetch.py for all Serper REST calls.
 
 Retry policy (verified against PITFALLS § Error Handling):
     total=3 retries

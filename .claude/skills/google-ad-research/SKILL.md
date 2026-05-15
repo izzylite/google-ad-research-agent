@@ -1,6 +1,6 @@
 ---
 description: Run Google Ads keyword research from a campaign brief — produces ranked keyword tables, ad group clusters, competitor ad copy, and tiered negative keyword lists. Use when the operator says "keyword research", "Google Ads research", "PPC keywords", "ad group clusters", or pastes a campaign brief mentioning industry / product / location / language / audience.
-allowed-tools: Bash(uv run *) Read Write WebSearch
+allowed-tools: Bash(uv run *) Read Write WebSearch WebFetch
 ---
 
 # Google Ad Research
@@ -150,7 +150,7 @@ Tell the operator: "Run folder ready at `{run_dir}`. Brief saved at `{brief_path
 
 - **Never accept a thin brief.** A one-line "research grocery delivery keywords" is an empty brief — re-prompt for all five required fields.
 - **Never guess missing required fields from context.** "Online groceries" does not imply "UK households" — ask.
-- **Never write API keys to the run folder.** This skill currently makes zero API calls; Phase 2+ uses `lib/config.load_env()` only. If you ever see `SERPER_API_KEY` or `TAVILY_API_KEY` written to disk, STOP and surface it.
+- **Never write API keys to the run folder.** This skill currently makes zero API calls; Phase 2+ uses `lib/config.load_env()` only. If you ever see `SERPER_API_KEY` written to disk, STOP and surface it.
 - **Never bypass `run_init.py` by writing brief.md directly.** The script owns the run folder layout (timestamp, slug, raw/ subfolder, collision suffix). Hand-rolling defeats Pitfall 19/20 mitigations.
 - **Never embed the brief in `--slug-source`.** Slug-source is one phrase (typically `product`). The full brief goes through stdin.
 - **Never let SKILL.md grow past 500 lines.** Extract step rubrics into `.claude/skills/google-ad-research/references/{step-name}.md` and link them — but Phase 1 should not need any references yet.
@@ -167,7 +167,7 @@ Tell the operator: "Run folder ready at `{run_dir}`. Brief saved at `{brief_path
 
 ## Phase 2: Signal Collection
 
-> Prerequisites: Phase 1 complete — `run_dir` and `brief.md` exist. `SERPER_API_KEY` and `TAVILY_API_KEY` set in `.env`.
+> Prerequisites: Phase 1 complete — `run_dir` and `brief.md` exist. `SERPER_API_KEY` set in `.env`.
 
 ### Step 6: Generate seed keywords
 
@@ -216,7 +216,7 @@ Write to: `{run_dir}/raw/websearch-baseline.json`
 
 **Do not advance to Step 8 until `raw/websearch-baseline.json` exists.**
 
-### Step 8: Run Serper fetch and Tavily extract
+### Step 8: Run Serper fetch
 
 Derive locale parameters from brief:
 - `gl` = lowercased country code from Location field (e.g., "UK" → "uk", "United Kingdom" → "uk")
@@ -237,21 +237,9 @@ Parse stdout JSON. Surface `organic_count`, `paa_count`, `related_count`, `ads_c
 
 If exit code 2 (retryable): tell operator "Serper returned a transient error — retry? (y/n)". Re-run once if yes. If exit code 3: stop and surface the error; do not proceed.
 
-Run Tavily extract for each competitor domain in brief's Competitor URLs field (up to 5 domains, up to 5 URLs each):
-```bash
-uv run "${CLAUDE_SKILL_DIR}/scripts/tavily_extract.py" \
-  --run-dir "{run_dir}" \
-  --competitor "domain1:url1,url2,url3" \
-  --competitor "domain2:url1,url2"
-```
+Landing-page extraction for paid competitors is deferred to Phase 5 (Step 19), where Claude calls WebFetch directly on the advertiser URLs surfaced by `competitor_intel.py`. No separate Phase 2 extraction step.
 
-If no competitor URLs in brief: skip Tavily (no `--competitor` args means Tavily step is skipped; log "no competitor URLs — skipping Tavily extract").
-
-Parse stdout JSON. Surface `competitor_count`, `urls_succeeded`, `urls_failed`, `credits_used`.
-
-If exit code 2 (quota): warn operator "Tavily quota exceeded — continuing with partial data". If exit code 3: stop and surface error.
-
-**Do not advance to Step 9 until both scripts have exited (0 or 2 with partial data accepted).**
+**Do not advance to Step 9 until `serp_fetch.py` has exited 0 (or 2 with partial data accepted).**
 
 ### Step 9: Merge signals
 
@@ -271,7 +259,6 @@ Tell the operator:
 
 > "Phase 2 complete. Signal collection summary:
 > - Serper: {organic_count} organic, {paa_count} PAA, {related_count} related, {ads_count} ads
-> - Tavily: {urls_succeeded} pages extracted across {competitor_count} competitor domains
 > - WebSearch: {len(extracted_keywords)} keyword phrases extracted
 > - Merged: {keywords_count} canonical keywords ({variants_merged} variants collapsed), avg source diversity {source_diversity_avg:.1f}
 >
@@ -480,7 +467,7 @@ Phase 5 (competitor intel) begins at Step 18 below.
 
 ## Phase 7: Niche Pulse (optional, time-sensitive sidecar)
 
-> See `.claude/skills/google-ad-research/references/phase7-niche-pulse.md` for full step instructions (Steps 27-30). Load it with the Read tool when entering Phase 7. Phase 7 is optional — ask the operator before running. It surfaces trending news themes, regulatory alerts, competitor news, and trending negative candidates from the last 7 days. Costs ~12 Serper + ~12 Tavily credits per run. Does NOT merge into the main `keywords.json` — produces its own `niche-pulse.json`.
+> See `.claude/skills/google-ad-research/references/phase7-niche-pulse.md` for full step instructions (Steps 27-30). Load it with the Read tool when entering Phase 7. Phase 7 is optional — ask the operator before running. It surfaces trending news themes, regulatory alerts, competitor news, and trending negative candidates from the last 7 days. Costs ~12 Serper credits per run. Does NOT merge into the main `keywords.json` — produces its own `niche-pulse.json`.
 
 ## Phase 8: Account Data + Volume Enrichment (optional, account-aware sidecar)
 

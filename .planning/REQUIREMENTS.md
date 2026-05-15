@@ -83,7 +83,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Niche Pulse (Phase 7 — time-sensitive sidecar)
 
 - [x] **PULSE-01**: `pulse_fetch.py` calls Serper `/news` endpoint per seed keyword with `tbs=qdr:w` (last 7 days) and persists `raw/serper-news.json`
-- [x] **PULSE-02**: `pulse_fetch.py` calls Tavily `search` with `topic="news"` and `days=7` per seed keyword and persists `raw/tavily-news.json`
+- [x] ~~**PULSE-02**: `pulse_fetch.py` calls Tavily `search` with `topic="news"` and `days=7` per seed keyword and persists `raw/tavily-news.json`~~ **DEPRECATED in v1.3 Phase 12 — superseded by PULSE-10.**
 - [x] **PULSE-03**: `pulse_synth.py` reads news raws and produces `niche-pulse.json` containing trending themes, regulatory alerts, competitor news, and trending negatives sections
 - [x] **PULSE-04**: Trending themes are clustered by repeated phrase/topic across both news sources with `mention_count`, `first_seen`, and `sources[]` attribution
 - [x] **PULSE-05**: Regulatory alerts are tagged via keyword heuristics (law/regulation/PIP/HIPAA/compliance/court/ruling/lawsuit terms)
