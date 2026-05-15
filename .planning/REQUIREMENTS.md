@@ -175,8 +175,8 @@ Milestone v1.3 — Phase 12 only. Replace Tavily landing-page extraction w/ Clau
 
 ### Pulse Tavily Drop
 
-- [ ] **PULSE-10**: `pulse_fetch.py` removes `_tavily_news` call; only Serper `/news` (PULSE-01) survives; `raw/tavily-news.json` no longer written
-- [ ] **PULSE-11**: `pulse_synth.py` drops Tavily branch in trending-themes source merging; single-source niche pulse logic simplified
+- [x] **PULSE-10**: `pulse_fetch.py` removes `_tavily_news` call; only Serper `/news` (PULSE-01) survives; `raw/tavily-news.json` no longer written
+- [x] **PULSE-11**: `pulse_synth.py` drops Tavily branch in trending-themes source merging; single-source niche pulse logic simplified
 - [ ] **PULSE-12**: SKILL.md Steps 27-30 (Phase 7) drop Tavily news mention; REQUIREMENTS.md marks original PULSE-02 deprecated (was Tavily news search; now N/A — superseded by PULSE-10)
 
 ## v2 Requirements
@@ -302,8 +302,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WFCH-02 | Phase 12 | Pending |
 | WFCH-03 | Phase 12 | Pending |
 | WFCH-04 | Phase 12 | Pending |
-| PULSE-10 | Phase 12 | Pending |
-| PULSE-11 | Phase 12 | Pending |
+| PULSE-10 | Phase 12 | Complete |
+| PULSE-11 | Phase 12 | Complete |
 | PULSE-12 | Phase 12 | Pending |
 
 **Coverage:**

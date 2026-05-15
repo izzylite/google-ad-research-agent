@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: Completed 12-01-PLAN.md — Tavily deletion. 5 files deleted, 4 modified, uv.lock regenerated. 4 TVLY-* audit tests RED→GREEN. Task 1 commit 93c785f; Task 2 absorbed by parallel commit f153729 (Plan 12-03).
-last_updated: "2026-05-15T03:57:00.211Z"
+stopped_at: "Completed 12-03-PLAN.md — Wave 1 parallel: pulse_fetch.py + pulse_synth.py stripped of Tavily. PULSE-10 + PULSE-11 GREEN. 2 commits: f153729 (PULSE-10), 0e26525 (PULSE-11). 9/9 plan-level tests pass."
+last_updated: "2026-05-15T04:00:15.454Z"
 progress:
   total_phases: 11
   completed_phases: 9
   total_plans: 49
-  completed_plans: 45
+  completed_plans: 46
 ---
 
 # State: Google Ad Research Agent
@@ -84,6 +84,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 11 P04 | ~25min | 3 tasks (2 docs + 1 auto-fix + 1 human-verify) | 3 files (1 created + 2 modified) |
 | Phase 12 P00 | 12min | 3 tasks | 8 files |
 | Phase 12-source-consolidation-drop-tavily P01 | 2min | 2 tasks | 9 files |
+| Phase 12-source-consolidation-drop-tavily P03 | 5min | 2 tasks | 4 files |
 
 ### Execution History
 
@@ -218,6 +219,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 12-source-consolidation-drop-tavily]: [Phase 12-00] Wave 2 plan 12-04 must land _load_competitor_landing_pages helper on render_report — exact symbol name locked by hasattr sentinel in test_render_report.py::_skip_unless_join_implemented
 - [Phase 12-source-consolidation-drop-tavily]: [Phase 12-01] uv.lock regenerated in-task (5 transitive deps auto-pruned: charset-normalizer, regex, requests, tiktoken, urllib3). Deferral path (per plan) not needed — uv lock is metadata-only and does not require import resolution. Cleaner outcome than deferring to plan 12-02 closing task.
 - [Phase 12-source-consolidation-drop-tavily]: [Phase 12-01] Task 2 commit absorbed by parallel Plan 12-03 commit f153729. Both plans needed identical edits to shared config files (.env.example, lib/config.py, pyproject.toml, uv.lock). Disk state matches spec; only commit attribution shifted. Structural race in parallel-wave shared-config files — future waves should explicitly document shared-config ownership.
+- [Phase 12-source-consolidation-drop-tavily]: [Phase 12-03] Test fixture enrichment chosen over MIN_THEME_MENTIONS_FLOOR re-tune — adjusting serper_news.json snippets to surface 'florida pip law' as a substantive 3-gram in 3 items keeps pre-existing test_find_themes_clusters_repeated_phrases GREEN under single-source mode without violating Plan 12-05's threshold-tuning ownership
+- [Phase 12-source-consolidation-drop-tavily]: [Phase 12-03] load_news_items signature reduced to single Path arg + main() caller chain collapses to one local — PULSE-11 contract; missing-input error message simplifies from 'Neither serper-news.json nor tavily-news.json found' to 'serper-news.json not found'
+- [Phase 12-source-consolidation-drop-tavily]: [Phase 12-03] Parallel-wave commit hygiene: explicit per-path git add + git status --short review before commit prevents absorption of concurrent Plan 12-01 / 12-02 working-tree changes when Wave 1 plans run simultaneously
 
 ### Open Questions / Todos
 
@@ -235,9 +239,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T03:57:00.206Z
+**Last session:** 2026-05-15T04:00:03.088Z
 
-**Stopped at:** Completed 12-01-PLAN.md — Tavily deletion. 5 files deleted, 4 modified, uv.lock regenerated. 4 TVLY-* audit tests RED→GREEN. Task 1 commit 93c785f; Task 2 absorbed by parallel commit f153729 (Plan 12-03).
+**Stopped at:** Completed 12-03-PLAN.md — Wave 1 parallel: pulse_fetch.py + pulse_synth.py stripped of Tavily. PULSE-10 + PULSE-11 GREEN. 2 commits: f153729 (PULSE-10), 0e26525 (PULSE-11). 9/9 plan-level tests pass.
 
 **Next session:** Milestone v1.2 complete. All 11 / 11 phases shipped (v1.0 + v1.1 + v1.2). No active phase. Options: (1) Define v1.3 milestone scope, (2) Address open-question/todos list (composite ranking calibration, Tavily credit metrics, match-type recommendation validation, v1.1 bid multiplier calibration, FRCS ratio tuning), (3) Triage v2 backlog (VOLM-*, VPRS-*, TOOL-*).
 
