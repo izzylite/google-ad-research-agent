@@ -625,6 +625,77 @@ def render_geographic_focus_section(brief_fields: dict[str, str]) -> str:
     )
 
 
+def _split_campaign_focus(raw: str) -> list[str]:
+    """Mirror perf_fetch.py pipe-split heuristic: space-pipe-space (' | ')
+    stays as ONE Google-Ads naming-convention campaign name; bare '|' splits
+    into a list. Empty raw → []."""
+    raw = (raw or "").strip()
+    if not raw:
+        return []
+    if "|" in raw and " | " not in raw:
+        return [n.strip() for n in raw.split("|") if n.strip()]
+    return [raw]
+
+
+def render_campaign_focus_section(
+    brief_fields: dict[str, str],
+    *,
+    perf_path: Path | None = None,
+) -> str:
+    """CAMP-05: render the '## Campaign Focus' callout + validate vs perf.json.
+
+    Returns markdown with:
+        - Empty string when brief_fields["campaign_focus"] is empty.
+        - Single-campaign block: `**Campaign:** <name>`
+        - Multi-campaign bulleted list (one name per line).
+        - Either form may include a `> ⚠ Campaign name not found in
+          account: '<name>' — check for typo` line per mismatched name when
+          perf_path is provided and the name is absent from the campaigns
+          list (case-sensitive — Google Ads campaign names are unique +
+          case-preserved by the API).
+
+    Pipes / angle brackets inside campaign names are NOT routed through
+    escape_md_cell — Google Ads campaign names like
+    `Search | Lake Worth Accident Exams | Manual CPC` deliberately use
+    pipes as a labelling convention, and escaping breaks operator
+    recognition. (Phase 11 GEO-05 escapes because city names rarely contain
+    markdown-special chars.)
+    """
+    raw = (brief_fields or {}).get("campaign_focus", "").strip()
+    if not raw:
+        return ""
+
+    names = _split_campaign_focus(raw)
+
+    # Validate against perf.json campaigns list when path provided.
+    warnings: list[str] = []
+    if perf_path is not None:
+        try:
+            perf_data = json.loads(Path(perf_path).read_text(encoding="utf-8"))
+            known = {c.get("name", "") for c in perf_data.get("campaigns", [])}
+            for n in names:
+                if n not in known:
+                    warnings.append(
+                        f"> ⚠ Campaign name not found in account: '{n}' "
+                        f"— check for typo\n"
+                    )
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
+            # Graceful: validation needs the file to exist + parse.
+            pass
+
+    parts: list[str] = ["## Campaign Focus\n\n"]
+    if len(names) == 1:
+        parts.append(f"**Campaign:** {names[0]}\n\n")
+    else:
+        for n in names:
+            parts.append(f"- {n}\n")
+        parts.append("\n")
+    parts.extend(warnings)
+    if warnings:
+        parts.append("\n")
+    return "".join(parts)
+
+
 def _load_ad_group_mapping_for_render(run_dir: Path) -> dict | None:
     """Mirror of export_csv._load_ad_group_mapping (kept module-local to avoid
     cross-script imports). Returns None when ad-group-mapping.json is absent
@@ -1264,6 +1335,19 @@ def render_full_report(
     if geo_md:
         sections.append("\n")
         sections.append(geo_md)
+    # CAMP-05: Campaign Focus callout sits between Geographic Focus and the
+    # compliance warning so operators see the narrowed scope context before
+    # any keyword work. Empty string when brief has no Campaign focus line.
+    # Validates focus names against raw/google-ads-perf.json when present —
+    # mismatched names trigger a typo warning (CAMP-05).
+    _perf_path_for_camp = run_dir / "raw" / "google-ads-perf.json"
+    camp_md = render_campaign_focus_section(
+        brief_fields_for_geo,
+        perf_path=_perf_path_for_camp if _perf_path_for_camp.exists() else None,
+    )
+    if camp_md:
+        sections.append("\n")
+        sections.append(camp_md)
     # Compliance warning ABOVE all other sections (CMPL-03) — operator's
     # first signal before they look at keywords / clusters / negatives. Empty
     # string when matched_verticals is empty/absent (graceful degrade).
@@ -2147,6 +2231,14 @@ def build_report_json(
         "focus": geo_focus_list,
     }
 
+    # CAMP-05: campaign_focus surfaces brief's parsed campaign focus list.
+    # Always present as a top-level key (empty list when brief has no
+    # Campaign focus line). Uses the shared pipe-split heuristic — spaced
+    # pipes (' | ') preserved as ONE name; bare '|' splits to list.
+    campaign_focus_list = _split_campaign_focus(
+        (brief_fields.get("campaign_focus") or "").strip()
+    )
+
     # ADGM-06: ad_group_mapping_summary surfaces only when the sidecar exists.
     # Schema mirrors the operator-facing telemetry: coverage_pct + per-tier
     # counts. Absent key when no mapping (Phase-8-absent or pre-Phase-11 runs).
@@ -2188,6 +2280,7 @@ def build_report_json(
         "forecast": forecast or {},
         "compliance": compliance_list,
         "geographic_focus": geographic_focus_obj,
+        "campaign_focus": campaign_focus_list,
         "next_steps": next_steps if next_steps is not None else (
             render_next_steps_section(
                 brief_fields, forecast, compliance, clusters_data,
