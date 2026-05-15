@@ -1,0 +1,34 @@
+{
+  "fetched_at": "2026-05-15T12:00:00Z",
+  "horizon_days": 30,
+  "customer_id": "9999999999",
+  "campaigns": [
+    {
+      "campaign_id": "111",
+      "name": "Search | Lake Worth Accident Exams | Manual CPC",
+      "status": "ENABLED",
+      "channel": "SEARCH",
+      "impressions": 1000,
+      "clicks": 50,
+      "cost_usd": 100.0,
+      "conversions": 5,
+      "conversions_value": 500.0,
+      "cpa_usd": 20.0,
+      "roas": 5.0
+    },
+    {
+      "campaign_id": "222",
+      "name": "FL PIP - Hybrid - Performance Max",
+      "status": "ENABLED",
+      "channel": "PERFORMANCE_MAX",
+      "impressions": 5000,
+      "clicks": 100,
+      "cost_usd": 250.0,
+      "conversions": 10,
+      "conversions_value": 1000.0,
+      "cpa_usd": 25.0,
+      "roas": 4.0
+    }
+  ],
+  "ad_groups": []
+}
