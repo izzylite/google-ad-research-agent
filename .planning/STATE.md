@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: "Completed 12-03-PLAN.md — Wave 1 parallel: pulse_fetch.py + pulse_synth.py stripped of Tavily. PULSE-10 + PULSE-11 GREEN. 2 commits: f153729 (PULSE-10), 0e26525 (PULSE-11). 9/9 plan-level tests pass."
-last_updated: "2026-05-15T04:00:15.454Z"
+stopped_at: "Completed 12-02-PLAN.md — Wave 1 parallel refactor done. WFCH-03 + WFCH-04 GREEN. competitor_intel.py + merge_signals.py Tavily-free. 2 commits: a20b597 (Task 1), 0a572fc (Task 2). Suite: 245 passed, 4 failed (Plans 12-04/05 territory), 1 skipped."
+last_updated: "2026-05-15T04:04:51.635Z"
 progress:
   total_phases: 11
   completed_phases: 9
   total_plans: 49
-  completed_plans: 46
+  completed_plans: 47
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 12 — Source Consolidation (Drop Tavily) |
-| Plan | 01 (Wave 0 complete via 12-00) |
-| Status | Wave 0 RED scaffolding complete; Wave 1 deletion starts next |
-| Last activity | 2026-05-15 — Plan 12-00 shipped Wave 0 RED contract: 14 failing Phase 12 tests + 1 SKIP; 239 legacy GREEN preserved |
+| Plan | 02 complete (Wave 1 parallel: 12-01 + 12-02 + 12-03 done; 12-04 next) |
+| Status | WFCH-03 + WFCH-04 GREEN; competitor_intel.py + merge_signals.py Tavily-free; Wave 2 (Plan 12-04) ready |
+| Last activity | 2026-05-15 — Plan 12-02 stripped Tavily from competitor_intel.py + merge_signals.py. Suite: 4 failed (Plans 12-04/05 territory), 245 passed, 1 skipped. |
 
 ## Previous Milestone
 
@@ -85,6 +85,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 12 P00 | 12min | 3 tasks | 8 files |
 | Phase 12-source-consolidation-drop-tavily P01 | 2min | 2 tasks | 9 files |
 | Phase 12-source-consolidation-drop-tavily P03 | 5min | 2 tasks | 4 files |
+| Phase 12-source-consolidation-drop-tavily P02 | 25min | 2 tasks | 4 files |
 
 ### Execution History
 
@@ -222,6 +223,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 12-source-consolidation-drop-tavily]: [Phase 12-03] Test fixture enrichment chosen over MIN_THEME_MENTIONS_FLOOR re-tune — adjusting serper_news.json snippets to surface 'florida pip law' as a substantive 3-gram in 3 items keeps pre-existing test_find_themes_clusters_repeated_phrases GREEN under single-source mode without violating Plan 12-05's threshold-tuning ownership
 - [Phase 12-source-consolidation-drop-tavily]: [Phase 12-03] load_news_items signature reduced to single Path arg + main() caller chain collapses to one local — PULSE-11 contract; missing-input error message simplifies from 'Neither serper-news.json nor tavily-news.json found' to 'serper-news.json not found'
 - [Phase 12-source-consolidation-drop-tavily]: [Phase 12-03] Parallel-wave commit hygiene: explicit per-path git add + git status --short review before commit prevents absorption of concurrent Plan 12-01 / 12-02 working-tree changes when Wave 1 plans run simultaneously
+- [Phase 12-source-consolidation-drop-tavily]: [Plan 12-02] Comment-text purity for substring audit — Removed Phase 12 archaeological comments (Phase 12: tavily-extract removed) from production .py files; would have left 'tavily' substrings violating the strict must-have. Deletion archaeology lives in 12-02-SUMMARY.md instead. Future Phase 12 cleanups should follow the same pattern: prose narrative goes in SUMMARY.md, not in surviving code files.
+- [Phase 12-source-consolidation-drop-tavily]: [Plan 12-02] Co-located test refactor — Pre-existing Phase 5 + Phase 2 tests that asserted on Tavily-shape fields (raw_content, extract_status, source_diversity == 6, _write_tavily helper) were updated in the SAME commit as the production refactor. Atomic per-task review: each commit is one self-consistent change. Wave 0 audit shape is the source of truth for what assertions should look like post-refactor.
+- [Phase 12-source-consolidation-drop-tavily]: [Plan 12-02] Orphan helper detection before deletion — _extract_first_phrase + _PUNCT_STRIP regex in merge_signals.py had read_tavily as their only consumer (verified via grep). Deleted alongside read_tavily rather than keeping them as dead code; keeping them would also have inflated the source-text 'tavily' count via the docstring reference. Pattern: grep for callers before deleting any function, then aggressively prune orphans in the same commit.
 
 ### Open Questions / Todos
 
@@ -239,9 +243,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T04:00:03.088Z
+**Last session:** 2026-05-15T04:04:51.631Z
 
-**Stopped at:** Completed 12-03-PLAN.md — Wave 1 parallel: pulse_fetch.py + pulse_synth.py stripped of Tavily. PULSE-10 + PULSE-11 GREEN. 2 commits: f153729 (PULSE-10), 0e26525 (PULSE-11). 9/9 plan-level tests pass.
+**Stopped at:** Completed 12-02-PLAN.md — Wave 1 parallel refactor done. WFCH-03 + WFCH-04 GREEN. competitor_intel.py + merge_signals.py Tavily-free. 2 commits: a20b597 (Task 1), 0a572fc (Task 2). Suite: 245 passed, 4 failed (Plans 12-04/05 territory), 1 skipped.
 
 **Next session:** Milestone v1.2 complete. All 11 / 11 phases shipped (v1.0 + v1.1 + v1.2). No active phase. Options: (1) Define v1.3 milestone scope, (2) Address open-question/todos list (composite ranking calibration, Tavily credit metrics, match-type recommendation validation, v1.1 bid multiplier calibration, FRCS ratio tuning), (3) Triage v2 backlog (VOLM-*, VPRS-*, TOOL-*).
 

@@ -170,8 +170,8 @@ Milestone v1.3 — Phase 12 only. Replace Tavily landing-page extraction w/ Clau
 
 - [ ] **WFCH-01**: SKILL.md Phase 5 step (Step 19) rewrites — Claude invokes WebFetch from skill prompt for top 3-5 advertisers per cluster, mirrors WebSearch baseline pattern in Step 7
 - [ ] **WFCH-02**: Skill writes extracted `{headline, cta, offer}` per advertiser to `raw/competitor-landing-pages.json` via Write tool (replaces `raw/tavily-<domain>.json` files)
-- [ ] **WFCH-03**: `competitor_intel.py` drops Tavily call path; keeps Serper requery for ads block + Serper-organic fallback for advertiser identity discovery
-- [ ] **WFCH-04**: Source taxonomy in `merge_signals.py` removes `tavily-extract` from 6-source list; the new `webfetch-landing` source is NOT merged into main keyword pool (landing-page extraction is Phase 5 competitor intel only, not keyword harvest)
+- [x] **WFCH-03**: `competitor_intel.py` drops Tavily call path; keeps Serper requery for ads block + Serper-organic fallback for advertiser identity discovery
+- [x] **WFCH-04**: Source taxonomy in `merge_signals.py` removes `tavily-extract` from 6-source list; the new `webfetch-landing` source is NOT merged into main keyword pool (landing-page extraction is Phase 5 competitor intel only, not keyword harvest)
 
 ### Pulse Tavily Drop
 
@@ -300,8 +300,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TVLY-04 | Phase 12 | Complete |
 | WFCH-01 | Phase 12 | Pending |
 | WFCH-02 | Phase 12 | Pending |
-| WFCH-03 | Phase 12 | Pending |
-| WFCH-04 | Phase 12 | Pending |
+| WFCH-03 | Phase 12 | Complete |
+| WFCH-04 | Phase 12 | Complete |
 | PULSE-10 | Phase 12 | Complete |
 | PULSE-11 | Phase 12 | Complete |
 | PULSE-12 | Phase 12 | Pending |
