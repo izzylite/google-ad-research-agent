@@ -8,15 +8,28 @@ Internal Claude Code skill for a centralized PPC operator. Operator pastes a cam
 
 From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session, without the operator leaving the chat.
 
-## Current Milestone: v1.3 Source Consolidation
+## Current Milestone: v1.4 Positives Sync
 
-**Goal:** Drop Tavily. Replace landing-page extraction with Claude's built-in WebFetch tool. Reduce paid API surface to Serper-only. Two paid quotas (Serper + Ahrefs + Google Ads) shrink to one (Serper + Ahrefs + Google Ads — same minus Tavily).
+**Goal:** Mirror negatives-sync for positives — diff ranked keywords against the client's currently-active Google Ads keywords and surface only net-new in `positives.csv`. Eliminates manual dedup pain on re-runs against the same account.
 
 **Target features:**
+- `perf_fetch.py` pulls `keyword_view` (active + paused account keywords, last 30d) via existing Google Ads OAuth
+- `perf_synth.py` produces 4-bucket `positives-sync.json`: `already_active` / `paused_in_account` / `covered_by_broad` / `new_to_add`
+- Report `## Positives Sync` section mirrors negatives-sync UX (stats line + enumerated `new_to_add` + count-only `already_active`)
+- `positives.csv` filters to `new_to_add` by default; `--include-existing` CLI override for full list
+- Graceful skip when `raw/google-ads-keywords.json` absent (no OAuth available)
+- Optional SKILL.md LLM re-tag step for borderline semantic dupes
+- Phase 13 (Landing-Page Extract Vendor Swap) remains backlog under v1.3 — defer-until-friction
+
+## Previous Milestone: v1.3 Source Consolidation
+
+**Goal (shipped):** Dropped Tavily. Landing-page extraction switched to Claude WebFetch. Niche pulse news single-source via Serper /news. Paid API surface reduced from 3 keys → 2 (Serper + Ahrefs + Google Ads).
+
+**Target features (shipped):**
 - Tavily removed entirely (script + SDK dep + env key + tests)
 - Phase 5 COMP-03 landing-page extraction switches to WebFetch (built-in, free, mirrors WebSearch baseline pattern)
 - Phase 7 PULSE-02 redundant Tavily news call deprecated; Serper /news (PULSE-01) only
-- Source taxonomy in merge_signals.py drops `tavily-extract`; new `webfetch-landing` source if needed
+- Source taxonomy in merge_signals.py drops `tavily-extract`; `webfetch-landing` source added
 - `.env.example` + lib/config.py drop TAVILY_API_KEY
 
 ## Previous Milestone: v1.2 Account-Structure Mapping
@@ -66,18 +79,23 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - ✓ us-cities.json reference data file (top 5000 US cities w/ county hierarchy) — v1.2
 - ✓ ad_group_match.py — maps ranked keywords to existing account ad groups w/ confidence tiers — v1.2
 - ✓ export_csv preserves existing ad group names when mapping coverage > 50% — v1.2
+- ✓ Tavily removed entirely (script + SDK dep + TAVILY_API_KEY + tests) — v1.3
+- ✓ WebFetch invoked from SKILL.md Phase 5 for top 3-5 advertisers per cluster (landing page extraction) — v1.3
+- ✓ competitor_intel.py + merge_signals.py Tavily code paths stripped — v1.3
+- ✓ pulse_fetch.py Tavily news call dropped; Serper /news single-source — v1.3
+- ✓ Source taxonomy: tavily-extract removed; webfetch-landing added — v1.3
 
 ### Active
 
-<!-- v1.3 scope. Building toward these. -->
+<!-- v1.4 scope. Building toward these. -->
 
-- [ ] Drop Tavily entirely — tavily_extract.py + tavily SDK dep + TAVILY_API_KEY + tests removed
-- [ ] WebFetch invoked from SKILL.md Phase 5 step for top 3-5 advertisers per cluster (landing page extraction)
-- [ ] competitor_intel.py drops Tavily code path; keeps Serper requery for ads block
-- [ ] Skill writes WebFetch-extracted headline/CTA/offer to raw/competitor-landing-pages.json via Write tool
-- [ ] pulse_fetch.py drops Tavily news call (Serper /news covers it); PULSE-02 deprecated
-- [ ] Source taxonomy: tavily-extract removed; webfetch-landing added if needed
-- [ ] All 263 tests pass post-removal; pyproject.toml deps cleaned (tavily-python out)
+- [ ] `perf_fetch.py` pulls `keyword_view` last 30d (active + paused account keywords) via existing Google Ads OAuth
+- [ ] `perf_synth.py` produces 4-bucket `positives-sync.json` (already_active / paused_in_account / covered_by_broad / new_to_add)
+- [ ] Report `## Positives Sync` section mirrors negatives-sync UX (md + HTML)
+- [ ] `positives.csv` filters to `new_to_add` by default; `--include-existing` CLI override for full list
+- [ ] Phase 14 graceful-skips when `raw/google-ads-keywords.json` absent (no OAuth)
+- [ ] SKILL.md LLM re-tag step catches borderline semantic dupes after script dedup (optional polish)
+- [ ] Test coverage: cross_ref_positives unit tests + golden positives-sync.json fixture
 
 ### Out of Scope
 
@@ -124,7 +142,9 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | Geo narrowing via brief `geo_focus` list — v1.2 | Team feedback: research returned Lake Worth FL keywords from across Florida; need county/city precision. Brief field + US-cities reference data scan keeps it simple. | — Pending |
 | Ad-group mapping respects client structure — v1.2 | Junior PPC manager paste-experience: current export creates new ad groups (theme_intent slugs) instead of reusing client's existing ad groups. Mapping script reads Phase 8 perf data + writes existing names to CSV. | — Pending |
 
-| Drop Tavily v1.3 | Tavily plan quota exhausted mid-Lake Worth re-run; Serper /webpage covers landing-page extract OR Claude WebFetch covers it free. Reducing paid API surface = fewer quota concerns + one fewer key to manage. WebFetch chosen over Serper /webpage — free (no API credits), mirrors WebSearch baseline pattern, fits single-operator Claude Code workflow. | — Pending |
+| Drop Tavily v1.3 | Tavily plan quota exhausted mid-Lake Worth re-run; Serper /webpage covers landing-page extract OR Claude WebFetch covers it free. Reducing paid API surface = fewer quota concerns + one fewer key to manage. WebFetch chosen over Serper /webpage — free (no API credits), mirrors WebSearch baseline pattern, fits single-operator Claude Code workflow. | ✓ Good — shipped v1.3, empirical pass on Lake Worth run |
+| Positives Sync v1.4 (Phase 14) | Re-running skill against the same client produces duplicate keyword imports — operator manually scrubs `positives.csv` before Editor paste. Negatives already dedup via Phase 8 `negatives-sync.json`; positives are asymmetric. Use existing Google Ads OAuth + `keyword_view` GAQL (free quota). LLM re-tag for semantic dupes catches the 20% of cases plain string norm misses. | — Pending |
+| Use Google Ads API over Ahrefs paid-kw for positives sync source | Authoritative truth (exact text, match_type, status, perf) vs Ahrefs inference (~60-80% accuracy, no match_type). OAuth already wired in Phase 8. Ahrefs paid-kw considered as fallback for accounts without OAuth — deferred. | — Pending |
 
 ---
-*Last updated: 2026-05-15 after milestone v1.3 start*
+*Last updated: 2026-05-15 after milestone v1.4 start*

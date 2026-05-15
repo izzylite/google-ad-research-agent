@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Phases
-status: unknown
-stopped_at: Phase 12 (v1.3) shipped — Tavily dropped; WebFetch replaces COMP-03; Serper /news single-source. 89/89 requirements Complete. Phase 13 (Serper /scrape vendor swap) added to ROADMAP as defer-until-friction backlog (commit 1227cbf).
-last_updated: "2026-05-15T10:18:27.414Z"
+milestone: v1.4
+milestone_name: Positives Sync
+status: defining_requirements
+stopped_at: Milestone v1.4 started 2026-05-15 — defining requirements (POS-01..07). v1.3 shipped 2026-05-15 (89/89 Complete).
+last_updated: "2026-05-15T11:00:00.000Z"
 progress:
   total_phases: 12
-  completed_phases: 10
+  completed_phases: 12
   total_plans: 49
   completed_plans: 49
 ---
@@ -20,16 +20,16 @@ progress:
 
 **Core value:** From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session.
 
-**Current focus:** Milestone v1.3 — Source Consolidation. Phase 12 (drop Tavily; swap to WebFetch + Serper). Triggered by Tavily quota exhaustion during dogfood re-run.
+**Current focus:** Milestone v1.4 — Positives Sync. Phase 14 (mirror negatives-sync for positives via Google Ads `keyword_view` GAQL). Triggered by operator pain on skill re-runs against same client (manual dedup of `positives.csv` before Editor paste).
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
-| Phase | 12 — Complete |
-| Plan | All 6/6 plans complete |
-| Status | Milestone v1.3 shipped — Tavily dropped; WebFetch replaces COMP-03; Serper /news single-source. Full suite 250 passed / 0 failed / 0 skipped. Phase 13 (Serper /scrape vendor swap) ready in ROADMAP backlog. |
-| Last activity | 2026-05-15 — Plan 12-05 closed Phase 12: deferred test_config RED fixed, 6 fixture JSONs scrubbed, REQUIREMENTS/STATE/ROADMAP updated. e2e smoke approved by operator. |
+| Phase | Not started (defining requirements) |
+| Plan | — |
+| Status | Defining requirements |
+| Last activity | 2026-05-15 — Milestone v1.4 started; scope drafted at `.planning/proposed/v1.4-positives-sync.md`; awaiting REQUIREMENTS.md + ROADMAP.md updates |
 
 ## Previous Milestone
 
@@ -256,11 +256,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T10:08:34.693Z
+**Last session:** 2026-05-15T11:00:00.000Z
 
-**Stopped at:** Phase 12 (v1.3) shipped — Tavily dropped; WebFetch replaces COMP-03; Serper /news single-source. 89/89 requirements Complete. Phase 13 (Serper /scrape vendor swap) added to ROADMAP as defer-until-friction backlog (commit 1227cbf).
+**Stopped at:** Milestone v1.4 started. PROJECT.md updated (Active = POS scope), STATE.md reset. Scope parked at `.planning/proposed/v1.4-positives-sync.md`. Next: REQUIREMENTS.md additions (POS-01..07), then gsd-roadmapper for Phase 14.
 
-**Next session:** Milestone v1.3 complete. All 12 / 12 phases shipped (v1.0 + v1.1 + v1.2 + v1.3). 89 / 89 requirements complete. No active phase. Options: (1) Run a real-brief end-to-end smoke in fresh Claude Code session to empirically test WebFetch friction; if disruptive, activate Phase 13 (Serper /scrape vendor swap, defer-until-friction backlog), (2) Define v1.4 milestone scope (open backlog: composite ranking calibration, match-type validation, v1.1 bid multiplier calibration, FRCS ratio tuning, niche-pulse MIN_THEME_MENTIONS_FLOOR re-tune), (3) Triage v2 backlog (VOLM-*, VPRS-*, TOOL-*).
+**Next session:** Continue v1.4 setup — define REQUIREMENTS.md POS-01..07, spawn roadmapper for Phase 14, then `/gsd:plan-phase 14`.
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
@@ -273,3 +273,4 @@ None.
 ---
 *State initialized: 2026-05-08*
 *v1.1 milestone started: 2026-05-14*
+*v1.4 milestone started: 2026-05-15*
