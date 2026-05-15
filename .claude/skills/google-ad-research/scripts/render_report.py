@@ -994,13 +994,17 @@ def _build_cluster_index(clusters_data: dict) -> dict[str, str]:
 
 
 def _parse_brief_fields(brief_text: str) -> dict[str, str]:
-    """Extract industry, product, location, language, audience, geo_focus from brief.md.
+    """Extract industry, product, location, language, audience, geo_focus, campaign_focus from brief.md.
 
     Looks for "**Field:** value" pattern (case-insensitive field matching).
     GEO-05 extension: also reads the optional `**Geo focus:**` list-item line
     (e.g. `- **Geo focus:** Palm Beach County, Lake Worth`) and exposes the
     comma-joined raw value under key `"geo_focus"`. Empty string when absent
     (graceful degrade — Phase 11 callers omit the section).
+    CAMP-01 extension: also reads the optional `**Campaign focus:**` list-item
+    line and exposes the raw value under key `"campaign_focus"`. Empty string
+    when absent (mirrors geo_focus contract — Plan 15-02 callers omit the
+    section).
     """
     fields = ["industry", "product", "location", "language", "audience"]
     result: dict[str, str] = {}
@@ -1027,6 +1031,16 @@ def _parse_brief_fields(brief_text: str) -> dict[str, str]:
         re.IGNORECASE | re.MULTILINE,
     )
     result["geo_focus"] = geo_match.group(1).strip() if geo_match else ""
+
+    # CAMP-01: optional "**Campaign focus:**" line. Tolerates leading list
+    # markers (-, *) and whitespace so both bare and bulleted forms parse
+    # identically. Mirrors GEO-05 regex shape.
+    camp_match = re.search(
+        r"^[-*\s]*\*\*Campaign\s*focus:\*\*\s*(.+)$",
+        brief_text,
+        re.IGNORECASE | re.MULTILINE,
+    )
+    result["campaign_focus"] = camp_match.group(1).strip() if camp_match else ""
     return result
 
 
