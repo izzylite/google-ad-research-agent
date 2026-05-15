@@ -281,14 +281,19 @@ def build_mapping(
 ) -> dict[str, Any]:
     """Compute the ad-group-mapping.json body. See module docstring for schema.
 
-    Algorithm (ADGM-02):
-        score = jaccard(kw_tokens, ag.token_bag) * intent_multiplier
-        intent_multiplier = 1.0 if kw.intent == ag.inferred_intent else 0.5
+    Algorithm (ADGM-02 + ADGM-11):
+        Phase 16 Plan 16-04 (ADGM-11): per-source max-Jaccard. raw_j =
+        max(name_j, crit_j, term_j) replaces the previous full-union
+        jaccard(kw, full_bag) to address the bag-vs-query token-count asymmetry
+        observed on real Lake Worth data (see 16-04-SUMMARY.md). The
+        intent_multiplier still applies multiplicatively to the max:
+            score = max(name_j, crit_j, term_j) * intent_multiplier
+            intent_multiplier = 1.0 if kw.intent == ag.inferred_intent else 0.5
 
     Confidence tiers (ADGM-03):
-        high   >= 0.7
-        medium 0.4..0.7
-        low    < 0.4  →  existing_ad_group=None (no claim of match)
+        high   >= _THRESHOLDS["high"]
+        medium >= _THRESHOLDS["medium"]
+        low    <  _THRESHOLDS["medium"]  →  existing_ad_group=None
 
     Coverage % (Pitfall 7):
         (high + medium count) / total_ranked * 100  —  low EXCLUDED
@@ -307,9 +312,16 @@ def build_mapping(
         best_ag_name: str | None = None
         best_jaccard = 0.0
         best_intent_match = False
+        best_partials: tuple[float, float, float] = (0.0, 0.0, 0.0)
 
         for ag_name, ag in index.items():
-            raw_j = _jaccard(kw_tokens, ag["token_bag"])
+            # Phase 16 Plan 16-04 (ADGM-11): compute per-source partials ONCE per
+            # (kw, ag) — power both scoring AND reason-field rendering. Replaces
+            # the previous full-union _jaccard(kw_tokens, ag["token_bag"]) call.
+            name_j = _jaccard(kw_tokens, ag["name_tokens"])
+            crit_j = _jaccard(kw_tokens, ag["criterion_tokens"])
+            term_j = _jaccard(kw_tokens, ag["search_term_tokens"])
+            raw_j = max(name_j, crit_j, term_j)
             if raw_j == 0.0:
                 continue
             intent_match = kw_intent == ag["inferred_intent"]
@@ -321,22 +333,29 @@ def build_mapping(
                 best_ag_name = ag_name
                 best_jaccard = raw_j
                 best_intent_match = intent_match
+                best_partials = (name_j, crit_j, term_j)
 
         confidence = _classify(best_score)
         if confidence == "low":
             unmapped_count += 1
             resolved_ag = None
-            reason = (
-                f"jaccard={best_jaccard:.2f} intent_match={best_intent_match}"
-            )
+            if best_jaccard > 0.0:
+                # Borderline-low audit: keep per-source attribution.
+                name_j, crit_j, term_j = best_partials
+                reason = (
+                    f"jaccard={best_jaccard:.2f} "
+                    f"(name={name_j:.2f} kw-criterion={crit_j:.2f} search-term={term_j:.2f}) "
+                    f"intent_match={best_intent_match}"
+                )
+            else:
+                reason = (
+                    f"jaccard={best_jaccard:.2f} intent_match={best_intent_match}"
+                )
         else:
             match_count += 1
             resolved_ag = best_ag_name
-            # Per-source Jaccards (ADGM-09) — compute against partial sets in index
-            ag = index[best_ag_name]
-            name_j = _jaccard(kw_tokens, ag["name_tokens"])
-            crit_j = _jaccard(kw_tokens, ag["criterion_tokens"])
-            term_j = _jaccard(kw_tokens, ag["search_term_tokens"])
+            # Per-source Jaccards (ADGM-09) — from cached best_partials (Plan 16-04)
+            name_j, crit_j, term_j = best_partials
             reason = (
                 f"jaccard={best_jaccard:.2f} "
                 f"(name={name_j:.2f} kw-criterion={crit_j:.2f} search-term={term_j:.2f}) "
