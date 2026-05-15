@@ -1126,6 +1126,7 @@ def render_full_report(
     top_n: int = 100,
     account_perf: dict | None = None,
     negatives_sync: dict | None = None,
+    positives_sync: dict | None = None,
     forecast: dict | None = None,
     compliance: dict | None = None,
 ) -> str:
@@ -1175,6 +1176,11 @@ def render_full_report(
     if negatives_sync:
         sections.append("\n")
         sections.append(render_negatives_sync_section(negatives_sync))
+    # Positives sync (Phase 14 POS-03) — sits adjacent to Negative Keyword
+    # Sync. render_positives_sync_section returns "" when sync absent (POS-05).
+    if positives_sync:
+        sections.append("\n")
+        sections.append(render_positives_sync_section(positives_sync))
     # Ad groups (evergreen)
     sections.extend([
         "\n",
@@ -1411,6 +1417,14 @@ Keyword Planner for actual volume + CPC.
   </div>
 </section>
 
+<section id="positives-sync">
+  <h2>Positives Sync <span class="cluster-meta" id="posSyncMeta"></span></h2>
+  <div class="usage"><strong>How to use:</strong> compares our ranked positives vs your account's live keyword list. <strong>New to add</strong> rows are what to paste into positives.csv for the Editor import. <em>Already active</em> / <em>paused</em> / <em>covered by broad</em> are audit signals — drill into positives-sync.json for full per-row data.</div>
+  <div id="posSyncContent">
+    <p style="color:#666;font-size:13px;">No positives-sync.json — run Phase 14 perf_synth.</p>
+  </div>
+</section>
+
 <section>
   <h2>Ad Group Clusters</h2>
   <div class="usage"><strong>How to use:</strong> each cluster is a ready-to-paste Google Ads ad group. Cluster name follows <code>theme_intent</code> — copy directly as the ad group label. Bid on transactional + commercial clusters; informational clusters belong in a separate awareness campaign with lower CPC ceilings.</div>
@@ -1598,6 +1612,37 @@ function renderNegativesSync() {{
     html += `<details${{tier==='Strong'?' open':''}}><summary>New <span class="tier-${{tier}}">${{tier}}</span> negatives <span class="cluster-meta">${{items.length}}</span></summary>`;
     if (!items.length) html += "<p style='color:#666;font-size:13px'>None.</p>";
     else html += "<ul>" + items.map(n => `<li><code>${{htmlEscape(n.keyword)}}</code> <span class="cluster-meta">${{htmlEscape(n.category||'')}}</span> — ${{htmlEscape(n.justification||'')}}</li>`).join("") + "</ul>";
+    html += "</details>";
+  }}
+  content.innerHTML = html;
+}}
+
+function renderPositivesSync() {{
+  const sync = REPORT.positives_sync || {{}};
+  const meta = document.getElementById("posSyncMeta");
+  const content = document.getElementById("posSyncContent");
+  if (!sync || !sync.stats) return;
+  const s = sync.stats || {{}};
+  meta.textContent = `${{s.our_total||0}} ours · ${{s.already_active||0}} active · ${{s.paused_in_account||0}} paused · ${{s.covered_by_broad||0}} broad-cover · ${{s.new_to_add||0}} new`;
+  let html = `<div style="background:#ecfdf5;border-left:4px solid #10b981;padding:10px 14px;margin-bottom:12px;border-radius:4px;font-size:13px">
+    <strong>Stats:</strong> our list = ${{s.our_total||0}} · already active = ${{s.already_active||0}} · paused = ${{s.paused_in_account||0}} · covered by broad = ${{s.covered_by_broad||0}} · new to add = <strong>${{s.new_to_add||0}}</strong>
+  </div>`;
+  const newRows = sync.new_to_add || [];
+  html += `<details open><summary>New positives to add <span class="cluster-meta">${{newRows.length}}</span></summary>`;
+  if (!newRows.length) html += "<p style='color:#666;font-size:13px'>None — your ranked list is fully covered by the active account.</p>";
+  else html += "<ul>" + newRows.map(r => `<li><code>${{htmlEscape(r.keyword||"")}}</code> <span class="cluster-meta">${{htmlEscape(r.intent||"")}}</span>${{r.justification?" — "+htmlEscape(r.justification):""}}</li>`).join("") + "</ul>";
+  html += "</details>";
+  // Count-only audit buckets — collapsible with full per-row data inline
+  const buckets = [
+    ["Already active", "already_active"],
+    ["Paused in account", "paused_in_account"],
+    ["Covered by broad-match", "covered_by_broad"],
+  ];
+  for (const [label, key] of buckets) {{
+    const items = sync[key] || [];
+    html += `<details><summary>${{label}} <span class="cluster-meta">${{items.length}}</span></summary>`;
+    if (!items.length) html += "<p style='color:#666;font-size:13px'>None.</p>";
+    else html += "<ul>" + items.map(r => `<li><code>${{htmlEscape(r.keyword||"")}}</code> <span class="cluster-meta">${{htmlEscape(r.intent||"")}} · ${{htmlEscape(r.match_type||"")}}</span></li>`).join("") + "</ul>";
     html += "</details>";
   }}
   content.innerHTML = html;
@@ -1879,7 +1924,7 @@ function renderAdGroupMapping() {{
 
 renderKeywords(); renderClusters(); renderCompetitors();
 renderCompliance(); renderForecast();
-renderAccountPerf(); renderNegativesSync(); renderNegatives();
+renderAccountPerf(); renderNegativesSync(); renderPositivesSync(); renderNegatives();
 renderAdGroupMapping();
 renderNextSteps();
 makeSortable("kwTable"); makeSortable("negTable");
@@ -1899,6 +1944,7 @@ def build_report_json(
     *,
     account_perf: dict | None = None,
     negatives_sync: dict | None = None,
+    positives_sync: dict | None = None,
     forecast: dict | None = None,
     compliance: dict | None = None,
     next_steps: list[dict] | None = None,
@@ -1973,6 +2019,7 @@ def build_report_json(
         "negatives": negatives,
         "account_perf": account_perf or {},
         "negatives_sync": negatives_sync or {},
+        "positives_sync": positives_sync or {},
         "forecast": forecast or {},
         "compliance": compliance_list,
         "geographic_focus": geographic_focus_obj,
@@ -2054,6 +2101,15 @@ def main(argv: list[str] | None = None) -> int:
         except (json.JSONDecodeError, OSError):
             negatives_sync = None
 
+    # Phase 14 POS-03 / POS-05 — Positives Sync sidecar (graceful absent path)
+    positives_sync: dict | None = None
+    pos_sync_path = run_dir / "positives-sync.json"
+    if pos_sync_path.exists():
+        try:
+            positives_sync = json.loads(pos_sync_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            positives_sync = None
+
     # Load optional Phase 9 sidecars (forecast.json + compliance-flags.json).
     # Missing files degrade gracefully — sections are simply omitted from the
     # report. Mirrors the account-perf / negatives-sync pattern.
@@ -2092,6 +2148,7 @@ def main(argv: list[str] | None = None) -> int:
         brief_text, run_dir, top_n=args.top_n,
         account_perf=account_perf,
         negatives_sync=negatives_sync,
+        positives_sync=positives_sync,
         forecast=forecast,
         compliance=compliance,
     )
@@ -2100,6 +2157,7 @@ def main(argv: list[str] | None = None) -> int:
         brief_text, run_dir,
         account_perf=account_perf,
         negatives_sync=negatives_sync,
+        positives_sync=positives_sync,
         forecast=forecast,
         compliance=compliance,
         next_steps=next_steps_list,
