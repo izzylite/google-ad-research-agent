@@ -92,3 +92,22 @@ def test_themes_have_required_fields():
         assert "headlines" in t
         assert "suggested_keywords" in t
         assert t["mention_count"] >= 2
+
+
+# ---------------------------------------------------------------------------
+# Phase 12 PULSE-11: single-source signature — load_news_items(serper_path)
+# ---------------------------------------------------------------------------
+def test_load_news_items_serper_only():
+    """PULSE-11: load_news_items must accept only serper_path post-Phase-12.
+
+    RED against Phase 11 (current signature is load_news_items(serper_path, tavily_path)).
+    Wave 1 plan 12-03 strips the tavily_path arg.
+    """
+    if PS_MISSING:
+        pytest.skip("pulse_synth not yet implemented")
+    import inspect as _i
+    sig = _i.signature(pulse_synth.load_news_items)
+    params = list(sig.parameters)
+    assert params == ["serper_path"], (
+        f"PULSE-11: load_news_items must accept only serper_path; got {params}"
+    )

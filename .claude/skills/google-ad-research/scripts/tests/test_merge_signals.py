@@ -440,3 +440,40 @@ def test_city_filter_preserves_county_hierarchy(tmp_run_dir, monkeypatch):
     assert any("boca raton" in s for s in all_surfaces), (
         f"boca raton dentist should be kept via county hierarchy: {all_surfaces}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Phase 12 WFCH-04: VALID_SOURCES is the 5-source post-Phase-12 set
+# ---------------------------------------------------------------------------
+def test_valid_sources_post_phase12():
+    """WFCH-04: VALID_SOURCES must equal the 5-source post-Phase-12 set.
+
+    RED against Phase 11 (VALID_SOURCES still contains 'tavily-extract').
+    Wave 1 plan 12-02 prunes the taxonomy. Explicitly assert NOT 'webfetch-landing'
+    either — LP extract is Phase 5 only, never enters the keyword pool.
+    """
+    if MODULE_MISSING:
+        pytest.skip("merge_signals not yet implemented")
+    expected = frozenset({
+        "serper-organic",
+        "serper-paa",
+        "serper-related",
+        "serper-ads",
+        "websearch-baseline",
+    })
+    assert merge_signals.VALID_SOURCES == expected, (
+        f"WFCH-04: VALID_SOURCES must equal 5-source post-Phase-12 set; got {merge_signals.VALID_SOURCES}"
+    )
+    assert "tavily-extract" not in merge_signals.VALID_SOURCES
+    assert "webfetch-landing" not in merge_signals.VALID_SOURCES, (
+        "WFCH-04: webfetch-landing must NOT be added to VALID_SOURCES "
+        "(LP extract is Phase 5 only, not keyword harvest)"
+    )
+
+
+def test_read_tavily_removed():
+    """WFCH-04: merge_signals.read_tavily reader function must be deleted."""
+    if MODULE_MISSING:
+        pytest.skip("merge_signals not yet implemented")
+    assert not hasattr(merge_signals, "read_tavily"), \
+        "WFCH-04: merge_signals.read_tavily must be deleted"

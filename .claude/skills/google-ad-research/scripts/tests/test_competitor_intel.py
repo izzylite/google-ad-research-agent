@@ -267,3 +267,34 @@ def test_output_schema_valid(tmp_run_dir, mock_env, monkeypatch):
         assert "representative_keyword" in cluster_data, f"{cluster_name} missing representative_keyword"
         assert "ads" in cluster_data, f"{cluster_name} missing ads"
         assert "advertisers" in cluster_data, f"{cluster_name} missing advertisers"
+
+
+# ---------------------------------------------------------------------------
+# Phase 12 WFCH-03: advertisers entries carry Serper fields only;
+# no Tavily raw_content / tavily_fetched_at / extract_status.
+# ---------------------------------------------------------------------------
+def test_advertisers_shape_post_phase12():
+    """WFCH-03: competitor_intel.py source contains no Tavily-shape fields.
+
+    RED against Phase 11 (current competitor_intel.py imports tavily and writes
+    raw_content + tavily_fetched_at into advertisers entries). Wave 1 plan 12-02
+    rewrites the helper to emit only Serper fields:
+        {domain, url, title, description, position}
+    Tavily fields {raw_content, tavily_fetched_at} are deleted; extract_status
+    (if any) moves to raw/competitor-landing-pages.json under WFCH-02.
+    """
+    if MODULE_MISSING:
+        pytest.skip("competitor_intel not yet implemented")
+    import inspect as _i
+    src = _i.getsource(competitor_intel)
+    # Source-level invariants — Tavily fields must NOT appear in source text
+    assert "raw_content" not in src, \
+        "WFCH-03: competitor_intel.py must not reference raw_content (Tavily-shape field)"
+    assert "tavily_fetched_at" not in src, \
+        "WFCH-03: competitor_intel.py must not reference tavily_fetched_at"
+    assert "tavily" not in src.lower(), \
+        "WFCH-03: competitor_intel.py must contain no Tavily references"
+    # No Tavily-prefixed symbols in module namespace
+    tavily_symbols = [m for m in dir(competitor_intel) if "tavily" in m.lower()]
+    assert not tavily_symbols, \
+        f"WFCH-03: competitor_intel namespace must contain no tavily-prefixed symbols; got {tavily_symbols}"
