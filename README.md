@@ -43,7 +43,6 @@ Every run lands in a sealed dated folder under `.runs/`:
 ├── negatives.json                    ← tiered + categorised negatives
 ├── competitor-intel.json             ← per-cluster advertiser identity + ads
 ├── competitor-landing-pages.json     ← WebFetch-extracted headline/CTA/offer
-├── niche-pulse.json                  ← time-sensitive news themes (Phase 7)
 ├── ranked-enriched.json              ← ranked.json + Ahrefs MSV/CPC/KD + Phase 9
 │                                       suggested_max_cpc_micros (Phase 8+9)
 ├── account-perf.json                 ← Google Ads MCC performance pull (Phase 8)
@@ -90,13 +89,12 @@ The skill splits into two layers that communicate only through files in a sealed
 | 4 | Clustering | `clusters.json` | `validate_clusters.py` |
 | 5 | Competitor ads + landing pages | `competitor-{intel,landing-pages}.json` | `competitor_intel.py` + WebFetch |
 | 6 | Negatives + report assembly | `report.{md,json,html}` | `generate_negatives.py`, `render_report.py`, `update_index.py` |
-| 7 | Niche pulse (optional sidecar) | `niche-pulse.json` | `pulse_fetch.py`, `pulse_synth.py` |
 | 8 | Volume + perf context (optional) | `ranked-enriched.json`, `account-perf.json`, `negatives-sync.json` | `volume_enrich.py`, `perf_fetch.py`, `perf_synth.py` |
 | 9 | Bid + forecast + compliance | `ranked-enriched.json` (+suggested_max_cpc_micros), `forecast.json`, `compliance-flags.json` | `bid_suggest.py`, `forecast_budget.py`, `compliance_check.py` |
 | 10 | Operator launch kit (Editor CSVs) | `export/{positives,negatives,ad_groups}.csv` | `export_csv.py` |
 | 11 | Account-structure mapping | `ad-group-mapping.json` | `ad_group_match.py` |
 
-Phases 7-11 are **sidecars** — operator opts in per-run. Phases 1-6 are the always-on core. Skill prompts you after Phase 6 to pick which sidecars to run.
+Phases 8-11 **auto-run when prerequisites are present** (Ahrefs + Google Ads creds in `.env`, geo focus in brief). Phases 1-6 are the always-on core. No per-phase prompts — skill announces explicit skip + reason when a phase can't run.
 
 ### Signal sources
 
@@ -201,17 +199,16 @@ Open Claude Code in this directory and paste a brief. The skill activates on phr
 > Geo filter: dropped 44 keywords (wrong state) + 2 (wrong PB-county city)
 > Open report.html for interactive view.
 >
-> Phase 7-11 sidecars (Niche Pulse, Account Data, Economics, Launch Kit,
-> Account Mapping) optional — say which to run.
+> Phases 8-11 auto-ran (Account Data, Economics, Launch Kit, Account Mapping)
+> — all prereqs in .env. No further prompts.
 ```
 
-### Phase 7-11: default behavior
+### Phase 8-11: default behavior
 
-Only Phase 7 prompts. Phases 8-11 auto-run when prerequisites are present in `.env` + brief:
+All four auto-run when prerequisites are present in `.env` + brief. No prompts. Skill announces explicit skip + reason if a phase can't run.
 
 | Phase | Default | Auto-run trigger | What it adds |
 |-------|---------|------------------|--------------|
-| **7 — Niche Pulse** | **Opt-in** (operator prompted) | n/a | Trending news themes, regulatory alerts, competitor news, time-sensitive negative candidates. Useful for volatile niches (insurance, healthcare, finance) — weekly refresh. |
 | **8 — Account Data + Volume** | **Auto-run** | `AHREFS_API_KEY` AND Google Ads OAuth creds in `.env` | Ahrefs MSV + CPC + Keyword Difficulty (`ranked-enriched.json`); Google Ads MCC performance baseline (`account-perf.json`); existing-account negatives sync (`negatives-sync.json`). |
 | **9 — Economics + Compliance** | **Auto-run** | Phase 8 produced `cpc_micros` | Max CPC per keyword (mutated into `ranked-enriched.json`), budget forecast bands (`forecast.json`), vertical compliance flags (`compliance-flags.json`). Pure compute. |
 | **10 — Operator Launch Kit** | **Auto-run** | Phase 9 completed | `{run}/export/` Editor v2.x CSVs: `positives.csv` (with Max CPC), `negatives.csv` (tiered), `ad_groups.csv`. Next-Steps checklist with daily budget + Max CPC pre-filled. |
@@ -226,12 +223,11 @@ Only Phase 7 prompts. Phases 8-11 auto-run when prerequisites are present in `.e
 | 2: Signal collection | Serper × ~12 | 12 credits |
 | 5: Competitor intel | Serper × N clusters | ~14 credits |
 | 5: Landing-page extract | WebFetch (Claude built-in) | $0 |
-| 7: Niche pulse (opt-in) | Serper /news × ~10 | ~12 credits |
 | 8: Volume enrichment | Ahrefs API | ~73 units |
 | 8: Perf context | Google Ads API | free quota |
-| **Total Serper per run** | | **~26 credits (full pipeline ~38)** |
+| **Total Serper per run** | | **~26 credits** |
 
-Serper free tier = **2,500 credits**. At ~30 credits/run that's ~80 runs free — comfortably covers internal-team usage. No paid plan required for normal volume.
+Serper free tier = **2,500 credits**. At ~26 credits/run that's ~95 runs free — comfortably covers internal-team usage. No paid plan required for normal volume.
 
 ---
 
@@ -244,7 +240,6 @@ SKILL.md (operator-facing prompt — ≤500 lines)
 references/                          ← progressive-disclosure rubrics
 ├── phase5-competitor-intel.md       ← Serper ads + WebFetch landing pages
 ├── phase6-negatives-report.md       ← negative categories + report schema
-├── phase7-niche-pulse.md            ← news theme synthesis
 ├── phase8-account-data.md           ← Ahrefs + Google Ads pulls
 ├── phase9-economics-compliance.md   ← bid math + forecast + compliance
 ├── phase10-operator-launch-kit.md   ← Editor CSV + Next-Steps
@@ -269,9 +264,6 @@ scripts/
 ├── generate_negatives.py  enum validator + dedup vs positives
 ├── render_report.py       report.md + report.json + report.html (with WebFetch JOIN)
 ├── update_index.py        append .runs/INDEX.md row
-│
-├── pulse_fetch.py         Phase 7: Serper /news (single-source post-Phase-12)
-├── pulse_synth.py         Phase 7: theme cluster + regulatory tag
 │
 ├── volume_enrich.py       Phase 8: Ahrefs MSV + difficulty
 ├── perf_fetch.py          Phase 8: Google Ads MCC pull
@@ -327,8 +319,7 @@ scripts/
 2. **Brief quality drives output quality.** A vague brief produces vague keywords. Five required fields (industry, product, location, language, audience) are enforced for a reason.
 3. **Serper ads block is unreliable in some verticals.** Healthcare and several others return 0 ads even when Google clearly shows them. The competitor intel script falls back to top organic results — those landing pages contain the same value props paid advertisers would highlight, so the downstream analysis still works.
 4. **WebFetch can fail on JS-heavy or bot-blocked sites.** Typical success rate ~80% in production runs. The `competitor-landing-pages.json` schema includes `extract_status` so failures are visible; `report.md` shows fallback text per failed advertiser.
-5. **Niche pulse themes have noise.** N-gram clustering surfaces some news-source bylines and reporter names. Stop-token list filters most; the Highlights block at the top of the section is curated to high-priority items only.
-6. **Single-operator design.** No multi-tenant, no auth, no shared state. The skill expects one PPC operator running it for in-house or solo agency campaigns. Productizing for end clients is out of scope for v1.
+5. **Single-operator design.** No multi-tenant, no auth, no shared state. The skill expects one PPC operator running it for in-house team campaigns. Productizing for end clients is out of scope.
 
 ---
 
@@ -348,7 +339,7 @@ scripts/
 
 | Milestone | Scope | Status |
 |-----------|-------|--------|
-| **v1.0** | Phases 1-7 — core pipeline + Niche Pulse | Shipped 2026-05-08 |
+| **v1.0** | Phases 1-6 — core pipeline (Phase 7 Niche Pulse shipped here, removed post-v1.3) | Shipped 2026-05-08 |
 | **v1.1** | Phases 8-10 — Account Data + Volume, Economics, Launch Kit | Shipped 2026-05-14 |
 | **v1.2** | Phase 11 — Account-Structure Mapping | Shipped 2026-05-15 |
 | **v1.3** | Phase 12 — Source Consolidation | Shipped 2026-05-15 |
@@ -364,7 +355,6 @@ scripts/
 | Composite ranking weight calibration (after 3-5 real runs) | v1.4 candidate |
 | Match-type recommendation conservatism re-tune | v1.4 candidate |
 | FRCS avg-CPC ratio + band spread calibration | v1.4 candidate |
-| Niche-pulse threshold re-tune (single-source post-Phase-12) | v1.4 candidate |
 | SERP cache by query hash to reduce repeat API spend | v2 |
 | Run-diff script comparing two runs by `report.json` | v2 |
 | Multi-locale fan-out (one brief, multiple country/language reports) | v2 |

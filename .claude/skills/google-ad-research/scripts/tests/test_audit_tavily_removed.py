@@ -89,12 +89,11 @@ def test_skill_md_uses_webfetch_for_step19() -> None:
 
 
 # ---------------------------------------------------------------------------
-# PULSE-12: phase7 docs are Tavily-free
+# PULSE-12: phase7 docs absent (Phase 7 Niche Pulse dropped post-v1.3)
 # ---------------------------------------------------------------------------
-def test_phase7_docs_tavily_free() -> None:
-    ref = (REFERENCES_DIR / "phase7-niche-pulse.md").read_text(encoding="utf-8")
-    assert "tavily" not in ref.lower(), \
-        "PULSE-12: references/phase7-niche-pulse.md must contain no Tavily references"
+def test_phase7_docs_removed() -> None:
+    assert not (REFERENCES_DIR / "phase7-niche-pulse.md").exists(), \
+        "PULSE-12: phase7-niche-pulse.md must be deleted (Phase 7 removed)"
 
 
 # ---------------------------------------------------------------------------

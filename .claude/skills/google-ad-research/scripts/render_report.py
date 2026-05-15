@@ -81,32 +81,6 @@ USAGE_NEGATIVES = (
     "may be valid traffic for your tier. Skip Investigate-tier until you "
     "see them eat budget in search-term reports."
 )
-USAGE_PULSE_HIGHLIGHTS = (
-    "**How to use:** the operator's punchline. Every item is a time-sensitive "
-    "action — regulatory shifts mean ad copy claims need review, competitor "
-    "news means messaging adjustments, trending themes mean early-mover "
-    "keyword opportunities. Address these THIS WEEK; they age out fast."
-)
-USAGE_PULSE_THEMES = (
-    "**How to use:** treat as opportunity candidates with a 1-4 week shelf "
-    "life. Themes with high mention counts across both sources are real; "
-    "single-source themes are noisier. For each one worth pursuing, add a "
-    "phrase-match keyword to a dedicated 'trending' ad group with its own "
-    "budget cap so the spike doesn't blow up your CPA."
-)
-USAGE_PULSE_REGULATORY = (
-    "**How to use:** every alert here can affect what claims you're allowed "
-    "to make in ad copy and what the audience is searching for. Read titles "
-    "now; if anything mentions PIP, your state's no-fault law, or your "
-    "service category specifically, pause affected ad groups and review "
-    "creative before resuming."
-)
-USAGE_PULSE_COMPETITOR_NEWS = (
-    "**How to use:** competitor moves are signals. Acquisitions or "
-    "expansions mean their bid pressure rises in your geo. Lawsuits or "
-    "scandals are conquesting opportunities — increase bids on their brand "
-    "terms with comparison ad copy."
-)
 USAGE_ENRICHED = (
     "**How to use:** real Ahrefs data — monthly volume, CPC, Keyword "
     "Difficulty (KD), and parent topic. Bid first on transactional/commercial "
@@ -129,12 +103,6 @@ USAGE_NEG_SYNC = (
     "**Strong** tier to all campaigns now, review **Considered** + "
     "**Investigate** before adding. Saves duplicate work between research "
     "and account audit."
-)
-USAGE_PULSE_NEGATIVES = (
-    "**How to use:** quick-add candidates for your negative keyword list. "
-    "Unlike the main negatives section, these are reactive — driven by news "
-    "events you'd want to avoid being associated with. Review and either "
-    "promote to Strong negatives or dismiss as transient noise."
 )
 
 TIER_ORDER = ["Strong", "Considered", "Investigate"]
@@ -367,86 +335,6 @@ def render_competitor_section(competitor_intel: dict, run_dir: Path | None = Non
     return "".join(parts)
 
 
-def render_niche_pulse_section(pulse: dict) -> str:
-    """Render the Niche Pulse section (markdown).
-
-    pulse is the niche-pulse.json dict produced by pulse_synth.py. Empty / missing
-    pulse renders a stub note.
-    """
-    if not pulse or not isinstance(pulse, dict):
-        return ""
-    parts = ["## Niche Pulse — last "
-             f"{pulse.get('horizon_days', 7)} days "
-             f"(captured {pulse.get('captured_at', 'n/a')})\n"]
-    parts.append(
-        f"\n_News-derived signals across "
-        f"{pulse.get('total_news_items', 0)} headlines. "
-        f"Time-sensitive — shelf life days to weeks. NOT merged into the "
-        f"main keyword ranking._\n"
-    )
-
-    # --- Highlights (top of section, action-first) ---
-    highlights = pulse.get("highlights", [])
-    parts.append(f"\n### Highlights — Action This Week ({len(highlights)})\n\n"
-                 f"{USAGE_PULSE_HIGHLIGHTS}\n")
-    if not highlights:
-        parts.append("\n_No high-priority items in this harvest._\n")
-    else:
-        for h in highlights:
-            kind = h.get("kind", "?")
-            summary = escape_md_cell(h.get("summary", ""))
-            why = h.get("why_it_matters", "")
-            parts.append(f"\n- **[{kind.upper()}]** {summary}  \n  _Why it matters:_ {why}\n")
-
-    themes = pulse.get("trending_themes", [])
-    parts.append(f"\n### Trending Themes ({len(themes)})\n\n{USAGE_PULSE_THEMES}\n")
-    if not themes:
-        parts.append("\n_No repeated themes surfaced in the harvest window._\n")
-    else:
-        for t in themes[:15]:
-            theme = escape_md_cell(t.get("theme", ""))
-            count = t.get("mention_count", 0)
-            first = t.get("first_seen", "—")
-            sources = ", ".join(t.get("sources", []))
-            parts.append(f"\n- **{theme}** — {count} mentions · first seen {first} · sources: {sources}\n")
-            for h in t.get("headlines", [])[:3]:
-                title = escape_md_cell(h.get("title", ""))
-                date = h.get("date") or ""
-                parts.append(f"    - _{date}_ {title}\n")
-
-    reg = pulse.get("regulatory_alerts", [])
-    parts.append(f"\n### Regulatory Alerts ({len(reg)})\n\n{USAGE_PULSE_REGULATORY}\n")
-    if not reg:
-        parts.append("\n_No regulatory keywords detected._\n")
-    else:
-        for r in reg[:10]:
-            title = escape_md_cell(r.get("title", ""))
-            date = r.get("date") or ""
-            kws = ", ".join(r.get("matched_keywords", []))
-            parts.append(f"\n- _{date}_ **{title}** — matched: `{kws}`\n")
-
-    comp = pulse.get("competitor_news", [])
-    parts.append(f"\n### Competitor News ({len(comp)})\n\n{USAGE_PULSE_COMPETITOR_NEWS}\n")
-    if not comp:
-        parts.append("\n_No competitor brand mentions in the news harvest._\n")
-    else:
-        for c in comp[:10]:
-            title = escape_md_cell(c.get("title", ""))
-            brand = c.get("matched_brand", "")
-            date = c.get("date") or ""
-            parts.append(f"\n- _{date}_ **{title}** — brand: `{brand}`\n")
-
-    negs = pulse.get("trending_negatives", [])
-    parts.append(f"\n### Trending Negative Candidates ({len(negs)})\n\n{USAGE_PULSE_NEGATIVES}\n")
-    if not negs:
-        parts.append("\n_No scam/fraud/lawsuit triggers in the news window._\n")
-    else:
-        for n in negs[:10]:
-            title = escape_md_cell(n.get("title", ""))
-            trig = ", ".join(n.get("trigger_keywords", []))
-            parts.append(f"\n- **{title}** — triggers: `{trig}`\n")
-
-    return "".join(parts)
 
 
 def render_enriched_keyword_table(ranked: list[dict], top_n: int = 100) -> str:
@@ -605,7 +493,7 @@ def render_compliance_warning(compliance: dict | None) -> str:
     that reads the markdown line-by-line stays safe.
 
     Block sits immediately after the header + HOW_TO_READ and BEFORE all
-    other sections (above Niche Pulse, Account Perf, Clusters, Negatives,
+    other sections (above Account Perf, Clusters, Negatives,
     and the Ranked Keywords table) — surfaced before any keyword work so
     the operator addresses verification first.
     """
@@ -1166,7 +1054,6 @@ def render_full_report(
     run_dir: Path,
     *,
     top_n: int = 100,
-    niche_pulse: dict | None = None,
     account_perf: dict | None = None,
     negatives_sync: dict | None = None,
     forecast: dict | None = None,
@@ -1183,10 +1070,9 @@ def render_full_report(
         f"**Brief slug:** {brief_slug}  \n\n"
     )
 
-    # Section order: action items first (pulse highlights, clusters,
-    # negatives), reference data last (full ranked keyword table, full pulse
-    # tables, competitor LP details). Operator scrolls less to find what to
-    # do this week.
+    # Section order: action items first (clusters, negatives), reference
+    # data last (full ranked keyword table, competitor LP details).
+    # Operator scrolls less to find what to do this week.
     # Detect whether Ahrefs enrichment is present (any row w/ a volume value)
     has_enrichment = any(
         r.get("volume") is not None for r in ranked
@@ -1211,12 +1097,7 @@ def render_full_report(
     if compliance_md:
         sections.append("\n")
         sections.append(compliance_md)
-    # Niche pulse first (action this week)
-    pulse_md = render_niche_pulse_section(niche_pulse or {})
-    if pulse_md:
-        sections.append("\n")
-        sections.append(pulse_md)
-    # Account perf next (real campaign data, also action-this-week)
+    # Account perf first (real campaign data, action-this-week)
     if account_perf:
         sections.append("\n")
         sections.append(render_account_perf_section(account_perf))
@@ -1457,14 +1338,6 @@ Keyword Planner for actual volume + CPC.
   <div class="usage"><strong>How to use:</strong> cross-references our generated negatives vs your account's existing negative list. <strong>New candidates</strong> are what to add to the account — Strong tier first.</div>
   <div id="negSyncContent">
     <p style="color:#666;font-size:13px;">No negatives-sync.json — run Phase 8 perf_synth.</p>
-  </div>
-</section>
-
-<section id="niche-pulse">
-  <h2>Niche Pulse <span class="cluster-meta" id="pulseMeta"></span></h2>
-  <div class="usage"><strong>What this is:</strong> news-derived signals from the last 7 days. Time-sensitive (1-4 week shelf life). NOT merged into the main keyword ranking. The four sub-sections below each have their own action — start with <strong>Highlights</strong>.</div>
-  <div id="pulseContent">
-    <p style="color:#666;font-size:13px;">No niche-pulse.json found in this run — run Phase 7 (pulse_fetch + pulse_synth) to populate.</p>
   </div>
 </section>
 
@@ -1770,102 +1643,6 @@ function renderCompetitors() {{
   }}).join("");
 }}
 
-function renderNichePulse() {{
-  const pulse = REPORT.niche_pulse || {{}};
-  const meta = document.getElementById("pulseMeta");
-  const content = document.getElementById("pulseContent");
-  if (!pulse || !pulse.captured_at) {{
-    return;  // keep stub message
-  }}
-  meta.textContent = `last ${{pulse.horizon_days||7}} days · ${{pulse.total_news_items||0}} headlines · captured ${{pulse.captured_at}}`;
-  const highlights = pulse.highlights || [];
-  const themes = pulse.trending_themes || [];
-  const reg = pulse.regulatory_alerts || [];
-  const comp = pulse.competitor_news || [];
-  const negs = pulse.trending_negatives || [];
-
-  let html = "";
-
-  // Highlights — top of section
-  html += `<details open><summary>Highlights — Action This Week <span class="cluster-meta">${{highlights.length}}</span></summary>`;
-  html += `<div class="usage" style="margin-top:8px"><strong>How to use:</strong> the operator's punchline. Every item below is a time-sensitive action — regulatory shifts mean ad copy claims need review, competitor news means messaging adjustments, trending themes mean early-mover keyword opportunities. Address these THIS WEEK; they age out fast.</div>`;
-  if (!highlights.length) {{
-    html += `<p style="color:#666;font-size:13px;padding:8px 0">No high-priority items in this harvest window. Re-run Phase 7 next week.</p>`;
-  }} else {{
-    highlights.forEach(h => {{
-      html += `<div class="highlight-card"><span class="kind">${{htmlEscape(h.kind||'')}}</span> ${{h.link?`<a href="${{htmlEscape(h.link)}}" target="_blank">${{htmlEscape(h.summary||'')}}</a>`:`<strong>${{htmlEscape(h.summary||'')}}</strong>`}}`;
-      if (h.date) html += ` <span class="cluster-meta">${{htmlEscape(h.date)}}</span>`;
-      if (h.matched_brand) html += ` <span class="cluster-meta">brand: <code>${{htmlEscape(h.matched_brand)}}</code></span>`;
-      if (h.matched_keywords && h.matched_keywords.length) html += ` <span class="cluster-meta">matched: ${{h.matched_keywords.map(k=>`<code>${{k}}</code>`).join(" ")}}</span>`;
-      if (h.why_it_matters) html += `<div class="why">Why it matters: ${{htmlEscape(h.why_it_matters)}}</div>`;
-      html += `</div>`;
-    }});
-  }}
-  html += `</details>`;
-
-  // Trending themes
-  html += `<details><summary>Trending Themes <span class="cluster-meta">${{themes.length}}</span></summary>`;
-  html += `<div class="usage" style="margin-top:8px"><strong>How to use:</strong> opportunity candidates with 1-4 week shelf life. High mention counts (>=3 from Serper news) are real; single-mention themes are noisier. For each one worth pursuing, add a phrase-match keyword to a dedicated 'trending' ad group with its own budget cap so the spike doesn't blow up your CPA.</div>`;
-  if (!themes.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No repeated themes in window.</p>";
-  else {{
-    html += "<ul>";
-    themes.slice(0,15).forEach(t => {{
-      html += `<li><strong>${{htmlEscape(t.theme)}}</strong> <span class="cluster-meta">${{t.mention_count}} mentions · first seen ${{htmlEscape(t.first_seen||'—')}} · ${{(t.sources||[]).join(", ")}}</span>`;
-      if (t.headlines && t.headlines.length) {{
-        html += "<ul>";
-        t.headlines.slice(0,3).forEach(h => {{
-          html += `<li><em>${{htmlEscape(h.date||'')}}</em> ${{h.link?`<a href="${{htmlEscape(h.link)}}" target="_blank">${{htmlEscape(h.title||'')}}</a>`:htmlEscape(h.title||'')}}</li>`;
-        }});
-        html += "</ul>";
-      }}
-      html += "</li>";
-    }});
-    html += "</ul>";
-  }}
-  html += "</details>";
-
-  // Regulatory alerts
-  html += `<details><summary>Regulatory Alerts <span class="cluster-meta">${{reg.length}}</span></summary>`;
-  html += `<div class="usage" style="margin-top:8px"><strong>How to use:</strong> every alert here can affect what claims you're allowed to make in ad copy and what the audience is searching for. Read titles now; if anything mentions PIP, your state's no-fault law, or your service category specifically, pause affected ad groups and review creative before resuming.</div>`;
-  if (!reg.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No regulatory keywords detected.</p>";
-  else {{
-    html += "<ul>";
-    reg.slice(0,15).forEach(r => {{
-      html += `<li><em>${{htmlEscape(r.date||'')}}</em> ${{r.link?`<a href="${{htmlEscape(r.link)}}" target="_blank"><strong>${{htmlEscape(r.title||'')}}</strong></a>`:`<strong>${{htmlEscape(r.title||'')}}</strong>`}} <span class="cluster-meta">matched: ${{(r.matched_keywords||[]).map(k=>`<code>${{k}}</code>`).join(" ")}}</span></li>`;
-    }});
-    html += "</ul>";
-  }}
-  html += "</details>";
-
-  // Competitor news
-  html += `<details><summary>Competitor News <span class="cluster-meta">${{comp.length}}</span></summary>`;
-  html += `<div class="usage" style="margin-top:8px"><strong>How to use:</strong> competitor moves are signals. Acquisitions or expansions mean their bid pressure rises in your geo. Lawsuits or scandals are conquesting opportunities — increase bids on their brand terms with comparison ad copy.</div>`;
-  if (!comp.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No competitor brand mentions in window.</p>";
-  else {{
-    html += "<ul>";
-    comp.slice(0,15).forEach(c => {{
-      html += `<li><em>${{htmlEscape(c.date||'')}}</em> ${{c.link?`<a href="${{htmlEscape(c.link)}}" target="_blank"><strong>${{htmlEscape(c.title||'')}}</strong></a>`:`<strong>${{htmlEscape(c.title||'')}}</strong>`}} <span class="cluster-meta">brand: <code>${{htmlEscape(c.matched_brand||'')}}</code></span></li>`;
-    }});
-    html += "</ul>";
-  }}
-  html += "</details>";
-
-  // Trending negatives
-  html += `<details><summary>Trending Negative Candidates <span class="cluster-meta">${{negs.length}}</span></summary>`;
-  html += `<div class="usage" style="margin-top:8px"><strong>How to use:</strong> quick-add candidates for your negative keyword list. Unlike the main Negatives section, these are reactive — driven by news events you'd want to avoid being associated with. Review and either promote to Strong negatives or dismiss as transient noise.</div>`;
-  if (!negs.length) html += "<p style='color:#666;font-size:13px;padding:8px 0'>No scam/fraud/lawsuit triggers in window.</p>";
-  else {{
-    html += "<ul>";
-    negs.slice(0,15).forEach(n => {{
-      html += `<li><strong>${{htmlEscape(n.title||'')}}</strong> <span class="cluster-meta">triggers: ${{(n.trigger_keywords||[]).map(k=>`<code>${{k}}</code>`).join(" ")}}</span></li>`;
-    }});
-    html += "</ul>";
-  }}
-  html += "</details>";
-
-  content.innerHTML = html;
-}}
-
 function renderNegatives() {{
   const tbody = document.querySelector("#negTable tbody");
   const filter = document.getElementById("negFilter").value.toLowerCase();
@@ -2030,7 +1807,7 @@ function renderAdGroupMapping() {{
   content.innerHTML = html;
 }}
 
-renderKeywords(); renderClusters(); renderCompetitors(); renderNichePulse();
+renderKeywords(); renderClusters(); renderCompetitors();
 renderCompliance(); renderForecast();
 renderAccountPerf(); renderNegativesSync(); renderNegatives();
 renderAdGroupMapping();
@@ -2050,7 +1827,6 @@ def build_report_json(
     brief_text: str,
     run_dir: Path,
     *,
-    niche_pulse: dict | None = None,
     account_perf: dict | None = None,
     negatives_sync: dict | None = None,
     forecast: dict | None = None,
@@ -2125,7 +1901,6 @@ def build_report_json(
         "clusters": clusters_data.get("clusters", []),
         "competitor_intel": competitor_intel,
         "negatives": negatives,
-        "niche_pulse": niche_pulse or {},
         "account_perf": account_perf or {},
         "negatives_sync": negatives_sync or {},
         "forecast": forecast or {},
@@ -2192,15 +1967,6 @@ def main(argv: list[str] | None = None) -> int:
     else:
         competitor_intel = {}
 
-    # Load optional niche pulse (Phase 7 sidecar)
-    pulse_path = run_dir / "niche-pulse.json"
-    niche_pulse: dict | None = None
-    if pulse_path.exists():
-        try:
-            niche_pulse = json.loads(pulse_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            niche_pulse = None
-
     # Load optional account perf + negatives sync (Phase 8 sidecars)
     account_perf: dict | None = None
     perf_path = run_dir / "account-perf.json"
@@ -2220,7 +1986,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Load optional Phase 9 sidecars (forecast.json + compliance-flags.json).
     # Missing files degrade gracefully — sections are simply omitted from the
-    # report. Mirrors the niche-pulse / account-perf / negatives-sync pattern.
+    # report. Mirrors the account-perf / negatives-sync pattern.
     forecast: dict | None = None
     forecast_path = run_dir / "forecast.json"
     if forecast_path.exists():
@@ -2254,7 +2020,6 @@ def main(argv: list[str] | None = None) -> int:
     report_md = render_full_report(
         ranked, clusters_data, competitor_intel, negatives,
         brief_text, run_dir, top_n=args.top_n,
-        niche_pulse=niche_pulse,
         account_perf=account_perf,
         negatives_sync=negatives_sync,
         forecast=forecast,
@@ -2263,7 +2028,6 @@ def main(argv: list[str] | None = None) -> int:
     report_json = build_report_json(
         ranked, clusters_data, competitor_intel, negatives,
         brief_text, run_dir,
-        niche_pulse=niche_pulse,
         account_perf=account_perf,
         negatives_sync=negatives_sync,
         forecast=forecast,

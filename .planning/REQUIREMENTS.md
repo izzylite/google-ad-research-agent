@@ -80,17 +80,12 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **GADS-04**: `perf_synth.py` cross-references our `negatives.json` against existing account negatives and flags each as `already_in_account` or `new_candidate`
 - [x] **GADS-05**: Report includes new sections: Volume-Enriched Keywords (replaces ranked table when enrichment present), Real Search Terms, Account Performance, Negative Sync
 
-### Niche Pulse (Phase 7 — time-sensitive sidecar)
+### Niche Pulse (Phase 7) — REMOVED post-v1.3
 
-- [x] **PULSE-01**: `pulse_fetch.py` calls Serper `/news` endpoint per seed keyword with `tbs=qdr:w` (last 7 days) and persists `raw/serper-news.json`
-- [x] ~~**PULSE-02**: `pulse_fetch.py` calls Tavily `search` with `topic="news"` and `days=7` per seed keyword and persists `raw/tavily-news.json`~~ **DEPRECATED in v1.3 Phase 12 — superseded by PULSE-10.**
-- [x] **PULSE-03**: `pulse_synth.py` reads news raws and produces `niche-pulse.json` containing trending themes, regulatory alerts, competitor news, and trending negatives sections
-- [x] **PULSE-04**: Trending themes are clustered by repeated phrase/topic across both news sources with `mention_count`, `first_seen`, and `sources[]` attribution
-- [x] **PULSE-05**: Regulatory alerts are tagged via keyword heuristics (law/regulation/PIP/HIPAA/compliance/court/ruling/lawsuit terms)
-- [x] **PULSE-06**: `render_report.py` adds a Niche Pulse section to `report.md` and `report.html` showing trending themes, regulatory alerts, competitor news, freshness window
-- [x] **PULSE-07**: Niche Pulse data is tagged with `horizon_days` and `captured_at` so consumers know shelf life
-- [x] **PULSE-08**: SKILL.md Steps 27-30 wire the niche pulse phase as optional (skill prompts operator: run pulse?)
-- [x] **PULSE-09**: Niche pulse keywords/themes are NOT merged into the main `keywords.json` ranking (different lifecycle); they live in their own `niche-pulse.json`
+**Removed 2026-05-15.** Phase 7 dropped after internal-team review: skill is for a single team in a single vertical (urgent care PIP, FL); operators already live in the niche daily, so news-theme synthesis was noise on repeated runs. PULSE-01..12 all marked ~~deprecated~~ — code, references, tests, and report sections deleted. Operators perform manual Google News checks when actually needed.
+
+- [x] ~~**PULSE-01..09**: Phase 7 Niche Pulse core (Serper /news, theme clustering, regulatory alerts, competitor news, trending negatives).~~ **REMOVED post-v1.3 — internal-team noise.**
+- [x] ~~**PULSE-10..12**: Phase 12 Tavily-drop work on pulse pipeline.~~ **REMOVED post-v1.3 alongside Phase 7 deletion.**
 
 ## v1.1 Requirements (Operator-Ready Output)
 
@@ -173,11 +168,9 @@ Milestone v1.3 — Phase 12 only. Replace Tavily landing-page extraction w/ Clau
 - [x] **WFCH-03**: `competitor_intel.py` drops Tavily call path; keeps Serper requery for ads block + Serper-organic fallback for advertiser identity discovery
 - [x] **WFCH-04**: Source taxonomy in `merge_signals.py` removes `tavily-extract` from 6-source list; the new `webfetch-landing` source is NOT merged into main keyword pool (landing-page extraction is Phase 5 competitor intel only, not keyword harvest)
 
-### Pulse Tavily Drop
+### Pulse Tavily Drop — REMOVED post-v1.3
 
-- [x] **PULSE-10**: `pulse_fetch.py` removes `_tavily_news` call; only Serper `/news` (PULSE-01) survives; `raw/tavily-news.json` no longer written
-- [x] **PULSE-11**: `pulse_synth.py` drops Tavily branch in trending-themes source merging; single-source niche pulse logic simplified
-- [x] **PULSE-12**: SKILL.md Steps 27-30 (Phase 7) drop Tavily news mention; REQUIREMENTS.md marks original PULSE-02 deprecated (was Tavily news search; now N/A — superseded by PULSE-10)
+Phase 7 dropped entirely post-v1.3 (see Niche Pulse section above). PULSE-10..12 work is historical record only.
 
 ## v1.4 Requirements (Positives Sync)
 

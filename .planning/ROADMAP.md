@@ -112,15 +112,8 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - [x] 06-04-PLAN.md — Wave 2: update_index.py (.runs/INDEX.md append) — PRST-02
 - [x] 06-05-PLAN.md — Wave 3: SKILL.md Steps 21-26 (negatives gen → validate → render → index → final STOP)
 
-### Phase 7: Niche Pulse (time-sensitive sidecar)
-**Goal:** Surface trending themes, regulatory shifts, and competitor news from the last 7 days to capture event-driven keyword opportunities the evergreen pipeline misses. Sidecar phase — does NOT mutate `keywords.json`.
-**Depends on:** Phase 1 (run folder + brief.md). Phase 7 can run independently of Phases 2-6, but typical workflow runs after Phase 6 to enrich the report.
-**Requirements:** PULSE-01..09
-**Success Criteria** (what must be TRUE):
-  1. `pulse_fetch.py` calls Serper `/news` and Tavily `search(topic="news")` per seed and writes both raws to `raw/`.
-  2. `pulse_synth.py` produces `niche-pulse.json` with trending themes (mention_count, first_seen, sources), regulatory alerts, competitor news, and trending negatives sections.
-  3. `report.md` and `report.html` carry a Niche Pulse section showing the freshness window (`horizon_days`), trending themes, regulatory alerts, and competitor news.
-  4. Niche pulse keywords are NOT merged into `keywords.json` — they live in their own `niche-pulse.json` because they have a 1-30 day shelf life vs evergreen kw.
+### Phase 7: Niche Pulse — REMOVED post-v1.3 (2026-05-15)
+**Status:** Removed. Code (`pulse_fetch.py`, `pulse_synth.py`), reference (`phase7-niche-pulse.md`), tests, fixtures, report sections deleted from skill. Single-team internal tool; team lives in the urgent-care/PIP niche daily, so trending-news synthesis produced noise on repeated runs. Manual Google News checks faster than running the sidecar. Requirements PULSE-01..12 marked removed in REQUIREMENTS.md.
 
 ---
 
@@ -275,7 +268,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 4. Clustering | 3/3 | Complete    | 2026-05-08 |
 | 5. Competitor Ad Copy and LP Extraction | 3/3 | Complete    | 2026-05-08 |
 | 6. Negatives, Report Assembly, and Persistence | 6/6 | Complete    | 2026-05-08 |
-| 7. Niche Pulse | 2/2 | Complete    | 2026-05-08 |
+| 7. Niche Pulse | — | Removed post-v1.3 | 2026-05-15 |
 | 8. Account Data + Volume Enrichment | 8/8 | Complete    | 2026-05-08 |
 | 9. Campaign Economics and Compliance | 6/6 | Complete    | 2026-05-14 |
 | 10. Operator Launch Kit | 5/5 | Complete    | 2026-05-14 |
@@ -294,13 +287,13 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 4 | CLST-01, CLST-02, CLST-03 | 3 |
 | 5 | COMP-01, COMP-02, COMP-03 | 3 |
 | 6 | NEGT-01, NEGT-02, NEGT-03, RPRT-01, RPRT-02, RPRT-03, RPRT-04, RPRT-05, PRST-01, PRST-02 | 10 |
-| 7 | PULSE-01..09 | 9 |
+| 7 | _removed post-v1.3 (PULSE-01..09 dropped)_ | 0 |
 | 9 | BIDS-01, BIDS-02, BIDS-03, BIDS-04, FRCS-01, FRCS-02, FRCS-03, FRCS-04, FRCS-05, CMPL-01, CMPL-02, CMPL-03, CMPL-04, CMPL-05 | 14 |
 | 10 | EXPT-01, EXPT-02, EXPT-03, EXPT-04, EXPT-05, STEP-01, STEP-02, STEP-03, STEP-04 | 9 |
 | 11 | GEO-01, GEO-02, GEO-03, GEO-04, GEO-05, ADGM-01, ADGM-02, ADGM-03, ADGM-04, ADGM-05, ADGM-06 | 11 |
-| 12 | TVLY-01..04, WFCH-01..04, PULSE-10..12 | 11 |
+| 12 | TVLY-01..04, WFCH-01..04 (PULSE-10..12 removed with Phase 7) | 8 |
 | 14 | POS-01, POS-02, POS-03, POS-04, POS-05, POS-06, POS-07 | 7 |
-| **Total** | | **96 / 96** |
+| **Total** | | **84 / 84** (Phase 7 PULSE-01..09 + Phase 12 PULSE-10..12 removed post-v1.3) |
 
 No orphans. No duplicates. Every v1.0 + v1.1 + v1.2 + v1.3 + v1.4 requirement maps to exactly one phase.
 

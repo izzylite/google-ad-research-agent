@@ -28,7 +28,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 **Target features (shipped):**
 - Tavily removed entirely (script + SDK dep + env key + tests)
 - Phase 5 COMP-03 landing-page extraction switches to WebFetch (built-in, free, mirrors WebSearch baseline pattern)
-- Phase 7 PULSE-02 redundant Tavily news call deprecated; Serper /news (PULSE-01) only
+- Phase 7 Niche Pulse removed entirely post-v1.3 (internal-team noise on repeated runs in single vertical)
 - Source taxonomy in merge_signals.py drops `tavily-extract`; `webfetch-landing` source added
 - `.env.example` + lib/config.py drop TAVILY_API_KEY
 
@@ -68,7 +68,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - ✓ Per-cluster competitor ad copy + landing-page value-prop extraction — v1.0
 - ✓ Tiered negatives (Strong/Considered/Investigate) × 6 categories, dedup vs positive pool — v1.0
 - ✓ Four-section markdown + JSON twin + HTML report, sealed run folder, browsable INDEX — v1.0
-- ✓ Niche Pulse sidecar — 7-day news harvest with trending themes + regulatory alerts — v1.0
+- ✓ Niche Pulse sidecar — 7-day news harvest with trending themes + regulatory alerts — v1.0 (✗ REMOVED post-v1.3 — internal-team noise)
 - ✓ Account Data + Volume Enrichment sidecar — Ahrefs volume/CPC/KD + Google Ads search terms/perf/negatives sync — v1.0
 - ✓ Editor CSV export (positives/negatives/ad_groups, Editor v2.x format) — v1.1
 - ✓ Max-CPC bid suggestions (intent-weighted from Ahrefs CPC) — v1.1
@@ -82,7 +82,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - ✓ Tavily removed entirely (script + SDK dep + TAVILY_API_KEY + tests) — v1.3
 - ✓ WebFetch invoked from SKILL.md Phase 5 for top 3-5 advertisers per cluster (landing page extraction) — v1.3
 - ✓ competitor_intel.py + merge_signals.py Tavily code paths stripped — v1.3
-- ✓ pulse_fetch.py Tavily news call dropped; Serper /news single-source — v1.3
+- ✓ Phase 7 Niche Pulse REMOVED post-v1.3 (pulse_fetch + pulse_synth deleted; references/phase7 deleted; report sections stripped)
 - ✓ Source taxonomy: tavily-extract removed; webfetch-landing added — v1.3
 
 ### Active
