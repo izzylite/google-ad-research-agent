@@ -382,26 +382,12 @@ def test_unicode_dashes_preserved(tmp_path):
 # ADGM-07..11 — Phase 16 token-bag enrichment
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(
-    reason=(
-        "ADGM-11 deferred to plan 16-02 (operator decision option-a, 2026-05-15). "
-        "Structural Jaccard ceiling: Lake Worth's enriched AG token bag has ~34 "
-        "tokens (name ∪ kw_criteria ∪ top-10 search-terms) whereas typical ranked "
-        "queries carry only 4-6 tokens. Best-case jaccard caps at ~0.15-0.25 — "
-        "lowering the medium threshold below the calibration cap floor (0.10) "
-        "breaks C5 (garbage keywords like 'tomato sandwich' classify as medium). "
-        "At locked thresholds {high: 0.30, medium: 0.10}: observed coverage 16.67% "
-        "(11 medium / 66 ranked). Phase 11 80% invariant + zero-overlap garbage "
-        "guard both preserved. Closing the gap requires a structural change "
-        "(per-source max-jaccard instead of full-union jaccard, OR token bag "
-        "subsampling) — scheduled for plan 16-02 follow-up."
-    ),
-    strict=True,
-)
 def test_lake_worth_coverage_floor(tmp_path):
     """ADGM-11 — Lake Worth golden run yields mapping_coverage_pct >= 50%.
 
-    XFAIL — option-a deferral to plan 16-02. See marker rationale above.
+    ADGM-11 floor enforced — Plan 16-04 ships per-source max-Jaccard structural
+    fix; this test FAILS LOUD against full-union Jaccard until then (RED state,
+    Plan 16-03).
     """
     _skip_unless_phase16()
     run_dir = tmp_path / "2026-05-15T120000Z-lake-worth-golden"
@@ -525,3 +511,267 @@ def test_thresholds_recalibrated_below_phase11():
         f"Phase 16 ADGM-10 calibration not applied; medium still at "
         f"{ad_group_match._THRESHOLDS['medium']}"
     )
+
+
+# ---------------------------------------------------------------------------
+# ADGM-11 (Plan 16-03) — RED tests for per-source max-Jaccard structural fix.
+#
+# These tests pin down the algorithmic shift from full-union Jaccard to
+# per-source max-Jaccard scheduled for Plan 16-04. The lynchpin test
+# (test_per_source_max_jaccard_used_for_scoring) constructs a fixture where
+# full-union Jaccard mathematically CANNOT produce the asserted result —
+# only `max(name_j, crit_j, term_j)` can. Plan 16-04 flips these GREEN by
+# replacing the full-union call in build_mapping with the per-source max.
+#
+# Live e2e evidence motivating the structural fix (Plan 16-02 SUMMARY):
+#   sample reason: "jaccard=0.10 (name=0.33 kw-criterion=0.00 search-term=0.00)
+#                   intent_match=True"
+# Under full-union, name=0.33 dilutes to ~0.10. Under per-source max, the
+# same kw would score 0.33 (above the high threshold 0.30).
+# ---------------------------------------------------------------------------
+
+
+def test_per_source_max_jaccard_used_for_scoring(tmp_path):
+    """ADGM-11 RED — Score must reflect per-source max, not full-union dilution.
+
+    Construction: 1 ENABLED AG named "Accident" with name_tokens={accident}
+    and 30 distinct kw_criterion tokens that DO NOT include "accident".
+    Empty search-terms. Single ranked kw "accident" with intent=commercial
+    (matches AG inferred intent — no transactional markers in the bag).
+
+    Math:
+      - Full-union bag = {accident, <30 other tokens>} → 31 tokens
+      - kw_tokens ∩ bag = {accident} → 1 token
+      - Full-union jaccard = 1/31 ≈ 0.032 → classifies LOW (below medium=0.10)
+      - Per-source max:
+          name_j  = jaccard({accident}, {accident})       = 1.0
+          crit_j  = jaccard({accident}, {<30 others>})    = 0/31 ≈ 0.032
+          term_j  = jaccard({accident}, {})                = 0.0
+          max     = 1.0 → classifies HIGH (>= 0.30)
+
+    The high classification requires per-source max scoring — full-union is
+    mathematically incapable of producing this result on this fixture.
+    """
+    _skip_unless_phase16()
+    run_dir = tmp_path / "2026-05-15T120000Z-per-source-max"
+    (run_dir / "raw").mkdir(parents=True)
+
+    # 30 distinct non-marker, non-stopword 1-token criteria.
+    # Avoids _INTENT_MARKERS so AG inferred intent stays "commercial" (default).
+    distinct_criteria_tokens = [
+        "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta",
+        "iota", "kappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "rho",
+        "sigma", "tau", "upsilon", "phi", "chi", "psi", "omega",
+        "apple", "banana", "cherry", "elderberry", "fig", "grape",
+    ]
+    assert len(distinct_criteria_tokens) == 30, (
+        "fixture invariant — exactly 30 criterion tokens required for math"
+    )
+
+    perf = {
+        "ad_groups": [
+            {"name": "Accident", "status": "ENABLED"},
+            {"name": "Dummy Paused", "status": "PAUSED"},  # status filter sanity
+        ]
+    }
+    keywords = {
+        "items": [
+            {
+                "ad_group_name": "Accident",
+                "ad_group_criterion": {
+                    "status": "ENABLED",
+                    "keyword": {"text": tok},
+                },
+            }
+            for tok in distinct_criteria_tokens
+        ]
+    }
+    search_terms = {"items": []}
+    ranked = [{"keyword": "accident", "intent": "commercial"}]
+
+    (run_dir / "raw" / "google-ads-perf.json").write_text(
+        json.dumps(perf), encoding="utf-8",
+    )
+    (run_dir / "raw" / "google-ads-keywords.json").write_text(
+        json.dumps(keywords), encoding="utf-8",
+    )
+    (run_dir / "raw" / "google-ads-search-terms.json").write_text(
+        json.dumps(search_terms), encoding="utf-8",
+    )
+    (run_dir / "ranked-enriched.json").write_text(
+        json.dumps(ranked), encoding="utf-8",
+    )
+
+    rc = ad_group_match.main_with_args(["--run-dir", str(run_dir)])
+    assert rc == 0
+    out = json.loads((run_dir / "ad-group-mapping.json").read_text(encoding="utf-8"))
+    assert out["matches"], "expected one match row for the lone ranked kw"
+    match = out["matches"][0]
+    assert match["confidence"] == "high", (
+        f"Per-source max-Jaccard not applied — kw='accident' classified "
+        f"{match['confidence']!r} with score={match['score']}; under per-source "
+        f"max name_j=1.0 should drive confidence='high'. reason={match['reason']!r}"
+    )
+    assert match["score"] >= 0.30, (
+        f"Score {match['score']} below high threshold 0.30 — full-union "
+        f"dilution still active. reason={match['reason']!r}"
+    )
+    assert match["existing_ad_group"] == "Accident"
+
+
+def test_max_jaccard_boundary_all_zero_sources(tmp_path):
+    """ADGM-11 boundary — kw with zero token overlap classifies low regardless.
+
+    Degenerate case: same outcome under both full-union and per-source max
+    (all three partial jaccards are 0.0 → max=0.0). Guards against accidental
+    regressions where the max() rewrite mis-handles empty intersections.
+    """
+    _skip_unless_phase16()
+    run_dir = tmp_path / "2026-05-15T120000Z-all-zero"
+    (run_dir / "raw").mkdir(parents=True)
+
+    perf = {"ad_groups": [{"name": "alpha beta", "status": "ENABLED"}]}
+    keywords = {"items": []}
+    search_terms = {"items": []}
+    ranked = [{"keyword": "completely unrelated query", "intent": "transactional"}]
+
+    (run_dir / "raw" / "google-ads-perf.json").write_text(
+        json.dumps(perf), encoding="utf-8",
+    )
+    (run_dir / "raw" / "google-ads-keywords.json").write_text(
+        json.dumps(keywords), encoding="utf-8",
+    )
+    (run_dir / "raw" / "google-ads-search-terms.json").write_text(
+        json.dumps(search_terms), encoding="utf-8",
+    )
+    (run_dir / "ranked-enriched.json").write_text(
+        json.dumps(ranked), encoding="utf-8",
+    )
+
+    rc = ad_group_match.main_with_args(["--run-dir", str(run_dir)])
+    assert rc == 0
+    out = json.loads((run_dir / "ad-group-mapping.json").read_text(encoding="utf-8"))
+    assert out["matches"], "expected one match row"
+    match = out["matches"][0]
+    assert match["confidence"] == "low"
+    assert match["existing_ad_group"] is None
+    assert match["score"] == 0.0
+
+
+def test_max_jaccard_boundary_tied_sources(tmp_path):
+    """ADGM-11 boundary — tied per-source jaccards resolve deterministically.
+
+    Construction: AG name="cardiology clinic" (name_tokens={cardiology, clinic};
+    'clinic' is a transactional marker → AG intent='transactional'). One
+    kw_criterion 'heart specialist' (criterion_tokens={heart, specialist}).
+    Empty search-terms. kw="cardiology heart" intent=transactional.
+
+    Math:
+      - kw_tokens = {cardiology, heart}
+      - Full-union bag = {cardiology, clinic, heart, specialist} (4 tokens)
+      - Full-union jaccard = |{cardiology, heart}| / 4 = 2/4 = 0.50 → high (score 0.50)
+      - Per-source max:
+          name_j  = jaccard({cardiology, heart}, {cardiology, clinic})   = 1/3
+          crit_j  = jaccard({cardiology, heart}, {heart, specialist})    = 1/3
+          term_j  = jaccard({cardiology, heart}, {})                     = 0
+          max     = 1/3 ≈ 0.333 → high (score ≈ 0.333)
+
+    The score VALUE distinguishes the two algorithms — full-union gives 0.50,
+    per-source max gives 0.333. Asserting score≈0.333 fails RED under full-union.
+    """
+    _skip_unless_phase16()
+    run_dir = tmp_path / "2026-05-15T120000Z-tied-sources"
+    (run_dir / "raw").mkdir(parents=True)
+
+    perf = {"ad_groups": [{"name": "cardiology clinic", "status": "ENABLED"}]}
+    keywords = {
+        "items": [
+            {
+                "ad_group_name": "cardiology clinic",
+                "ad_group_criterion": {
+                    "status": "ENABLED",
+                    "keyword": {"text": "heart specialist"},
+                },
+            }
+        ]
+    }
+    search_terms = {"items": []}
+    ranked = [{"keyword": "cardiology heart", "intent": "transactional"}]
+
+    (run_dir / "raw" / "google-ads-perf.json").write_text(
+        json.dumps(perf), encoding="utf-8",
+    )
+    (run_dir / "raw" / "google-ads-keywords.json").write_text(
+        json.dumps(keywords), encoding="utf-8",
+    )
+    (run_dir / "raw" / "google-ads-search-terms.json").write_text(
+        json.dumps(search_terms), encoding="utf-8",
+    )
+    (run_dir / "ranked-enriched.json").write_text(
+        json.dumps(ranked), encoding="utf-8",
+    )
+
+    rc = ad_group_match.main_with_args(["--run-dir", str(run_dir)])
+    assert rc == 0
+    out = json.loads((run_dir / "ad-group-mapping.json").read_text(encoding="utf-8"))
+    assert out["matches"], "expected one match row"
+    match = out["matches"][0]
+    assert match["confidence"] == "high"
+    assert match["score"] == pytest.approx(0.333, abs=0.01), (
+        f"Expected score ≈ 0.333 under per-source max-Jaccard (1/3 from tied "
+        f"name/criterion sources); got {match['score']}. Full-union Jaccard "
+        f"yields 0.50 here, NOT 0.333 — RED under current algorithm. "
+        f"reason={match['reason']!r}"
+    )
+    assert "name=0.33" in match["reason"], (
+        f"reason missing name=0.33 attribution: {match['reason']!r}"
+    )
+    assert "kw-criterion=0.33" in match["reason"], (
+        f"reason missing kw-criterion=0.33 attribution: {match['reason']!r}"
+    )
+
+
+def test_max_jaccard_preserves_garbage_low(tmp_path):
+    """ADGM-11 C5 invariant — garbage keywords must still classify low.
+
+    Crafted against the Phase 11 fixture (same as test_coverage_pct_high_plus_
+    medium_only). Two ranked keywords ('tomato sandwich recipe', 'quantum
+    mechanics tutorial') share ZERO tokens with any ENABLED AG bag. Under
+    both full-union and per-source max algorithms, all jaccards are 0.0 →
+    classifies low → mapping_coverage_pct == 0.0%.
+
+    Passes both pre- and post-Plan-16-04 — guards the C5 invariant from any
+    accidental over-permissive regression introduced by the max() rewrite.
+    """
+    _skip_unless_phase16()
+    run_dir = tmp_path / "2026-05-15T120000Z-garbage-low"
+    (run_dir / "raw").mkdir(parents=True)
+
+    ranked = [
+        {"keyword": "tomato sandwich recipe", "intent": "transactional"},
+        {"keyword": "quantum mechanics tutorial", "intent": "transactional"},
+    ]
+    (run_dir / "ranked-enriched.json").write_text(
+        json.dumps(ranked), encoding="utf-8",
+    )
+    (run_dir / "raw" / "google-ads-perf.json").write_text(
+        (FIXTURES / "google-ads-perf-phase11.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    (run_dir / "raw" / "google-ads-search-terms.json").write_text(
+        (FIXTURES / "google-ads-search-terms-phase11.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    rc = ad_group_match.main_with_args(["--run-dir", str(run_dir)])
+    assert rc == 0
+    out = json.loads((run_dir / "ad-group-mapping.json").read_text(encoding="utf-8"))
+    assert out["mapping_coverage_pct"] == 0.0, (
+        f"C5 invariant violated — garbage kws lifted coverage to "
+        f"{out['mapping_coverage_pct']}%, expected 0.0%. matches={out['matches']!r}"
+    )
+    for match in out["matches"]:
+        assert match["confidence"] == "low", (
+            f"C5 violated: garbage kw {match['keyword']!r} classified "
+            f"{match['confidence']!r}"
+        )
