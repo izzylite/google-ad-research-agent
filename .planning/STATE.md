@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: "Completed 14-01-PLAN.md (perf_fetch.fetch_keyword_view + raw/google-ads-keywords.json writer). 244 passed, 12 skipped. Next: /gsd:execute-plan 14-02 (perf_synth.cross_ref_positives)."
-last_updated: "2026-05-15T12:25:58.877Z"
+stopped_at: "Completed 14-02-PLAN.md (perf_synth.cross_ref_positives + main wiring + POS-05 graceful skip). 250 passed, 6 skipped. Next: /gsd:execute-plan 14-03 (render_positives_sync_section)."
+last_updated: "2026-05-15T12:36:09.909Z"
 progress:
   total_phases: 13
   completed_phases: 10
   total_plans: 55
-  completed_plans: 51
+  completed_plans: 52
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 14 — Positives Sync |
-| Plan | 14-00 complete; 14-01 next |
-| Status | In progress — Wave 0 RED scaffolding shipped |
-| Last activity | 2026-05-15 — Plan 14-00 executed: 4 fixtures + 14 RED-via-SKIP tests + 1 PASSING omit-when-absent test across 4 test files. Full suite 242 passed, 14 skipped (was 241+0). Commits 954e4a3, ae0a73f, 71790dd. |
+| Plan | 14-00, 14-01, 14-02 complete; 14-03 next |
+| Status | In progress — Wave 1 (perf_fetch + perf_synth) shipped; Wave 2 (render + export) pending |
+| Last activity | 2026-05-15 — Plan 14-02 executed: perf_synth.cross_ref_positives + _norm_kw helper + main_with_args positives-block + POS-05 graceful skip. 6 Wave 0 cross_ref_positives RED stubs flipped GREEN incl. golden byte-match. Full suite 250 passed, 6 skipped (was 244+12). Commits 306d522, 6e73321. |
 
 ## Previous Milestone
 
@@ -52,7 +52,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | v1.1 requirements complete | 23 / 23 (BIDS 4/4, FRCS 5/5, CMPL 5/5, EXPT 5/5, STEP 4/4) |
 | v1.2 requirements complete | 11 / 11 (GEO 5/5, ADGM 6/6) |
 | v1.3 requirements complete | 11 / 11 (TVLY 4/4, WFCH 4/4, PULSE 3/3) |
-| v1.4 requirements complete | 0 / 7 (POS 0/7 — Phase 14 pending) |
+| v1.4 requirements complete | 4 / 7 (POS 4/7 — POS-01, POS-02, POS-05, POS-07 complete; POS-03, POS-04, POS-06 pending) |
 | Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
@@ -94,6 +94,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 12-source-consolidation-drop-tavily P05 | ~20min | 3 tasks | 10 files |
 | Phase 14 P00 | ~18min | 3 tasks | 5 created + 3 modified |
 | Phase 14 P01 | 2min | 2 tasks | 1 files |
+| Phase 14 P02 | 2min | 2 tasks | 1 files |
 
 ### Execution History
 
@@ -253,6 +254,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 14-00]: Fixture seed strategy — 5 ranked rows align verbatim with 4 account-keyword rows so each of the 4 bucket scenarios + the unmatched sanity case fires exactly once. urgent-care-lake-worth → ENABLED EXACT → already_active. auto-accident-clinic → PAUSED PHRASE → paused_in_account. pip-insurance-clinic → BROAD pip-clinic covers → covered_by_broad. accident-chiropractor-lake-worth + walk-in-clinic-boca-raton → no match → new_to_add. wellness-exam exists in account only → never surfaces in sync (sanity).
 - [Phase 14-00]: Python `_` digit separators (4_200_000) caused initial JSON parse failures in ranked_phase14.json + google-ads-keywords-fixture.json. Caught at fixture validation step (Bash python -c "json.load"), regex-stripped to 4200000. Future JSON fixtures: never paste Python int-literal underscores; JSON spec disallows them.
 - [Phase 14]: [14-01] fetch_keyword_view mirrors fetch_search_terms line-for-line (same client surface, same _date_literal, same enum .name pattern); no LIMIT (account-wide kw lists bounded, mirrors fetch_perf campaigns query); no per-keyword cost_usd derived field (keep raw faithful to API, perf_synth does USD math downstream). 2 commits: d8ade67 (function), 33f36e5 (wiring).
+- [Phase 14]: [14-02] _norm_neg = _norm_kw alias chosen over copy-paste — single source of canonicalization avoids drift between negatives and positives sync. Existing 4 negatives tests stay GREEN with zero edits.
+- [Phase 14]: [14-02] cross_ref_positives bucket priority via early-continue chain (ENABLED-exact > PAUSED-exact > BROAD-cover > new). Order matches golden_positives_sync.json authored in Wave 0. covered_by_broad min-2-token guard prevents single-token false positives.
+- [Phase 14]: [14-02] main_with_args prefers ranked-enriched.json over ranked.json — Phase 9 enrichment fields (suggested_max_cpc_micros, cpc_micros) must survive into positives-sync.json buckets for Plan 14-04 CSV filter.
 
 ### Open Questions / Todos
 
@@ -272,9 +276,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T12:25:58.872Z
+**Last session:** 2026-05-15T12:35:33.607Z
 
-**Stopped at:** Completed 14-01-PLAN.md (perf_fetch.fetch_keyword_view + raw/google-ads-keywords.json writer). 244 passed, 12 skipped. Next: /gsd:execute-plan 14-02 (perf_synth.cross_ref_positives).
+**Stopped at:** Completed 14-02-PLAN.md (perf_synth.cross_ref_positives + main wiring + POS-05 graceful skip). 250 passed, 6 skipped. Next: /gsd:execute-plan 14-03 (render_positives_sync_section).
 
 **Next session:** Run `/gsd:execute-plan 14-01` (Wave 1 perf_fetch.fetch_keyword_view + raw/google-ads-keywords.json writer — POS-01). Parallel-runnable with 14-02 (perf_synth.cross_ref_positives). RED stubs in test_perf_fetch.py + test_perf_synth.py will flip SKIP → GREEN as Wave 1 lands.
 
