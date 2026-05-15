@@ -16,13 +16,16 @@ Exit codes:
     0  ok
     3  fatal (IO / run_dir not found / no readable raw files)
 
-Source taxonomy (locked — all 6 must be handled):
+Source taxonomy (5 sources):
     "serper-organic"    from serper.json  by_seed[].organic[].title
     "serper-paa"        from serper.json  by_seed[].peopleAlsoAsk[].question
     "serper-related"    from serper.json  by_seed[].relatedSearches[].query
     "serper-ads"        from serper.json  by_seed[].ads[].title
-    "tavily-extract"    from tavily-<domain>.json results[].raw_content (first phrase)
     "websearch-baseline" from websearch-baseline.json extracted_keywords[].keyword
+
+NOTE: webfetch-landing is NOT a keyword source. Landing-page extraction is
+a Phase 5 Step 19 sidecar (Claude WebFetch) and feeds the competitor section
+of report.md only — it never enters the keyword pool (WFCH-04 contract).
 
 Output row shape (keywords.json):
     {
@@ -108,16 +111,16 @@ log = configure_logger()
 # ---------------------------------------------------------------------------
 
 MAX_KEYWORD_WORDS = 7
+# Source taxonomy: 5 sources. webfetch-landing NOT included — landing-page
+# extraction is Phase 5 Step 19 only (WebFetch sidecar), not a keyword harvest
+# source per WFCH-04 contract.
 VALID_SOURCES = frozenset({
     "serper-organic",
     "serper-paa",
     "serper-related",
     "serper-ads",
-    "tavily-extract",
     "websearch-baseline",
 })
-
-_PUNCT_STRIP = re.compile(r"[^\w\s]")
 
 # ---------------------------------------------------------------------------
 # Phase 11 plan 11-01 — city-level geo filter (GEO-03 / GEO-04)
@@ -313,53 +316,6 @@ def read_serper(path: Path) -> Iterator[tuple[str, dict]]:
                 yield text.strip(), attr
 
 
-def _extract_first_phrase(raw_content: str) -> str:
-    """Extract a short keyword phrase from Tavily raw_content.
-
-    Strategy (v1 — intentionally simple):
-        1. Take the first sentence (split on '. ' or first 100 chars).
-        2. Strip punctuation.
-        3. Take the first MAX_KEYWORD_WORDS words.
-    Phase 3 will apply intent classification; Phase 2 just surfaces the text.
-    """
-    if not raw_content:
-        return ""
-    # First sentence — split on sentence-ending punctuation
-    sentence = re.split(r"[.!?]\s", raw_content.strip())[0]
-    # Strip non-word characters (keep spaces)
-    cleaned = _PUNCT_STRIP.sub(" ", sentence)
-    cleaned = re.sub(r"\s+", " ", cleaned).strip()
-    tokens = cleaned.split()[:MAX_KEYWORD_WORDS]
-    return " ".join(tokens)
-
-
-def read_tavily(path: Path) -> Iterator[tuple[str, dict]]:
-    """Read raw/tavily-<domain>.json and yield (keyword_text, attribution_dict).
-
-    Skips failed_results.
-    Extracts a short phrase from results[].raw_content.
-    """
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        log.warning(f"Could not read {path}: {exc}")
-        return
-
-    domain = data.get("domain", "")
-    for result in data.get("results", []):
-        url = result.get("url", "")
-        raw_content = result.get("raw_content", "")
-        phrase = _extract_first_phrase(raw_content)
-        if phrase.strip():
-            attr = {
-                "source": "tavily-extract",
-                "competitor_domain": domain,
-                "url": url,
-                "snippet_excerpt": phrase,
-            }
-            yield phrase.strip(), attr
-
-
 def read_websearch(path: Path) -> Iterator[tuple[str, dict]]:
     """Read raw/websearch-baseline.json and yield (keyword_text, attribution_dict)."""
     try:
@@ -439,7 +395,9 @@ def merge_raw_files(raw_dir: Path,
     """Read all raw/*.json files and merge signals into a dict keyed by lemma_hash.
 
     Args:
-        raw_dir: directory containing serper.json, tavily-*.json, websearch-baseline.json.
+        raw_dir: directory containing serper.json + websearch-baseline.json.
+            (Landing-page content is a Phase 5 WebFetch sidecar — never feeds
+            the keyword pool.)
         allowed_states: when non-empty, drop keywords containing US state
             tokens not in this set (geo-drift filter).
         city_filter: optional {'in': set, 'out': set} from `_build_city_filter`.
@@ -506,11 +464,6 @@ def merge_raw_files(raw_dir: Path,
             _add(text, attr)
     else:
         log.debug(f"No serper.json in {raw_dir}")
-
-    # --- tavily-*.json ---
-    for tavily_path in sorted(raw_dir.glob("tavily-*.json")):
-        for text, attr in read_tavily(tavily_path):
-            _add(text, attr)
 
     # --- websearch-baseline.json (optional) ---
     websearch_path = raw_dir / "websearch-baseline.json"

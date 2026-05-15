@@ -4,7 +4,7 @@ Tests for merge_signals.py — raw/*.json → keywords.json (canonicalised + sou
 Covers:
   - sources array present on every row
   - close variants merge via lemma_hash
-  - all 6 source types from taxonomy handled
+  - all 5 source types from taxonomy handled (Phase 12: tavily-extract removed)
   - source_diversity computed correctly
   - no keyword row lacks sources
   - end-to-end with fixture files
@@ -52,23 +52,6 @@ def _write_serper(raw_dir: Path, by_seed: list[dict]) -> None:
     )
 
 
-def _write_tavily(raw_dir: Path, domain: str, results: list[dict]) -> None:
-    """Write a tavily-<domain>.json file."""
-    slug = domain.replace(".", "-")
-    (raw_dir / f"tavily-{slug}.json").write_text(
-        json.dumps({
-            "domain": domain,
-            "source": "tavily-extract",
-            "results": [
-                {**r, "source": "tavily-extract", "competitor_domain": domain}
-                for r in results
-            ],
-            "failed_results": [],
-        }),
-        encoding="utf-8",
-    )
-
-
 def _write_websearch(raw_dir: Path, keywords: list[str]) -> None:
     """Write a websearch-baseline.json with extracted_keywords list."""
     (raw_dir / "websearch-baseline.json").write_text(
@@ -96,7 +79,7 @@ def _read_keywords(run_dir: Path) -> list[dict]:
 def test_sources_array_per_keyword(tmp_run_dir):
     """Every keyword in keywords.json has a non-empty sources array."""
     raw_dir = tmp_run_dir / "raw"
-    # One keyword from serper-organic, one from tavily
+    # One keyword from serper-organic, one from websearch-baseline
     _write_serper(raw_dir, [{
         "seed": "grocery delivery",
         "locale": {"gl": "uk", "hl": "en-GB"},
@@ -106,10 +89,7 @@ def test_sources_array_per_keyword(tmp_run_dir):
         "ads": [],
         "searchParameters": {},
     }])
-    _write_tavily(raw_dir, "tesco.com", [{
-        "url": "https://tesco.com/delivery",
-        "raw_content": "Order groceries online for home delivery today.",
-    }])
+    _write_websearch(raw_dir, ["order groceries online"])
 
     merge_signals.main_with_args(["--run-dir", str(tmp_run_dir)])
 
@@ -159,8 +139,8 @@ def test_close_variants_merge(tmp_run_dir):
     )
 
 
-def test_six_source_taxonomy(tmp_run_dir):
-    """All 6 source types produce entries in keywords.json and source_diversity == 6 for the keyword present in all."""
+def test_five_source_taxonomy(tmp_run_dir):
+    """All 5 source types (post-Phase-12) produce entries in keywords.json and source_diversity == 5 for the keyword present in all."""
     raw_dir = tmp_run_dir / "raw"
     kw = "grocery delivery"
 
@@ -173,11 +153,6 @@ def test_six_source_taxonomy(tmp_run_dir):
         "ads": [{"title": kw, "link": "https://ex.com/ad", "snippet": "ad snippet", "displayUrl": "ex.com", "position": 1, "source": "serper-ads", "from_seed": kw}],
         "searchParameters": {},
     }])
-    # Use raw_content that is short enough to produce exactly kw as the extracted phrase
-    _write_tavily(raw_dir, "tesco.com", [{
-        "url": "https://tesco.com/delivery",
-        "raw_content": kw + ".",
-    }])
     _write_websearch(raw_dir, [kw])
 
     merge_signals.main_with_args(["--run-dir", str(tmp_run_dir)])
@@ -189,12 +164,12 @@ def test_six_source_taxonomy(tmp_run_dir):
     row = matches[0]
 
     all_source_strings = {s["source"] for s in row["sources"]}
-    expected_taxonomy = {"serper-organic", "serper-paa", "serper-related", "serper-ads", "tavily-extract", "websearch-baseline"}
+    expected_taxonomy = {"serper-organic", "serper-paa", "serper-related", "serper-ads", "websearch-baseline"}
     assert expected_taxonomy == all_source_strings, (
-        f"Expected all 6 source types, got: {all_source_strings}"
+        f"Expected all 5 source types, got: {all_source_strings}"
     )
-    assert row["source_diversity"] == 6, (
-        f"Expected source_diversity == 6, got {row['source_diversity']}"
+    assert row["source_diversity"] == 5, (
+        f"Expected source_diversity == 5, got {row['source_diversity']}"
     )
 
 
@@ -203,7 +178,7 @@ def test_source_diversity_count(tmp_run_dir):
     raw_dir = tmp_run_dir / "raw"
     kw = "grocery delivery"
 
-    # Two different source types — serper-organic and tavily-extract
+    # Two different source types — serper-organic (x2) and websearch-baseline
     _write_serper(raw_dir, [{
         "seed": kw,
         "locale": {"gl": "uk", "hl": "en-GB"},
@@ -216,11 +191,7 @@ def test_source_diversity_count(tmp_run_dir):
         "ads": [],
         "searchParameters": {},
     }])
-    # Use short raw_content that produces exactly kw as the extracted phrase
-    _write_tavily(raw_dir, "tesco.com", [{
-        "url": "https://tesco.com/delivery",
-        "raw_content": kw + ".",
-    }])
+    _write_websearch(raw_dir, [kw])
 
     merge_signals.main_with_args(["--run-dir", str(tmp_run_dir)])
 
@@ -233,9 +204,9 @@ def test_source_diversity_count(tmp_run_dir):
     assert row["source_diversity"] == computed_diversity, (
         f"source_diversity {row['source_diversity']} != computed {computed_diversity}"
     )
-    # The two serper-organic entries count as 1 towards diversity, tavily as 1 → diversity == 2
+    # The two serper-organic entries count as 1 towards diversity, websearch as 1 → diversity == 2
     assert row["source_diversity"] == 2, (
-        f"Expected source_diversity == 2 (serper-organic + tavily-extract), got {row['source_diversity']}"
+        f"Expected source_diversity == 2 (serper-organic + websearch-baseline), got {row['source_diversity']}"
     )
 
 
@@ -301,21 +272,6 @@ def test_end_to_end_with_fixtures(tmp_run_dir):
     }
     (raw_dir / "serper.json").write_text(
         json.dumps({"by_seed": [by_seed_entry]}), encoding="utf-8"
-    )
-
-    # Adapt the tavily_extract_2urls.json fixture to what tavily_extract.py produces
-    raw_tavily = json.loads((FIXTURES_DIR / "tavily_extract_2urls.json").read_text())
-    adapted_tavily = {
-        "domain": "tesco.com",
-        "source": "tavily-extract",
-        "results": [
-            {**r, "source": "tavily-extract", "competitor_domain": "tesco.com"}
-            for r in raw_tavily.get("results", [])
-        ],
-        "failed_results": raw_tavily.get("failed_results", []),
-    }
-    (raw_dir / "tavily-tesco-com.json").write_text(
-        json.dumps(adapted_tavily), encoding="utf-8"
     )
 
     merge_signals.main_with_args(["--run-dir", str(tmp_run_dir)])
