@@ -43,23 +43,28 @@ Every run lands in a sealed dated folder under `.runs/`:
 ├── negatives.json                    ← tiered + categorised negatives
 ├── competitor-intel.json             ← per-cluster advertiser identity + ads
 ├── competitor-landing-pages.json     ← WebFetch-extracted headline/CTA/offer
-├── niche-pulse.json                  ← time-sensitive news themes (optional)
-├── volume-enrichment.json            ← Ahrefs MSV + difficulty (optional)
-├── perf-context.json                 ← Google Ads MCC performance pull (optional)
-├── bid-suggestions.json              ← per-keyword max CPC recommendations
-├── forecast.json                     ← clicks/conv/spend bands per cluster
-├── compliance-flags.json             ← vertical-specific policy alerts
-├── ad-group-mapping.json             ← Editor-ready ad group + geo structure
+├── niche-pulse.json                  ← time-sensitive news themes (Phase 7)
+├── ranked-enriched.json              ← ranked.json + Ahrefs MSV/CPC/KD + Phase 9
+│                                       suggested_max_cpc_micros (Phase 8+9)
+├── account-perf.json                 ← Google Ads MCC performance pull (Phase 8)
+├── negatives-sync.json               ← generated vs existing-account negatives (Phase 8)
+├── forecast.json                     ← clicks/conv/spend low-mid-high bands (Phase 9)
+├── compliance-flags.json             ← vertical policy alerts (Phase 9)
+├── ad-group-mapping.json             ← geo eligibility + ad-group structure (Phase 11)
 ├── report.md                         ← human-readable narrative
 ├── report.json                       ← stable v1 schema for automation
 ├── report.html                       ← interactive: sortable, filterable, CSV export
-├── positives.csv                     ← Google Ads Editor paste-ready (keywords)
-├── negatives.csv                     ← Google Ads Editor paste-ready (negatives)
+├── export/                           ← Google Ads Editor paste-ready (Phase 10)
+│   ├── positives.csv                 ← keywords with Max CPC, match-type
+│   ├── negatives.csv                 ← tiered negatives
+│   └── ad_groups.csv                 ← ad-group structure
 └── raw/                              ← per-stage API dumps (audit trail, git-ignored)
     ├── serper.json
     ├── serper-news.json
     ├── websearch-baseline.json
     ├── competitor-intel.json
+    ├── google-ads-perf.json
+    ├── google-ads-search-terms.json
     └── ahrefs-*.json
 ```
 
@@ -86,9 +91,9 @@ The skill splits into two layers that communicate only through files in a sealed
 | 5 | Competitor ads + landing pages | `competitor-{intel,landing-pages}.json` | `competitor_intel.py` + WebFetch |
 | 6 | Negatives + report assembly | `report.{md,json,html}` | `generate_negatives.py`, `render_report.py`, `update_index.py` |
 | 7 | Niche pulse (optional sidecar) | `niche-pulse.json` | `pulse_fetch.py`, `pulse_synth.py` |
-| 8 | Volume + perf context (optional) | `volume-enrichment.json`, `perf-context.json` | `volume_enrich.py`, `perf_fetch.py`, `perf_synth.py` |
-| 9 | Bid + forecast + compliance | `bid-suggestions.json`, `forecast.json`, `compliance-flags.json` | `bid_suggest.py`, `forecast_budget.py`, `compliance_check.py` |
-| 10 | Operator launch kit (Editor CSVs) | `positives.csv`, `negatives.csv` | `export_csv.py` |
+| 8 | Volume + perf context (optional) | `ranked-enriched.json`, `account-perf.json`, `negatives-sync.json` | `volume_enrich.py`, `perf_fetch.py`, `perf_synth.py` |
+| 9 | Bid + forecast + compliance | `ranked-enriched.json` (+suggested_max_cpc_micros), `forecast.json`, `compliance-flags.json` | `bid_suggest.py`, `forecast_budget.py`, `compliance_check.py` |
+| 10 | Operator launch kit (Editor CSVs) | `export/{positives,negatives,ad_groups}.csv` | `export_csv.py` |
 | 11 | Account-structure mapping | `ad-group-mapping.json` | `ad_group_match.py` |
 
 Phases 7-11 are **sidecars** — operator opts in per-run. Phases 1-6 are the always-on core. Skill prompts you after Phase 6 to pick which sidecars to run.
@@ -204,9 +209,9 @@ Open Claude Code in this directory and paste a brief. The skill activates on phr
 | Sidecar | What it adds | When to run |
 |---------|--------------|-------------|
 | **Phase 7 — Niche Pulse** | Trending news themes, regulatory alerts, competitor news, time-sensitive negative candidates | Weekly refresh; before launch in volatile niches (insurance, healthcare, finance) |
-| **Phase 8 — Account Data + Volume** | Ahrefs MSV + difficulty per keyword; Google Ads MCC performance baseline (avg CPC, CTR, conv rate) | When client provides Ahrefs / Ads MCC access |
-| **Phase 9 — Economics + Compliance** | Max-CPC suggestions (from intent × baseline CPC × bid multipliers), daily budget forecast (low/mid/high), vertical compliance flags (HIPAA, finance UDAP, employment EEO, etc.) | Always before launch |
-| **Phase 10 — Operator Launch Kit** | Google Ads Editor-paste CSVs (positives + negatives), Next-Steps checklist with daily budget + max-CPC pre-filled | Always before launch |
+| **Phase 8 — Account Data + Volume** | Ahrefs MSV + CPC + Keyword Difficulty per keyword (`ranked-enriched.json`); Google Ads MCC performance baseline (`account-perf.json`); existing-account negatives sync (`negatives-sync.json`). **Prerequisite for Phase 9 + Phase 10.** | When client provides Ahrefs API key + Ads MCC OAuth — required if you want Phase 9/10 outputs |
+| **Phase 9 — Economics + Compliance** | Max-CPC suggestions per keyword (intent × baseline CPC × bid multipliers, mutated into `ranked-enriched.json`), daily budget forecast bands (low/mid/high in `forecast.json`), vertical compliance flags (HIPAA, finance UDAP, employment EEO — `compliance-flags.json`). Pure-compute, no API cost. **Needs Phase 8.** | Always before launch — gates Phase 10 |
+| **Phase 10 — Operator Launch Kit** | Google Ads Editor-paste CSVs in `{run}/export/` — `positives.csv` (with Max CPC + match-type), `negatives.csv` (tiered), `ad_groups.csv` (structure). Next-Steps checklist with daily budget + Max CPC pre-filled. **Needs Phase 9.** | Always before launch |
 | **Phase 11 — Account-Structure Mapping** | Geo eligibility filter (state/county/city), ad-group structure suggestion with bid modifiers | Local-services and geo-targeted campaigns |
 
 ### Cost per run
@@ -312,7 +317,7 @@ scripts/
 
 ## Limitations & honest tradeoffs
 
-1. **No real search volume in the core.** Phases 1-6 rank on `source_diversity` × intent × `signal_count` — a popularity proxy, not Google's actual data. Phase 8 (opt-in) adds Ahrefs MSV. Otherwise paste the final keyword list into Keyword Planner for volume + CPC.
+1. **Real volume + CPC requires Phase 8 (Ahrefs).** Core Phases 1-6 rank on `source_diversity` × intent × `signal_count` — a popularity proxy designed to work without paid volume data. Phase 8 (opt-in, needs `AHREFS_API_KEY`) adds real Ahrefs MSV, CPC, and Keyword Difficulty per keyword and is the prerequisite for Phase 9 bid suggestions + Phase 10 Editor CSVs. Without Phase 8, paste the final keyword list into Keyword Planner manually for volume + CPC.
 2. **Brief quality drives output quality.** A vague brief produces vague keywords. Five required fields (industry, product, location, language, audience) are enforced for a reason.
 3. **Serper ads block is unreliable in some verticals.** Healthcare and several others return 0 ads even when Google clearly shows them. The competitor intel script falls back to top organic results — those landing pages contain the same value props paid advertisers would highlight, so the downstream analysis still works.
 4. **WebFetch can fail on JS-heavy or bot-blocked sites.** Typical success rate ~80% in production runs. The `competitor-landing-pages.json` schema includes `extract_status` so failures are visible; `report.md` shows fallback text per failed advertiser.
