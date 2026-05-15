@@ -332,6 +332,16 @@ def main_with_args(argv: list[str]) -> int:
         )
         log.info(f"  → {len(negs)} existing negatives")
 
+        log.info("Pulling keyword_view (active + paused account keywords)...")
+        kws = fetch_keyword_view(client, customer_id, days=args.days)
+        (raw_dir / "google-ads-keywords.json").write_text(
+            json.dumps({"fetched_at": _now_iso(), "horizon_days": args.days,
+                        "customer_id": customer_id, "items": kws},
+                       ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        log.info(f"  → {len(kws)} active+paused keywords")
+
     except GoogleAdsException as exc:
         log.error(f"Google Ads API failure: {exc.error.code().name}")
         for err in exc.failure.errors:
@@ -346,6 +356,7 @@ def main_with_args(argv: list[str]) -> int:
         "campaigns_count": len(perf["campaigns"]),
         "ad_groups_count": len(perf["ad_groups"]),
         "existing_negatives_count": len(negs),
+        "keyword_count": len(kws),
         "customer_id": customer_id,
         "horizon_days": args.days,
     }))
