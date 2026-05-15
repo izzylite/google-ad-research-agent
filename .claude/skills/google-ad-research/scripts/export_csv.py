@@ -83,6 +83,10 @@ assert frozenset(MATCH_TYPE_TITLECASE.keys()) == frozenset(
     {"phrase", "exact", "broad"}
 ), "MATCH_TYPE_TITLECASE drift — RANK-03 taxonomy changed?"
 
+# Phase 14 POS-04 sentinel — flipped on once --include-existing flag + positives-sync
+# filter lands. Wave 0 test skip-guards check this attr via getattr default-False.
+_POSITIVES_SYNC_SUPPORTED = True
+
 
 # ---------------------------------------------------------------------------
 # Private helpers
@@ -142,6 +146,22 @@ def _load_ad_group_mapping(run_dir: Path) -> dict | None:
         return None
     try:
         return json.loads(mapping_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def _load_positives_sync(run_dir: Path) -> dict | None:
+    """POS-04: Read positives-sync.json (sidecar from perf_synth.cross_ref_positives).
+
+    Returns None when absent or unparseable (POS-05 graceful fallback — Phase 14
+    only filters positives.csv when sync is available; otherwise emit the full
+    ranked list per pre-Phase-14 behaviour).
+    """
+    sync_path = run_dir / "positives-sync.json"
+    if not sync_path.exists():
+        return None
+    try:
+        return json.loads(sync_path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return None
 
@@ -236,7 +256,7 @@ def _cluster_median_max_cpc_micros(
 # CSV writers (EXPT-01..04 byte contract)
 # ---------------------------------------------------------------------------
 
-def write_positives(path: Path, rows: list[dict]) -> None:
+def write_positives(path: Path, rows: list[dict], *, include_status: bool = False) -> None:
     """Write positives.csv (EXPT-01).
 
     Byte contract: UTF-8 no BOM (encoding='utf-8', NOT 'utf-8-sig'), CRLF
@@ -244,13 +264,15 @@ def write_positives(path: Path, rows: list[dict]) -> None:
     csv.QUOTE_MINIMAL gives RFC 4180 quoting only when a cell contains a
     comma / quote / newline.
 
-    rows: list of dicts with the six POSITIVES_HEADERS keys.
+    rows: list of dicts with the six POSITIVES_HEADERS keys (plus an optional
+    'Status' key when ``include_status`` is True — POS-04 --include-existing).
     """
     path.parent.mkdir(parents=True, exist_ok=True)
+    headers = POSITIVES_HEADERS + (["Status"] if include_status else [])
     with path.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(
             f,
-            fieldnames=POSITIVES_HEADERS,
+            fieldnames=headers,
             lineterminator="\r\n",
             quoting=csv.QUOTE_MINIMAL,
         )
@@ -302,6 +324,8 @@ def _build_positives_rows(
     cluster_index: dict[str, str],
     campaign: str,
     mapping: dict | None = None,
+    positives_sync: dict | None = None,
+    include_existing: bool = False,
 ) -> list[dict]:
     """Build positives.csv rows from ranked-enriched rows joined to clusters.
 
@@ -313,7 +337,30 @@ def _build_positives_rows(
     match in the ad-group-mapping.json sidecar, substitute the existing
     ad-group name for the cluster slug in the Ad Group column. Backward compat:
     mapping=None → identical pre-Phase-11 output (cluster slug only).
+
+    POS-04: when ``positives_sync`` is provided + ``include_existing=False``,
+    filter rows to those whose keyword (case-insensitive) appears in
+    ``sync['new_to_add']``. When ``include_existing=True``, emit all rows + a
+    ``Status`` column tagging the bucket. When ``positives_sync`` is None,
+    pre-Phase-14 behaviour (full list, no Status column).
     """
+    # POS-04: build bucket-lookup table at function entry so per-row filtering
+    # stays O(1). Buckets are checked in priority order so the priority chain
+    # (ENABLED-exact > PAUSED-exact > BROAD-cover > new) is preserved if the
+    # sync ever surfaces overlapping rows.
+    bucket_by_kw: dict[str, str] = {}
+    if positives_sync:
+        for bucket_name in (
+            "new_to_add",
+            "already_active",
+            "paused_in_account",
+            "covered_by_broad",
+        ):
+            for r in positives_sync.get(bucket_name, []) or []:
+                kw_lc = (r.get("keyword") or "").lower()
+                if kw_lc and kw_lc not in bucket_by_kw:
+                    bucket_by_kw[kw_lc] = bucket_name
+
     rows: list[dict] = []
     ordered = sorted(
         ranked_enriched, key=lambda r: r.get("score", 0) or 0, reverse=True
@@ -331,17 +378,31 @@ def _build_positives_rows(
         ag = _resolve_ad_group_from_mapping(kw, cluster_slug or "", mapping)
         if not ag:
             continue
+        # POS-04 default-filter path: when sync present + flag NOT set, drop any
+        # ranked row not in new_to_add (operator workflow ships only new kws to
+        # paste into Editor — already-active / paused / broad-covered are skipped).
+        bucket = bucket_by_kw.get(kw.lower()) if positives_sync else None
+        if positives_sync and not include_existing:
+            if bucket != "new_to_add":
+                continue
+        payload = {
+            "Campaign": campaign,
+            "Ad Group": ag,
+            "Keyword": kw,
+            "Match Type": _titlecase_match_type(row.get("match_type")),
+            "Max CPC": _micros_to_csv_usd(row.get("suggested_max_cpc_micros")),
+            "Final URL": "",
+        }
+        # POS-04 include-existing path: surface the bucket as a trailing column
+        # so operator can see which kws are already_active / paused / covered.
+        # Default to new_to_add when the kw isn't in the sync — defensive, but
+        # signals the row may not have been processed by cross_ref_positives.
+        if positives_sync and include_existing:
+            payload["Status"] = bucket or "new_to_add"
         interim.append((
             ag,
             float(row.get("score", 0) or 0),
-            {
-                "Campaign": campaign,
-                "Ad Group": ag,
-                "Keyword": kw,
-                "Match Type": _titlecase_match_type(row.get("match_type")),
-                "Max CPC": _micros_to_csv_usd(row.get("suggested_max_cpc_micros")),
-                "Final URL": "",
-            },
+            payload,
         ))
     # Sort by (Ad Group asc, Score desc) so same-ad-group rows are contiguous
     # in the CSV — operator pastes one ad group's keywords together in Editor
@@ -427,6 +488,17 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument("--run-dir", required=True, type=Path)
+    parser.add_argument(
+        "--include-existing",
+        action="store_true",
+        default=False,
+        help=(
+            "POS-04: When positives-sync.json is present, by default "
+            "positives.csv contains only new_to_add rows. Pass "
+            "--include-existing to emit all ranked rows with an added Status "
+            "column."
+        ),
+    )
 
     # argv[0]-skip heuristic — accept full sys.argv or args-only list.
     if argv is None:
@@ -488,9 +560,20 @@ def main(argv: list[str] | None = None) -> int:
     # ADGM-05: ad-group-mapping.json is an optional sidecar. Absence is a
     # silent fallback to pre-Phase-11 cluster-slug behaviour (backward compat).
     mapping = _load_ad_group_mapping(run_dir)
+    # POS-04 / POS-05: positives-sync.json is an optional sidecar. Absence is a
+    # graceful fallback to pre-Phase-14 full-ranked-list behaviour.
+    positives_sync = _load_positives_sync(run_dir)
+    include_existing: bool = args.include_existing
+    if positives_sync is None:
+        filter_mode = "no_sync_full_list"
+    elif include_existing:
+        filter_mode = "include_existing"
+    else:
+        filter_mode = "new_to_add"
 
     positives_rows = _build_positives_rows(
-        ranked_enriched, cluster_index, campaign, mapping=mapping
+        ranked_enriched, cluster_index, campaign, mapping=mapping,
+        positives_sync=positives_sync, include_existing=include_existing,
     )
     negatives_rows = _build_negatives_rows(negatives, campaign)
     ad_groups_rows = _build_ad_groups_rows(
@@ -503,7 +586,11 @@ def main(argv: list[str] | None = None) -> int:
     ad_groups_path = exports_dir / "ad_groups.csv"
 
     try:
-        write_positives(positives_path, positives_rows)
+        write_positives(
+            positives_path,
+            positives_rows,
+            include_status=(filter_mode == "include_existing"),
+        )
         write_negatives(negatives_csv_path, negatives_rows)
         write_ad_groups(ad_groups_path, ad_groups_rows)
     except (PermissionError, OSError) as exc:
@@ -534,6 +621,8 @@ def main(argv: list[str] | None = None) -> int:
         "mapping_coverage_pct": (
             mapping.get("mapping_coverage_pct") if mapping else None
         ),
+        # POS-04 telemetry — filter mode applied to positives.csv.
+        "positives_filter": filter_mode,
     }
     print(json.dumps(summary))
     return 0
