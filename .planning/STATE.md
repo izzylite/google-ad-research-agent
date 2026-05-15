@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: source-consolidation
-status: in_progress
-stopped_at: "Completed 12-00-PLAN.md — Wave 0 RED scaffolding for Phase 12 (Drop Tavily). 14 RED + 1 SKIPPED Phase 12 tests; 239 legacy tests GREEN. Commits 9ea9ae8 (audit), 8121628 (PULSE-10/11 + WFCH-03/04 unit), 191e997 (WFCH-02 + fixtures)."
-last_updated: "2026-05-15T03:51:31.078Z"
+milestone: v1.1
+milestone_name: Phases
+status: unknown
+stopped_at: Completed 12-01-PLAN.md — Tavily deletion. 5 files deleted, 4 modified, uv.lock regenerated. 4 TVLY-* audit tests RED→GREEN. Task 1 commit 93c785f; Task 2 absorbed by parallel commit f153729 (Plan 12-03).
+last_updated: "2026-05-15T03:57:00.211Z"
 progress:
-  total_phases: 12
-  completed_phases: 11
+  total_phases: 11
+  completed_phases: 9
   total_plans: 49
-  completed_plans: 44
+  completed_plans: 45
 ---
 
 # State: Google Ad Research Agent
@@ -83,6 +83,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 11 P03 | 9 | 2 tasks | 3 files |
 | Phase 11 P04 | ~25min | 3 tasks (2 docs + 1 auto-fix + 1 human-verify) | 3 files (1 created + 2 modified) |
 | Phase 12 P00 | 12min | 3 tasks | 8 files |
+| Phase 12-source-consolidation-drop-tavily P01 | 2min | 2 tasks | 9 files |
 
 ### Execution History
 
@@ -215,6 +216,8 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 12-source-consolidation-drop-tavily]: [Phase 12-00] WFCH-03 competitor_intel guard uses BOTH inspect.getsource substring AND dir() namespace scan — covers Tavily dict-literal keys (raw_content) AND symbol imports (TavilyClient)
 - [Phase 12-source-consolidation-drop-tavily]: [Phase 12-00] Phase 12 fixtures prefixed phase12- (phase12-competitor-intel.json, phase12-competitor-landing-pages.json) — distinguishes from Phase 5 competitor_intel_full.json which still carries Tavily-shape entries used by 41 GREEN render_report tests
 - [Phase 12-source-consolidation-drop-tavily]: [Phase 12-00] Wave 2 plan 12-04 must land _load_competitor_landing_pages helper on render_report — exact symbol name locked by hasattr sentinel in test_render_report.py::_skip_unless_join_implemented
+- [Phase 12-source-consolidation-drop-tavily]: [Phase 12-01] uv.lock regenerated in-task (5 transitive deps auto-pruned: charset-normalizer, regex, requests, tiktoken, urllib3). Deferral path (per plan) not needed — uv lock is metadata-only and does not require import resolution. Cleaner outcome than deferring to plan 12-02 closing task.
+- [Phase 12-source-consolidation-drop-tavily]: [Phase 12-01] Task 2 commit absorbed by parallel Plan 12-03 commit f153729. Both plans needed identical edits to shared config files (.env.example, lib/config.py, pyproject.toml, uv.lock). Disk state matches spec; only commit attribution shifted. Structural race in parallel-wave shared-config files — future waves should explicitly document shared-config ownership.
 
 ### Open Questions / Todos
 
@@ -232,9 +235,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T03:51:18.792Z
+**Last session:** 2026-05-15T03:57:00.206Z
 
-**Stopped at:** Completed 12-00-PLAN.md — Wave 0 RED scaffolding for Phase 12 (Drop Tavily). 14 RED + 1 SKIPPED Phase 12 tests; 239 legacy tests GREEN. Commits 9ea9ae8 (audit), 8121628 (PULSE-10/11 + WFCH-03/04 unit), 191e997 (WFCH-02 + fixtures).
+**Stopped at:** Completed 12-01-PLAN.md — Tavily deletion. 5 files deleted, 4 modified, uv.lock regenerated. 4 TVLY-* audit tests RED→GREEN. Task 1 commit 93c785f; Task 2 absorbed by parallel commit f153729 (Plan 12-03).
 
 **Next session:** Milestone v1.2 complete. All 11 / 11 phases shipped (v1.0 + v1.1 + v1.2). No active phase. Options: (1) Define v1.3 milestone scope, (2) Address open-question/todos list (composite ranking calibration, Tavily credit metrics, match-type recommendation validation, v1.1 bid multiplier calibration, FRCS ratio tuning), (3) Triage v2 backlog (VOLM-*, VPRS-*, TOOL-*).
 

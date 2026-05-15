@@ -161,10 +161,10 @@ Milestone v1.3 — Phase 12 only. Replace Tavily landing-page extraction w/ Clau
 
 ### Tavily Removal
 
-- [ ] **TVLY-01**: `scripts/tavily_extract.py` deleted; any `lib/` Tavily helper removed
-- [ ] **TVLY-02**: `TAVILY_API_KEY` removed from `.env.example`, `lib/config.py` validation list, and any project docs/README
-- [ ] **TVLY-03**: `pyproject.toml` deps drop `tavily-python`; fixture files with `tavily-` prefix renamed or deleted; raw output filenames `tavily-*.json` removed from glob references
-- [ ] **TVLY-04**: `tests/test_tavily_extract.py` deleted; conftest fixtures pruned; respx mocks for Tavily removed
+- [x] **TVLY-01**: `scripts/tavily_extract.py` deleted; any `lib/` Tavily helper removed
+- [x] **TVLY-02**: `TAVILY_API_KEY` removed from `.env.example`, `lib/config.py` validation list, and any project docs/README
+- [x] **TVLY-03**: `pyproject.toml` deps drop `tavily-python`; fixture files with `tavily-` prefix renamed or deleted; raw output filenames `tavily-*.json` removed from glob references
+- [x] **TVLY-04**: `tests/test_tavily_extract.py` deleted; conftest fixtures pruned; respx mocks for Tavily removed
 
 ### WebFetch Replacement for COMP-03
 
@@ -294,10 +294,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADGM-04 | Phase 11 | Complete |
 | ADGM-05 | Phase 11 | Complete |
 | ADGM-06 | Phase 11 | Complete |
-| TVLY-01 | Phase 12 | Pending |
-| TVLY-02 | Phase 12 | Pending |
-| TVLY-03 | Phase 12 | Pending |
-| TVLY-04 | Phase 12 | Pending |
+| TVLY-01 | Phase 12 | Complete |
+| TVLY-02 | Phase 12 | Complete |
+| TVLY-03 | Phase 12 | Complete |
+| TVLY-04 | Phase 12 | Complete |
 | WFCH-01 | Phase 12 | Pending |
 | WFCH-02 | Phase 12 | Pending |
 | WFCH-03 | Phase 12 | Pending |
