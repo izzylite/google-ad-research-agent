@@ -277,7 +277,11 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. Ad Group Mapping section shows only the ad groups inside the focused campaign (e.g. the 3 AGs under "Lake Worth Accident Exams") instead of all 35 account-wide ad groups.
   4. Operator omits `campaign_focus` from `brief.md` → skill runs account-wide unchanged (current v1.4 behavior preserved end-to-end; backward compat verified by re-running an existing pre-v1.5 brief).
   5. Operator types a `campaign_focus` value that does not match any campaign name in `raw/google-ads-perf.json` → `render_report.py` emits a warning callout in the report header before downstream sections render against the (empty) narrowed result.
-**Plans:** TBD
+**Plans:** 4 plans
+- [ ] 15-00-PLAN.md — Wave 1: RED test scaffolding (test_perf_fetch + test_render_report + brief_with_campaign_focus.md + google-ads-perf-with-campaign.json fixtures) — CAMP-06
+- [ ] 15-01-PLAN.md — Wave 2: perf_fetch.py --campaign-filter CLI + thread through 4 GAQL queries + SQL-quote escape — CAMP-02
+- [ ] 15-02-PLAN.md — Wave 2: render_report.py _parse_brief_fields campaign_focus + render_campaign_focus_section + name validation + report.json key — CAMP-01, CAMP-05
+- [ ] 15-03-PLAN.md — Wave 3: SKILL.md Step 3/4 wiring + references/phase8-account-data.md Step 33 + end-to-end Lake Worth smoke — CAMP-03, CAMP-04
 
 ### Phase 16: Ad Group Mapping Token-Bag Enrichment
 **Goal:** `ad_group_match.py` Jaccard scoring uses an enriched per-AG token bag (AG name ∪ active kw_criteria tokens ∪ top-N search-term tokens) instead of AG name only, lifting high+medium mapping coverage from 0% to 50%+ on real client accounts whose AG names are short labels. When Phase 14 `raw/google-ads-keywords.json` is absent, falls back silently to current name-only Jaccard (backward compat for pre-Phase-14 accounts).
