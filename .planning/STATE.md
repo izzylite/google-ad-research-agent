@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Phases
-status: unknown
-stopped_at: Completed 14-05-PLAN.md (Step 34a LLM re-tag rubric + SKILL.md pointer; live e2e approved on Lake Worth account). Phase 14 ready for verification gate; v1.4 shippable on green.
-last_updated: "2026-05-15T13:39:29.398Z"
+milestone: v1.5
+milestone_name: Account-Aware Narrowing
+status: defining_requirements
+stopped_at: Milestone v1.5 started 2026-05-15 — defining requirements (Phase 15 CAMP-01..06 + Phase 16 ADGM-07..11). Scope parked at .planning/proposed/v1.5-account-aware-narrowing.md.
+last_updated: "2026-05-15T14:30:00.000Z"
 progress:
-  total_phases: 13
-  completed_phases: 11
+  total_phases: 14
+  completed_phases: 13
   total_plans: 55
   completed_plans: 55
 ---
@@ -20,18 +20,20 @@ progress:
 
 **Core value:** From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session.
 
-**Current focus:** Milestone v1.4 — Positives Sync. Phase 14 (mirror negatives-sync for positives via Google Ads `keyword_view` GAQL). Triggered by operator pain on skill re-runs against same client (manual dedup of `positives.csv` before Editor paste).
+**Current focus:** Milestone v1.5 — Account-Aware Narrowing. Phase 15 (`campaign_focus` brief field filters all Phase 8 GAQL queries to one campaign) + Phase 16 (AG Mapping token-bag enrichment lifts 0% → 50%+ coverage). Triggered by Lake Worth dogfood (2026-05-15) showing contamination from unrelated campaigns + 0% AG mapping coverage.
 
 ## Current Position
 
 | Field | Value |
 |-------|-------|
-| Phase | 14 — Positives Sync |
-| Plan | 14-00..14-05 complete (6/6); Phase 14 awaiting verification gate |
-| Status | Ready for verification — all 6 plans shipped; live e2e approved on Lake Worth account; POS-01..07 Complete. v1.4 ships on gsd-verifier green. |
-| Last activity | 2026-05-15 — Plan 14-05 executed: Step 34a LLM re-tag rubric (+49 lines in references/phase8-account-data.md) + SKILL.md Phase 8 pointer extended (495/500 lines). Live e2e on real Google Ads account confirmed positives-sync.json stats (our_total=83, new_to_add=64, csv=64 rows). Commits 8983c68 + f7e80ef. |
+| Phase | Not started (defining requirements) |
+| Plan | — |
+| Status | Defining requirements |
+| Last activity | 2026-05-15 — Milestone v1.5 started; scope drafted at `.planning/proposed/v1.5-account-aware-narrowing.md`; awaiting REQUIREMENTS.md + ROADMAP.md updates |
 
 ## Previous Milestone
+
+v1.4 — Positives Sync (1 phase, 7 reqs). Shipped 2026-05-15. perf_fetch keyword_view + perf_synth cross_ref_positives + 4-bucket positives-sync.json + render section md+HTML+JSON + export_csv filter + SKILL.md Step 34a LLM re-tag. Live e2e Lake Worth confirmed: 83 ranked → 11 already_active / 8 covered_by_broad / 64 new_to_add. Post-ship UX fix: Existing Ad Groups always rendered in Mapping section (commit 4674b00). 96/96 v1 requirements Complete.
 
 v1.3 — Source Consolidation / Drop Tavily (1 phase, 11 reqs). Shipped 2026-05-15. tavily_extract.py deleted; WebFetch replaces COMP-03 landing-page extraction; Serper /news single-source niche pulse; pyproject deps cleaned; full suite 250/250.
 
@@ -45,14 +47,15 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 
 | Metric | Value |
 |--------|-------|
-| Phases planned | 13 / 13 (12 shipped + Phase 13 BACKLOG + Phase 14 pending) |
-| Phases complete | 12 / 13 (v1.0 + v1.1 + v1.2 + v1.3 all complete; v1.4 pending) |
-| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) + 5 (v1.1 Phase 10) + 5 (v1.2 Phase 11) + 6 (v1.3 Phase 12) = 49 |
+| Phases planned | 14 (13 shipped + Phase 13 BACKLOG + Phases 15-16 pending) |
+| Phases complete | 13 (v1.0 + v1.1 + v1.2 + v1.3 + v1.4 all complete; v1.5 pending) |
+| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) + 5 (v1.1 Phase 10) + 5 (v1.2 Phase 11) + 6 (v1.3 Phase 12) + 6 (v1.4 Phase 14) = 55 |
 | v1.0 requirements complete | 52 / 52 |
 | v1.1 requirements complete | 23 / 23 (BIDS 4/4, FRCS 5/5, CMPL 5/5, EXPT 5/5, STEP 4/4) |
 | v1.2 requirements complete | 11 / 11 (GEO 5/5, ADGM 6/6) |
 | v1.3 requirements complete | 11 / 11 (TVLY 4/4, WFCH 4/4, PULSE 3/3) |
-| v1.4 requirements complete | 7 / 7 (POS-01..07 all complete; Phase 14 awaiting verification gate) |
+| v1.4 requirements complete | 7 / 7 (POS-01..07) |
+| v1.5 requirements complete | 0 / 11 (CAMP 0/6, ADGM 0/5 — Phases 15 + 16 pending) |
 | Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
@@ -286,17 +289,17 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T13:35:04.601Z
+**Last session:** 2026-05-15T14:30:00.000Z
 
-**Stopped at:** Completed 14-05-PLAN.md (Step 34a LLM re-tag rubric + SKILL.md pointer; live e2e approved on Lake Worth account). Phase 14 ready for verification gate; v1.4 shippable on green.
+**Stopped at:** Milestone v1.5 started — PROJECT.md updated, STATE.md reset, parked scope at `.planning/proposed/v1.5-account-aware-narrowing.md`. Next: REQUIREMENTS.md additions (CAMP-01..06 + ADGM-07..11), then gsd-roadmapper for Phases 15 + 16.
 
-**Next session:** Run `/gsd:execute-plan 14-05` (Wave 4 SKILL.md LLM re-tag step + Phase 8 sub-flow doc updates — POS-03 + POS-06 prose work; all Python now done). With 14-03 also complete, all 6 Wave-0 SKIP stubs are now GREEN; suite at 256 passed.
+**Next session:** Continue v1.5 setup — define REQUIREMENTS.md CAMP-01..06 (Phase 15 Campaign Focus) + ADGM-07..11 (Phase 16 AG Token-Bag Enrichment), spawn roadmapper, then `/gsd:plan-phase 15`.
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\REQUIREMENTS.md`
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\ROADMAP.md`
-- `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\proposed\v1.4-positives-sync.md`
+- `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\proposed\v1.5-account-aware-narrowing.md`
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\research\SUMMARY.md`
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\research\ARCHITECTURE.md`
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\research\PITFALLS.md`
@@ -305,3 +308,4 @@ None.
 *State initialized: 2026-05-08*
 *v1.1 milestone started: 2026-05-14*
 *v1.4 milestone started: 2026-05-15*
+*v1.5 milestone started: 2026-05-15*

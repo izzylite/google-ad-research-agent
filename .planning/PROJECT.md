@@ -8,17 +8,29 @@ Internal Claude Code skill for a centralized PPC operator. Operator pastes a cam
 
 From one campaign brief, deliver campaign-ready keyword research — clusters, competitor intel, and negatives — in a single Claude Code session, without the operator leaving the chat.
 
-## Current Milestone: v1.4 Positives Sync
+## Current Milestone: v1.5 Account-Aware Narrowing
 
-**Goal:** Mirror negatives-sync for positives — diff ranked keywords against the client's currently-active Google Ads keywords and surface only net-new in `positives.csv`. Eliminates manual dedup pain on re-runs against the same account.
+**Goal:** Narrow skill output from "whole OAuth account" to "operator's actual target campaign + the AGs inside it". Same architectural pattern as v1.2's `geo_focus`. Two issues fixed: Phase 8 GAQL queries pull all 30+ campaigns (cross-refs contaminated by unrelated data); Ad Group Mapping algorithm uses AG name only (Jaccard near zero on real client accounts).
 
 **Target features:**
+- Optional `campaign_focus:` brief field — `perf_fetch.py` adds `AND campaign.name = '<focus>'` filter to all 4 GAQL queries (keyword_view, search_term_view, ad_group, campaign_criterion)
+- Positives Sync + Negatives Sync + Ad Group Mapping inherit narrowed dataset automatically (no per-script wiring needed)
+- Report header renders "Campaign Focus" callout beside Geographic Focus; validates name against `raw/google-ads-perf.json` campaigns list
+- Graceful degrade: no `campaign_focus` → account-wide pull (current v1.4 behavior)
+- `ad_group_match.py` `_build_ag_token_bag(name, kw_criteria, search_terms)` — Jaccard input enriched with Phase 14 `keyword_view` + Phase 8 `search_term_view`; replaces name-only logic
+- Threshold recalibration after enrichment (likely 0.5 high / 0.25 medium); backward compat when Phase 14 raw absent
+
+## Previous Milestone: v1.4 Positives Sync
+
+**Goal (shipped):** Mirror negatives-sync for positives — diff ranked keywords against the client's currently-active Google Ads keywords and surface only net-new in `positives.csv`. Eliminates manual dedup pain on re-runs against the same account.
+
+**Target features (shipped):**
 - `perf_fetch.py` pulls `keyword_view` (active + paused account keywords, last 30d) via existing Google Ads OAuth
 - `perf_synth.py` produces 4-bucket `positives-sync.json`: `already_active` / `paused_in_account` / `covered_by_broad` / `new_to_add`
 - Report `## Positives Sync` section mirrors negatives-sync UX (stats line + enumerated `new_to_add` + count-only `already_active`)
 - `positives.csv` filters to `new_to_add` by default; `--include-existing` CLI override for full list
 - Graceful skip when `raw/google-ads-keywords.json` absent (no OAuth available)
-- Optional SKILL.md LLM re-tag step for borderline semantic dupes
+- SKILL.md Step 34a LLM re-tag step for borderline semantic dupes
 - Phase 13 (Landing-Page Extract Vendor Swap) remains backlog under v1.3 — defer-until-friction
 
 ## Previous Milestone: v1.3 Source Consolidation
@@ -84,18 +96,28 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - ✓ competitor_intel.py + merge_signals.py Tavily code paths stripped — v1.3
 - ✓ Phase 7 Niche Pulse REMOVED post-v1.3 (pulse_fetch + pulse_synth deleted; references/phase7 deleted; report sections stripped)
 - ✓ Source taxonomy: tavily-extract removed; webfetch-landing added — v1.3
+- ✓ `perf_fetch.py` pulls `keyword_view` (active + paused account keywords, last 30d) — v1.4
+- ✓ `perf_synth.py` 4-bucket `positives-sync.json` (already_active / paused_in_account / covered_by_broad / new_to_add) — v1.4
+- ✓ Report `## Positives Sync` section + HTML mirrors negatives-sync UX — v1.4
+- ✓ `positives.csv` filters to `new_to_add` by default; `--include-existing` flag for full list — v1.4
+- ✓ Graceful skip across synth/render/csv when `raw/google-ads-keywords.json` absent — v1.4
+- ✓ SKILL.md Step 34a LLM re-tag step for borderline semantic dupes — v1.4
+- ✓ Existing Ad Groups in Account always rendered in Mapping section (post-v1.4 UX fix, commit 4674b00)
 
 ### Active
 
-<!-- v1.4 scope. Building toward these. -->
+<!-- v1.5 scope. Building toward these. -->
 
-- [ ] `perf_fetch.py` pulls `keyword_view` last 30d (active + paused account keywords) via existing Google Ads OAuth
-- [ ] `perf_synth.py` produces 4-bucket `positives-sync.json` (already_active / paused_in_account / covered_by_broad / new_to_add)
-- [ ] Report `## Positives Sync` section mirrors negatives-sync UX (md + HTML)
-- [ ] `positives.csv` filters to `new_to_add` by default; `--include-existing` CLI override for full list
-- [ ] Phase 14 graceful-skips when `raw/google-ads-keywords.json` absent (no OAuth)
-- [ ] SKILL.md LLM re-tag step catches borderline semantic dupes after script dedup (optional polish)
-- [ ] Test coverage: cross_ref_positives unit tests + golden positives-sync.json fixture
+- [ ] Brief `campaign_focus:` field parsed by `_parse_brief_fields` (single value or list)
+- [ ] `perf_fetch.py --campaign-filter '<name>'` adds `AND campaign.name = '...'` to all 4 GAQL queries
+- [ ] SKILL.md Phase 8 step auto-passes `campaign_focus` from brief.md to perf_fetch
+- [ ] Graceful degrade: no `campaign_focus` → account-wide pull (current v1.4 behavior)
+- [ ] Report header renders Campaign Focus callout when set; validates name against raw perf.json
+- [ ] `_build_ag_token_bag(name, kw_criteria, search_terms)` enriches Jaccard input beyond AG name
+- [ ] Jaccard scoring uses enriched bag; falls back to name-only when Phase 14 raw absent
+- [ ] Match `reason` field surfaces which evidence source contributed
+- [ ] Threshold recalibration documented in `references/phase11-account-structure-mapping.md`
+- [ ] Test coverage: brief w/ campaign_focus + respx GAQL filter assertion + golden mapping fixture asserting ≥50% coverage
 
 ### Out of Scope
 
@@ -143,8 +165,9 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | Ad-group mapping respects client structure — v1.2 | Junior PPC manager paste-experience: current export creates new ad groups (theme_intent slugs) instead of reusing client's existing ad groups. Mapping script reads Phase 8 perf data + writes existing names to CSV. | — Pending |
 
 | Drop Tavily v1.3 | Tavily plan quota exhausted mid-Lake Worth re-run; Serper /webpage covers landing-page extract OR Claude WebFetch covers it free. Reducing paid API surface = fewer quota concerns + one fewer key to manage. WebFetch chosen over Serper /webpage — free (no API credits), mirrors WebSearch baseline pattern, fits single-operator Claude Code workflow. | ✓ Good — shipped v1.3, empirical pass on Lake Worth run |
-| Positives Sync v1.4 (Phase 14) | Re-running skill against the same client produces duplicate keyword imports — operator manually scrubs `positives.csv` before Editor paste. Negatives already dedup via Phase 8 `negatives-sync.json`; positives are asymmetric. Use existing Google Ads OAuth + `keyword_view` GAQL (free quota). LLM re-tag for semantic dupes catches the 20% of cases plain string norm misses. | — Pending |
+| Positives Sync v1.4 (Phase 14) | Re-running skill against the same client produces duplicate keyword imports — operator manually scrubs `positives.csv` before Editor paste. Negatives already dedup via Phase 8 `negatives-sync.json`; positives are asymmetric. Use existing Google Ads OAuth + `keyword_view` GAQL (free quota). LLM re-tag for semantic dupes catches the 20% of cases plain string norm misses. | ✓ Good — shipped v1.4, live e2e on Lake Worth (64 new / 11 active / 8 covered_by_broad) |
+| Account-Aware Narrowing v1.5 (Phases 15-16) | Lake Worth dogfood revealed two related contamination issues: (1) Phase 8 GAQL pulls all 30+ campaigns when brief targets ONE → Positives/Negatives Sync + AG Mapping show irrelevant data; (2) AG Mapping Jaccard uses AG name only (~4 tokens) vs ranked kw (long phrases) → 0% coverage. Both fixed by extending Phase 11's `geo_focus` pattern to campaign + AG-criterion narrowing. No new APIs — reuses existing OAuth + raw data. | — Pending |
 | Use Google Ads API over Ahrefs paid-kw for positives sync source | Authoritative truth (exact text, match_type, status, perf) vs Ahrefs inference (~60-80% accuracy, no match_type). OAuth already wired in Phase 8. Ahrefs paid-kw considered as fallback for accounts without OAuth — deferred. | — Pending |
 
 ---
-*Last updated: 2026-05-15 after milestone v1.4 start*
+*Last updated: 2026-05-15 after milestone v1.5 start*
