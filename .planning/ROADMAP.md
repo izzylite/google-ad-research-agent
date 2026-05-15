@@ -275,7 +275,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 11. Account-Structure Mapping | 5/5 | Complete    | 2026-05-14 |
 | 12. Source Consolidation (Drop Tavily) | 6/6 | Complete    | 2026-05-15 |
 | 13. Landing-Page Extract Vendor Swap | 0/0 | Backlog (defer-until-friction) | — |
-| 14. Positives Sync | 6/6 | Complete   | 2026-05-15 |
+| 14. Positives Sync | 6/6 | Complete    | 2026-05-15 |
 
 ## Coverage Map
 
