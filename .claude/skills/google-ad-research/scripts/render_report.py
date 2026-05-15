@@ -3,6 +3,7 @@
 # dependencies = [
 #     "tabulate>=0.9.0",
 #     "python-dotenv>=1.0",
+#     "python-slugify>=8.0",
 # ]
 # ///
 """render_report.py — Assembles report.md + report.json from all upstream JSONs.
@@ -638,7 +639,30 @@ def _load_ad_group_mapping_for_render(run_dir: Path) -> dict | None:
         return None
 
 
-def render_ad_group_mapping_section(ad_group_mapping: dict | None) -> str:
+def _load_existing_ad_groups(run_dir: Path) -> list[dict] | None:
+    """Load `raw/google-ads-perf.json` ad_groups list so the Mapping section
+    can always enumerate the operator's account structure, even when no
+    keyword matches an existing ad group with high/medium confidence.
+
+    Returns None when perf data is absent or unparseable.
+    """
+    perf_path = run_dir / "raw" / "google-ads-perf.json"
+    if not perf_path.exists():
+        return None
+    try:
+        data = json.loads(perf_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    ags = data.get("ad_groups") or []
+    if not ags:
+        return None
+    return ags
+
+
+def render_ad_group_mapping_section(
+    ad_group_mapping: dict | None,
+    existing_ad_groups: list[dict] | None = None,
+) -> str:
     """Render the Ad Group Mapping section (ADGM-04 visualization).
 
     Returns "" when ad_group_mapping is None/empty — caller appends
@@ -647,6 +671,10 @@ def render_ad_group_mapping_section(ad_group_mapping: dict | None) -> str:
     Sections:
       * Coverage % + tier counts (high/medium/low)
       * Top 15 matches table (Keyword | Existing Ad Group | Confidence | Score)
+      * Keywords by Existing Ad Group (when matched count > 0)
+      * Existing Ad Groups in Account (always when perf data present — lets
+        operator see their full account structure even when no kw matched
+        with high/medium confidence)
       * Unmapped count
     """
     if not ad_group_mapping or not isinstance(ad_group_mapping, dict):
@@ -747,6 +775,67 @@ def render_ad_group_mapping_section(ad_group_mapping: dict | None) -> str:
             f"_{low} low-confidence keyword(s) routed to new cluster ad "
             f"groups (cluster slug used as ad group name in positives.csv)._\n\n"
         )
+
+    # Existing ad groups list — surfaces operator's account structure even
+    # when no kw matched with high/medium confidence. Without this, low-Jaccard
+    # accounts (short AG names vs long ranked kw) leave the operator unable
+    # to see which ad groups they actually have. Dedup by (name, campaign)
+    # to avoid noise from repeat names across campaigns.
+    if existing_ad_groups:
+        seen: set[tuple[str, str]] = set()
+        deduped: list[dict] = []
+        for ag in existing_ad_groups:
+            name = (ag.get("name") or "").strip()
+            campaign = (ag.get("campaign_name") or "").strip()
+            key = (name.lower(), campaign.lower())
+            if not name or key in seen:
+                continue
+            seen.add(key)
+            deduped.append(ag)
+        if deduped:
+            # Sort by clicks desc so active ad groups surface first; alpha
+            # tiebreak for stable rendering across runs.
+            deduped.sort(
+                key=lambda a: (
+                    -(a.get("clicks") or 0),
+                    (a.get("name") or "").lower(),
+                )
+            )
+            parts.append(
+                f"### Existing Ad Groups in Account ({len(deduped)})\n\n"
+            )
+            parts.append(
+                "_Your full account structure pulled from Phase 8 perf data. "
+                "Listed here regardless of match quality so you can manually "
+                "pick a destination ad group when the algorithm cannot find "
+                "a confident bucket._\n\n"
+            )
+            rows = []
+            for ag in deduped:
+                clicks = ag.get("clicks") or 0
+                impr = ag.get("impressions") or 0
+                cost = ag.get("cost_usd") or 0.0
+                conv = ag.get("conversions") or 0
+                rows.append([
+                    escape_md_cell(ag.get("name", "")),
+                    escape_md_cell(ag.get("campaign_name", "")),
+                    escape_md_cell(ag.get("status", "")),
+                    f"{int(clicks)}" if clicks else "—",
+                    f"{int(impr)}" if impr else "—",
+                    f"${cost:,.0f}" if cost else "—",
+                    f"{conv:.0f}" if conv else "—",
+                ])
+            parts.append(
+                tabulate(
+                    rows,
+                    headers=[
+                        "Ad Group", "Campaign", "Status",
+                        "Clicks", "Impr", "Cost", "Conv",
+                    ],
+                    tablefmt="github",
+                )
+            )
+            parts.append("\n\n")
 
     return "".join(parts)
 
@@ -1190,7 +1279,11 @@ def render_full_report(
     # both are organization-related; mapping shows how export_csv routes
     # keywords to existing client ad groups. Returns "" when no sidecar.
     _ad_group_mapping_for_section = _load_ad_group_mapping_for_render(run_dir)
-    mapping_md = render_ad_group_mapping_section(_ad_group_mapping_for_section)
+    _existing_ad_groups_for_section = _load_existing_ad_groups(run_dir)
+    mapping_md = render_ad_group_mapping_section(
+        _ad_group_mapping_for_section,
+        existing_ad_groups=_existing_ad_groups_for_section,
+    )
     if mapping_md:
         sections.append("\n")
         sections.append(mapping_md)
@@ -1853,7 +1946,9 @@ function renderAdGroupMapping() {{
   var agm = REPORT.ad_group_mapping;
   if (!agm) return;
   var matches = agm.matches || [];
-  if (!matches.length) return;
+  var existingAgs = agm.existing_ad_groups || [];
+  // Show section when EITHER matches OR a raw ad-group list is present.
+  if (!matches.length && !existingAgs.length) return;
   var section = document.getElementById("ad-group-mapping");
   var meta = document.getElementById("agmMeta");
   var content = document.getElementById("agmContent");
@@ -1913,13 +2008,69 @@ function renderAdGroupMapping() {{
       }}).join("");
       return '<details><summary><strong>' + htmlEscape(ag) + '</strong> <span class="cluster-meta">' + kws.length + ' keyword' + (kws.length !== 1 ? 's' : '') + '</span></summary><ul>' + items + '</ul></details>';
     }}).join("");
-  }} else {{
+  }} else if (matches.length) {{
     html += '<p style="color:#666;font-size:13px"><em>No high or medium-confidence matches in this run. All ranked keywords fall back to new cluster ad groups (see Ad Group Clusters section above).</em></p>';
   }}
   if (low) {{
     html += '<p style="color:#666;font-size:13px"><em>' + low + ' low-confidence keyword(s) routed to new cluster ad groups (cluster slug used as ad group name in positives.csv).</em></p>';
   }}
+  // Existing Ad Groups in Account — always render when perf data has them
+  // so operator can see their account structure regardless of match quality.
+  if (existingAgs.length) {{
+    var seen = {{}};
+    var dedup = [];
+    existingAgs.forEach(function(ag){{
+      var name = (ag.name || "").trim();
+      var camp = (ag.campaign_name || "").trim();
+      var key = name.toLowerCase() + "|" + camp.toLowerCase();
+      if (!name || seen[key]) return;
+      seen[key] = true;
+      dedup.push(ag);
+    }});
+    dedup.sort(function(a, b){{
+      var ca = (a.clicks || 0), cb = (b.clicks || 0);
+      if (cb !== ca) return cb - ca;
+      return (a.name || "").toLowerCase().localeCompare((b.name || "").toLowerCase());
+    }});
+    html += '<h3 style="margin-top:24px">Existing Ad Groups in Account (' + dedup.length + ')</h3>';
+    html += '<p style="color:#666;font-size:13px"><em>Your full account structure pulled from Phase 8 perf data. Listed here regardless of match quality so you can manually pick a destination ad group when the algorithm cannot find a confident bucket.</em></p>';
+    html += '<table><thead><tr><th>Ad Group</th><th>Campaign</th><th>Status</th><th>Clicks</th><th>Impr</th><th>Cost</th><th>Conv</th></tr></thead><tbody>';
+    html += dedup.map(function(ag){{
+      var clicks = ag.clicks || 0;
+      var impr = ag.impressions || 0;
+      var cost = ag.cost_usd || 0;
+      var conv = ag.conversions || 0;
+      var statusColor = ag.status === "ENABLED" ? "#15803d" : "#a16207";
+      return '<tr>'
+        + '<td>' + htmlEscape(ag.name || "") + '</td>'
+        + '<td style="color:#666">' + htmlEscape(ag.campaign_name || "") + '</td>'
+        + '<td style="color:' + statusColor + ';font-weight:600">' + htmlEscape(ag.status || "") + '</td>'
+        + '<td>' + (clicks ? clicks.toLocaleString() : '—') + '</td>'
+        + '<td>' + (impr ? impr.toLocaleString() : '—') + '</td>'
+        + '<td>' + (cost ? '$' + Math.round(cost).toLocaleString() : '—') + '</td>'
+        + '<td>' + (conv ? Math.round(conv).toLocaleString() : '—') + '</td>'
+        + '</tr>';
+    }}).join('');
+    html += '</tbody></table>';
+  }}
+  // Update meta line if there were no matches at all (matches.length === 0)
+  // — meta was set earlier only when matches existed.
+  if (!matches.length) {{
+    meta.textContent = dedupedAgsMeta(existingAgs);
+  }}
   content.innerHTML = html;
+}}
+
+function dedupedAgsMeta(agsList) {{
+  var seen = {{}};
+  var n = 0;
+  agsList.forEach(function(ag){{
+    var name = (ag.name || "").trim();
+    var camp = (ag.campaign_name || "").trim();
+    var key = name.toLowerCase() + "|" + camp.toLowerCase();
+    if (name && !seen[key]) {{ seen[key] = true; n++; }}
+  }});
+  return n + " existing ad group" + (n !== 1 ? "s" : "") + " in account";
 }}
 
 renderKeywords(); renderClusters(); renderCompetitors();
@@ -2035,6 +2186,18 @@ def build_report_json(
         report["ad_group_mapping_summary"] = ad_group_mapping_summary
     if ad_group_mapping is not None:
         report["ad_group_mapping"] = ad_group_mapping
+    # Surface the operator's full existing-ad-group list so the HTML JS
+    # renderAdGroupMapping() can always show their account structure even
+    # when no kw matched with high/medium confidence (low-Jaccard accounts).
+    existing_ad_groups = _load_existing_ad_groups(run_dir)
+    if existing_ad_groups:
+        if ad_group_mapping is None:
+            report["ad_group_mapping"] = {"matches": [], "existing_ad_groups": existing_ad_groups}
+        else:
+            report["ad_group_mapping"] = {
+                **ad_group_mapping,
+                "existing_ad_groups": existing_ad_groups,
+            }
     return report
 
 
