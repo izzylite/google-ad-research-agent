@@ -238,6 +238,27 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   5. Full test suite passes; e2e smoke produces equivalent report.md competitor section quality.
 **Plans:** TBD — defer until trigger condition met.
 
+---
+
+## Milestone v1.4: Positives Sync
+
+**Started:** 2026-05-15
+**Goal:** Mirror negatives-sync UX for positives — diff ranked keywords against the client's currently-active Google Ads keywords and surface only net-new in `positives.csv`. Eliminates the manual dedup pain operators hit on skill re-runs against the same account.
+**Granularity:** standard (1 phase for 7 requirements)
+**Coverage:** 7/7 v1.4 requirements mapped (100%)
+
+### Phase 14: Positives Sync
+**Goal:** Operator re-running the skill against a client whose Google Ads OAuth is already wired (Phase 8) sees a Positives Sync section in `report.md` + `report.html` with 4 buckets (`already_active` / `paused_in_account` / `covered_by_broad` / `new_to_add`) and an Editor-ready `positives.csv` that defaults to only the net-new keywords — no manual scrub needed before paste. Same skill on an account without OAuth degrades gracefully (sync section omitted, CSV falls back to full ranked list).
+**Depends on:** Phase 8 (existing Google Ads OAuth wiring + `perf_fetch.py` foundation), Phase 6 (`render_report.py` section composition), Phase 10 (`export_csv.py` extension surface). No new external APIs — reuses free Google Ads API quota.
+**Requirements:** POS-01, POS-02, POS-03, POS-04, POS-05, POS-06, POS-07
+**Success Criteria** (what must be TRUE):
+  1. Operator re-runs the skill on a client whose Google Ads account is already OAuth-wired (Phase 8); `positives.csv` contains only `new_to_add` rows by default — no manual dedup against the live account needed before Editor paste.
+  2. Operator passes `--include-existing` to `export_csv.py` and the full ranked list (all 4 buckets) lands in `positives.csv` — backward-compatible escape hatch for the v1.0 / pre-Phase-8 workflow.
+  3. Operator runs the skill on an account without Google Ads OAuth (`raw/google-ads-keywords.json` absent); Phase 14 graceful-skips with no errors — Positives Sync section omitted from the report and `positives.csv` falls back to the full ranked list.
+  4. Operator opens `report.md` and `report.html` and sees a `## Positives Sync` section that mirrors the existing negatives-sync UX: stats line (our_total / already_active / paused_in_account / covered_by_broad / new_to_add) above an enumerated `new_to_add` list (with category + justification per row) and collapsible / count-only views for the other 3 buckets.
+  5. Borderline semantic-dupe keywords (e.g. `urgent care lake worth` ranked vs `lake worth urgent care` active in account, or ranked-exact `auto accident doctor` covered by account-broad `accident doctor`) get re-tagged from `new_to_add` → `already_active` (or `covered_by_broad`) by the SKILL.md LLM re-tag step after script dedup — script + LLM tandem catches both string-norm hits and the ~20% of cases plain hashing misses.
+**Plans:** TBD — to be drafted via `/gsd:plan-phase 14`.
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -255,6 +276,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 11. Account-Structure Mapping | 5/5 | Complete    | 2026-05-14 |
 | 12. Source Consolidation (Drop Tavily) | 6/6 | Complete    | 2026-05-15 |
 | 13. Landing-Page Extract Vendor Swap | 0/0 | Backlog (defer-until-friction) | — |
+| 14. Positives Sync | 0/0 | Not started (defining plan) | — |
 
 ## Coverage Map
 
@@ -271,9 +293,10 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 10 | EXPT-01, EXPT-02, EXPT-03, EXPT-04, EXPT-05, STEP-01, STEP-02, STEP-03, STEP-04 | 9 |
 | 11 | GEO-01, GEO-02, GEO-03, GEO-04, GEO-05, ADGM-01, ADGM-02, ADGM-03, ADGM-04, ADGM-05, ADGM-06 | 11 |
 | 12 | TVLY-01..04, WFCH-01..04, PULSE-10..12 | 11 |
-| **Total** | | **89 / 89** |
+| 14 | POS-01, POS-02, POS-03, POS-04, POS-05, POS-06, POS-07 | 7 |
+| **Total** | | **96 / 96** |
 
-No orphans. No duplicates. Every v1.0 + v1.1 + v1.2 + v1.3 requirement maps to exactly one phase.
+No orphans. No duplicates. Every v1.0 + v1.1 + v1.2 + v1.3 + v1.4 requirement maps to exactly one phase.
 
 ## Phase Ordering Rationale
 
@@ -285,6 +308,7 @@ No orphans. No duplicates. Every v1.0 + v1.1 + v1.2 + v1.3 requirement maps to e
 - **Report assembly last (v1.0):** render is the integration test for every upstream stage; markdown sanitization and JSON-twin schema validation depend on all data being final.
 - **Economics before launch kit (v1.1):** Phase 10 CSVs need Phase 9's `suggested_max_cpc_micros` for the Max-CPC column; Phase 10 Next-Steps checklist needs Phase 9's mid-forecast spend for the daily-budget step and Phase 9's compliance flags to decide checklist ordering. Splitting data layer from output layer keeps each phase's success criteria observable in isolation.
 - **Why not one fat Phase 9?** 23 requirements in one phase produces ~13 plans and a coverage map where success criteria mix data-shape concerns (does `forecast.json` exist?) with output concerns (does CSV import into Editor?). Splitting yields two phases of ~5-7 plans each with crisper success criteria.
+- **Positives Sync (v1.4) deferred until after v1.0 ships, not bundled with Phase 8:** the negatives-sync architecture (Phase 8 GADS-04) had to prove out before mirroring it for positives; v1.4 inherits the same OAuth wiring + `perf_synth.py` shape, so the engineering surface is small (~3 scripts touched, no new APIs) and the phase stays single — coverage of POS-01..07 in one delivery boundary keeps success criteria observable end-to-end.
 
 ---
 *Roadmap created: 2026-05-08*
@@ -296,3 +320,4 @@ No orphans. No duplicates. Every v1.0 + v1.1 + v1.2 + v1.3 requirement maps to e
 *v1.1 milestone phases (9-10) added: 2026-05-14*
 *v1.2 milestone phase 11 shipped: 2026-05-15*
 *v1.3 milestone phase 12 shipped: 2026-05-15 — Tavily dropped; WebFetch replaces COMP-03; Serper /news single-source niche pulse. 89/89 requirements Complete.*
+*v1.4 milestone phase 14 added: 2026-05-15 — Positives Sync (POS-01..07) pending; 96 total v1 requirements (89 Complete + 7 Pending).*

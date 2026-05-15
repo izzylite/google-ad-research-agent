@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Positives Sync
-status: defining_requirements
-stopped_at: Milestone v1.4 started 2026-05-15 — defining requirements (POS-01..07). v1.3 shipped 2026-05-15 (89/89 Complete).
-last_updated: "2026-05-15T11:00:00.000Z"
+status: roadmap_drafted
+stopped_at: Milestone v1.4 — Phase 14 added to ROADMAP.md 2026-05-15. POS-01..07 mapped, 100% coverage. Next, `/gsd:plan-phase 14`.
+last_updated: "2026-05-15T11:30:00.000Z"
 progress:
-  total_phases: 12
+  total_phases: 13
   completed_phases: 12
   total_plans: 49
   completed_plans: 49
@@ -26,10 +26,10 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | Not started (defining requirements) |
-| Plan | — |
-| Status | Defining requirements |
-| Last activity | 2026-05-15 — Milestone v1.4 started; scope drafted at `.planning/proposed/v1.4-positives-sync.md`; awaiting REQUIREMENTS.md + ROADMAP.md updates |
+| Phase | 14 — Positives Sync |
+| Plan | — (not yet drafted) |
+| Status | Not started — defining plan |
+| Last activity | 2026-05-15 — REQUIREMENTS.md POS-01..07 added; ROADMAP.md Phase 14 section + coverage map updated (96/96 mapped). Awaiting `/gsd:plan-phase 14`. |
 
 ## Previous Milestone
 
@@ -45,13 +45,14 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 
 | Metric | Value |
 |--------|-------|
-| Phases planned | 12 / 12 |
-| Phases complete | 12 / 12 (v1.0 + v1.1 + v1.2 + v1.3 all complete) |
+| Phases planned | 13 / 13 (12 shipped + Phase 13 BACKLOG + Phase 14 pending) |
+| Phases complete | 12 / 13 (v1.0 + v1.1 + v1.2 + v1.3 all complete; v1.4 pending) |
 | Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) + 5 (v1.1 Phase 10) + 5 (v1.2 Phase 11) + 6 (v1.3 Phase 12) = 49 |
 | v1.0 requirements complete | 52 / 52 |
 | v1.1 requirements complete | 23 / 23 (BIDS 4/4, FRCS 5/5, CMPL 5/5, EXPT 5/5, STEP 4/4) |
 | v1.2 requirements complete | 11 / 11 (GEO 5/5, ADGM 6/6) |
 | v1.3 requirements complete | 11 / 11 (TVLY 4/4, WFCH 4/4, PULSE 3/3) |
+| v1.4 requirements complete | 0 / 7 (POS 0/7 — Phase 14 pending) |
 | Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
@@ -239,6 +240,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 12-source-consolidation-drop-tavily]: [Plan 12-05] Test fixture scrub strategy — 6 fixture JSONs (ranked_full, ranked_phase3, ranked_no_cpc, ranked_partial_cpc, ranked_with_cpc, keywords_phase2) rewrote tavily / tavily-extract / tavily-tesco / tavily-ocado source strings as serper-ads or websearch-baseline (valid post-Phase-12 sources). 6 consumer test files (test_bid_suggest/test_compliance_check/test_forecast_budget/test_generate_negatives/test_rank_keywords/test_render_report/test_validate_clusters) untouched — they assert on sources array presence, not specific values. Full suite stayed at 250 passed.
 - [Phase 12-source-consolidation-drop-tavily]: [Plan 12-05] Operator-grep must-have re-interpreted: 'zero matches' applies to PRODUCTION CODE only (scripts/ excluding tests/, references/, SKILL.md, lib/, .env.example) — proven by test_repo_grep_tavily_clean GREEN. Test code retains tavily strings intentionally: absence-assertions in test_audit_tavily_removed (43 mentions), test_competitor_intel (20), test_pulse_fetch (14), test_merge_signals (8), test_pulse_synth (2), test_config (2). Wave-0 audit-test SKIP_DIRS already encodes this design (tests/ + fixtures/ skipped). Obfuscating absence-assertions to satisfy a literal grep would be an anti-pattern.
 - [Phase 12-post-ship 2026-05-15]: WebFetch real-run empirical pass — operator ran skill on Lake Worth medical/chiropractor brief. WebFetch fired clean on 5 advertiser URLs (florida injury centers x2, mylakeworthchiropractor.com, alexkeithchiropractor.com, doctors.wellingtonregional.com) — no permission-prompt friction, no reliability issues. Phase 13 (Serper /scrape vendor swap, ROADMAP backlog commit 1227cbf) trigger NOT met; backlog stays parked. WebFetch path validated as production-ready; v1.3 closeout decision confirmed by real-run evidence.
+- [v1.4 roadmap]: Single-phase milestone (Phase 14 only, 7 reqs POS-01..07) — entire engineering surface is extensions to existing scripts (perf_fetch.py + perf_synth.py + render_report.py + export_csv.py); no new external APIs, no new scripts. Mirrors negatives-sync architecture from Phase 8 GADS-04 — proven shape, just inverted (positives instead of negatives). Splitting into 2 phases would yield 3-4 plans each with no observable-success boundary between them.
+- [v1.4 roadmap]: POS-06 (SKILL.md LLM re-tag step) treated as REQUIRED scope per user, not optional polish — the ~20% script-miss rate on semantic dupes (e.g. token-reorder `urgent care lake worth` vs `lake worth urgent care`, match-type drift like ranked-exact vs account-broad) is the most operator-visible failure mode of the sync. Shipping without LLM re-tag would leave the manual-dedup pain partially intact, defeating the milestone goal.
+- [v1.4 roadmap]: Phase 13 (Landing-Page Extract Vendor Swap) stays parked as defer-until-friction backlog under v1.3 — WebFetch real-run pass on Lake Worth brief means trigger condition not met. Phase 14 (Positives Sync) skips ahead in the numbering; Phase 13 is NOT a prerequisite to Phase 14, the two are orthogonal.
 
 ### Open Questions / Todos
 
@@ -249,6 +253,8 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [v1.1] Bid multiplier calibration (transactional 1.2 / commercial 0.8 / informational 0.4 / navigational 1.0) — defensible starting point per PROJECT.md decision; revisit after first 3 v1.1 runs against client CPA targets.
 - [v1.1] FRCS avg-CPC-to-max-CPC ratio of 0.65 and band spread (×0.5 / ×1.0 / ×1.5) — directional anchor, not Google forecast; measure delta against real campaign data after first 2-3 launches.
 - [v1.1] Compliance vertical token lists — start with 5 (medical/legal/finance/gambling/crypto); operator can extend via `references/compliance-verticals.json`. Track which verticals get extended for v2 preset signal.
+- [v1.4] `covered_by_broad` heuristic false-positive rate — Google's broad-match expansion is fuzzy; measure how often the LLM re-tag flips script's `covered_by_broad` calls in the first 2-3 v1.4 runs.
+- [v1.4] PMax / Search-Themes auto-added keywords — `keyword_view` surfaces them; will appear in `already_active`. Operator confusion risk if origin not surfaced — add origin field to HTML if friction observed.
 
 ### Blockers
 
@@ -256,16 +262,17 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T11:00:00.000Z
+**Last session:** 2026-05-15T11:30:00.000Z
 
-**Stopped at:** Milestone v1.4 started. PROJECT.md updated (Active = POS scope), STATE.md reset. Scope parked at `.planning/proposed/v1.4-positives-sync.md`. Next: REQUIREMENTS.md additions (POS-01..07), then gsd-roadmapper for Phase 14.
+**Stopped at:** Milestone v1.4 roadmap entry added. ROADMAP.md Phase 14 section + coverage map updated (96/96 mapped). REQUIREMENTS.md traceability already had POS-01..07 mapped Pending. STATE.md current position now points at Phase 14.
 
-**Next session:** Continue v1.4 setup — define REQUIREMENTS.md POS-01..07, spawn roadmapper for Phase 14, then `/gsd:plan-phase 14`.
+**Next session:** Run `/gsd:plan-phase 14` to draft the Phase 14 plans (Positives Sync — perf_fetch GAQL extension, perf_synth cross_ref_positives, render_report sync section, export_csv --include-existing flag, SKILL.md LLM re-tag step, test coverage).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\REQUIREMENTS.md`
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\ROADMAP.md`
+- `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\proposed\v1.4-positives-sync.md`
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\research\SUMMARY.md`
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\research\ARCHITECTURE.md`
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\research\PITFALLS.md`
