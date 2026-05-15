@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: Completed 15-02-PLAN.md (render_report.py campaign_focus + report.json + 9 RED→GREEN)
-last_updated: "2026-05-15T15:23:05.784Z"
+stopped_at: Completed 15-03-PLAN.md (SKILL.md + references wiring; live e2e Lake Worth approved; Phase 15 ready for verification gate)
+last_updated: "2026-05-15T15:52:57.517Z"
 progress:
   total_phases: 15
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 59
-  completed_plans: 58
+  completed_plans: 59
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 15 — Campaign Focus |
-| Plan | 15-02 complete (next: 15-03 SKILL.md wiring) |
-| Status | In progress — Wave 2 perf_fetch + render_report both shipped |
-| Last activity | 2026-05-15 — Plan 15-02 complete: render_report.py _parse_brief_fields campaign_focus key + render_campaign_focus_section + pipeline wiring + report.json campaign_focus key; all 9 Plan 15-00 RED render tests GREEN; full suite 226/48/0; commits 9e589d2, 6bbad29 |
+| Plan | 15-03 complete (Phase 15 ready for verification gate; Phase 16 next milestone) |
+| Status | Phase complete — all 4 plans shipped (00 RED + 01 perf_fetch + 02 render_report + 03 SKILL wiring); live e2e Lake Worth approved |
+| Last activity | 2026-05-15 — Plan 15-03 complete: SKILL.md Step 3/4 (commit bfaa97f) + references/phase8-account-data.md Step 33 contract + downstream-inheritance + anti-patterns (commit 23eb1f3); live e2e Lake Worth approved (30+ campaigns → 1, 35+ AGs → 3, 47 focused keywords); REQUIREMENTS CAMP-03 + CAMP-04 marked complete (commit 146b6f6) |
 
 ## Previous Milestone
 
@@ -104,6 +104,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 14 P05 | 12min | 3 tasks | 2 files |
 | Phase 15-campaign-focus P01 | 3 min | 2 tasks | 1 files |
 | Phase 15-campaign-focus P02 | 2 min | 2 tasks | 1 files |
+| Phase 15-campaign-focus P03 | 12 min | 3 tasks | 3 files |
 
 ### Execution History
 
@@ -142,6 +143,8 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 15-campaign-focus]: [15-01]: Pipe-split heuristic for --campaign-filter — ' | ' (space-pipe-space) preserved as single Google-Ads-naming-convention campaign name; bare '|' (no spaces) splits into list. Single-quoted operator copy-paste of names like 'Search | Lake Worth Accident Exams | Manual CPC' stays one filter value.
 - [Phase 15-campaign-focus]: [15-01]: Empty-clause contract — _apply_campaign_filter returns '' when filter is None/empty so callers inject {campaign_clause} unconditionally; preserves v1.4 GAQL byte-identical modulo whitespace (CAMP-04 backward compat).
 - [Phase 15-campaign-focus]: [15-02]: render_campaign_focus_section bypasses escape_md_cell — Google Ads campaign names like 'Search | Lake Worth Accident Exams | Manual CPC' use pipes by convention; escaping breaks operator recognition. Name validation against perf.json is case-sensitive (Google Ads API preserves case + enforces uniqueness).
+- [Phase 15-campaign-focus]: [15-03]: SKILL.md stays at 497/500 lines by offloading Step 33 --campaign-filter contract to references/phase8-account-data.md — trigger row + template line are the only SKILL.md edits; detailed contract loads on demand via progressive disclosure
+- [Phase 15-campaign-focus]: [15-03]: Live e2e on real Lake Worth OAuth account is the closeout gate, not unit tests alone — Plan 15-00/15-01/15-02 unit tests are necessary but not sufficient; only a real Google Ads pull confirms the GAQL clause narrows server-side (verified: 30+ campaigns → 1, 35+ AGs → 3, 47 focused keywords)
 
 ### Open Questions / Todos
 
@@ -163,9 +166,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T15:23:05.780Z
+**Last session:** 2026-05-15T15:52:57.513Z
 
-**Stopped at:** Completed 15-02-PLAN.md (render_report.py campaign_focus + report.json + 9 RED→GREEN)
+**Stopped at:** Completed 15-03-PLAN.md (SKILL.md + references wiring; live e2e Lake Worth approved; Phase 15 ready for verification gate)
 
 **Next session:** `/gsd:execute-plan 15-01` (perf_fetch.py `--campaign-filter` + thread through 4 GAQL queries) and/or `/gsd:execute-plan 15-02` (render_report.py `_parse_brief_fields` campaign_focus + `render_campaign_focus_section`). Plans land independently; 15-03 SKILL.md wiring follows both.
 

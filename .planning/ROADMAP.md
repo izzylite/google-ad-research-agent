@@ -277,7 +277,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. Ad Group Mapping section shows only the ad groups inside the focused campaign (e.g. the 3 AGs under "Lake Worth Accident Exams") instead of all 35 account-wide ad groups.
   4. Operator omits `campaign_focus` from `brief.md` → skill runs account-wide unchanged (current v1.4 behavior preserved end-to-end; backward compat verified by re-running an existing pre-v1.5 brief).
   5. Operator types a `campaign_focus` value that does not match any campaign name in `raw/google-ads-perf.json` → `render_report.py` emits a warning callout in the report header before downstream sections render against the (empty) narrowed result.
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 - [x] 15-00-PLAN.md — Wave 1: RED test scaffolding (test_perf_fetch + test_render_report + brief_with_campaign_focus.md + google-ads-perf-with-campaign.json fixtures) — CAMP-06
 - [ ] 15-01-PLAN.md — Wave 2: perf_fetch.py --campaign-filter CLI + thread through 4 GAQL queries + SQL-quote escape — CAMP-02
 - [ ] 15-02-PLAN.md — Wave 2: render_report.py _parse_brief_fields campaign_focus + render_campaign_focus_section + name validation + report.json key — CAMP-01, CAMP-05
@@ -314,7 +314,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 12. Source Consolidation (Drop Tavily) | 6/6 | Complete    | 2026-05-15 |
 | 13. Landing-Page Extract Vendor Swap | 0/0 | Backlog (defer-until-friction) | — |
 | 14. Positives Sync | 6/6 | Complete    | 2026-05-15 |
-| 15. Campaign Focus | 1/4 | In progress (Wave 1 RED stubs landed) | — |
+| 15. Campaign Focus | 4/4 | Complete   | 2026-05-15 |
 | 16. Ad Group Mapping Token-Bag Enrichment | 0/0 | Not started | — |
 
 ## Coverage Map
