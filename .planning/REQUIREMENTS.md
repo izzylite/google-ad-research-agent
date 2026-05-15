@@ -310,11 +310,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v1.0 requirements: 52 total (Phases 1-8, all complete)
 - v1.1 requirements: 23 total (Phase 9 + 10, all complete)
 - v1.2 requirements: 11 total (Phase 11, all complete)
-- v1.3 requirements: 11 total (TVLY×4 + WFCH×4 + PULSE×3) — Phase 12
+- v1.3 requirements: 11 / 11 Complete (TVLY×4 + WFCH×4 + PULSE×3) — Phase 12
 - v1.3 mapped to phases: 11 (Phase 12)
 - Unmapped: 0
 - Orphaned: 0
 
+**Total: 89 / 89 Complete** (52 v1.0 + 23 v1.1 + 11 v1.2 + 11 v1.3).
+
 ---
 *Requirements defined: 2026-05-08*
-*Last updated: 2026-05-15 — Phase 11 plans 5/5 executed; all 11 v1.2 requirements (GEO-01..05 + ADGM-01..06) marked Complete. Milestone v1.2 shipped. Total requirements: 78/78 Complete (52 v1.0 + 23 v1.1 + 11 v1.2).*
+*Last updated: 2026-05-15 — Phase 12 plans 6/6 executed; all 11 v1.3 requirements (TVLY-01..04 + WFCH-01..04 + PULSE-10..12) marked Complete. Milestone v1.3 shipped (Tavily dropped; WebFetch replaces COMP-03 landing-page extraction; Serper /news single-source for niche pulse). Total requirements: 89/89 Complete (52 v1.0 + 23 v1.1 + 11 v1.2 + 11 v1.3).*

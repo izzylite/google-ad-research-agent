@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Phases
-status: unknown
-stopped_at: "Completed 12-04-PLAN.md — WFCH-01 + WFCH-02 + PULSE-12 GREEN. 8/8 Wave 0 audit tests GREEN. SKILL.md 486/500. 3 commits: 9028020 (Task 1 docs), 0b21392 (Task 2 SKILL+lib), 36f3a59 (Task 3 render+JOIN). Suite: 249 passed, 1 failed (Plan 12-01 test_config leftover, deferred to 12-05), 0 skipped."
-last_updated: "2026-05-15T04:16:19.661Z"
+milestone: v1.3
+milestone_name: Source Consolidation (Drop Tavily)
+status: awaiting_next_milestone
+stopped_at: Milestone v1.3 shipped — Phase 12 complete. Tavily dropped; WebFetch replaces COMP-03; Serper /news single-source niche pulse. 89/89 requirements Complete. Phase 13 (Serper /scrape vendor swap) ready in ROADMAP backlog (defer-until-friction, commit 1227cbf).
+last_updated: "2026-05-15T10:08:56.950Z"
 progress:
-  total_phases: 11
-  completed_phases: 9
-  total_plans: 49
-  completed_plans: 48
+  total_phases: 12
+  completed_phases: 12
+  total_plans: 55
+  completed_plans: 55
 ---
 
 # State: Google Ad Research Agent
@@ -26,12 +26,14 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | 12 — Source Consolidation (Drop Tavily) |
-| Plan | 04 complete (Wave 2 done; Plan 12-05 final-gate next) |
-| Status | WFCH-01 + WFCH-02 + PULSE-12 GREEN; 8/8 Wave 0 audit tests GREEN; SKILL.md 486/500; Plan 12-05 (full-suite gate + e2e smoke) ready |
-| Last activity | 2026-05-15 — Plan 12-04 rewrote Phase 5 + Phase 7 docs for WebFetch; render_report.py JOINs raw/competitor-landing-pages.json. Suite: 249 passed, 1 failed (test_config Plan-12-01 leftover, deferred), 0 skipped. |
+| Phase | 12 — Complete |
+| Plan | All 6/6 plans complete |
+| Status | Milestone v1.3 shipped — Tavily dropped; WebFetch replaces COMP-03; Serper /news single-source. Full suite 250 passed / 0 failed / 0 skipped. Phase 13 (Serper /scrape vendor swap) ready in ROADMAP backlog. |
+| Last activity | 2026-05-15 — Plan 12-05 closed Phase 12: deferred test_config RED fixed, 6 fixture JSONs scrubbed, REQUIREMENTS/STATE/ROADMAP updated. e2e smoke approved by operator. |
 
 ## Previous Milestone
+
+v1.3 — Source Consolidation / Drop Tavily (1 phase, 11 reqs). Shipped 2026-05-15. tavily_extract.py deleted; WebFetch replaces COMP-03 landing-page extraction; Serper /news single-source niche pulse; pyproject deps cleaned; full suite 250/250.
 
 v1.2 — Account-Structure Mapping (1 phase, 11 reqs). Shipped 2026-05-15. Brief `geo_focus`, us-cities filter, ad_group_match.
 
@@ -43,12 +45,13 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 
 | Metric | Value |
 |--------|-------|
-| Phases planned | 11 / 11 |
-| Phases complete | 11 / 11 (v1.0 + v1.1 + v1.2 all complete) |
-| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) + 5 (v1.1 Phase 10) + 5 (v1.2 Phase 11) = 43 |
+| Phases planned | 12 / 12 |
+| Phases complete | 12 / 12 (v1.0 + v1.1 + v1.2 + v1.3 all complete) |
+| Plans complete | 27 (v1.0) + 6 (v1.1 Phase 9) + 5 (v1.1 Phase 10) + 5 (v1.2 Phase 11) + 6 (v1.3 Phase 12) = 49 |
 | v1.0 requirements complete | 52 / 52 |
 | v1.1 requirements complete | 23 / 23 (BIDS 4/4, FRCS 5/5, CMPL 5/5, EXPT 5/5, STEP 4/4) |
 | v1.2 requirements complete | 11 / 11 (GEO 5/5, ADGM 6/6) |
+| v1.3 requirements complete | 11 / 11 (TVLY 4/4, WFCH 4/4, PULSE 3/3) |
 | Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
@@ -87,6 +90,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 12-source-consolidation-drop-tavily P03 | 5min | 2 tasks | 4 files |
 | Phase 12-source-consolidation-drop-tavily P02 | 25min | 2 tasks | 4 files |
 | Phase 12-source-consolidation-drop-tavily P04 | 45min | 3 tasks | 7 files |
+| Phase 12-source-consolidation-drop-tavily P05 | ~20min | 3 tasks | 10 files |
 
 ### Execution History
 
@@ -230,6 +234,10 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 12-source-consolidation-drop-tavily]: [Plan 12-04] render_competitor_section signature extended with optional run_dir kwarg (not required) — preserves backward compat with every existing test in test_render_report.py while enabling Wave 0 WFCH-02 JOIN. Adding required arg would have cascade-broken 41 pre-existing GREEN tests.
 - [Phase 12-source-consolidation-drop-tavily]: [Plan 12-04] Out-of-scope file scrubs (lib/http.py 1-line docstring + render_report.py 5 Tavily mentions) bundled with their owning task commits rather than spawning separate deviation commits — Rule 3 (blocking) justification: test_repo_grep_tavily_clean is the gate, and decoupling would have forced Plan 12-05 to redo this work.
 - [Phase 12-source-consolidation-drop-tavily]: [Plan 12-04] Wave 0 test fixture bug (Rule 1) — test_competitor_section_joins_webfetch_results wrote negatives.json as tier-keyed dict; Phase 6 contract is flat list. Fixed inline because the test's actual contract is competitor-section content assertions, not negatives shape; without fix, render_negatives_section crashes before reaching the section under test.
+- [Phase 12-source-consolidation-drop-tavily]: [Plan 12-05] Phase 12 closeout: e2e smoke approved by operator without running full 9-step manual list — single-operator project; operator-judgment override. WebFetch friction will be empirically tested in next real-brief run. If friction observed, Phase 13 (Serper /scrape vendor swap, added to ROADMAP 1227cbf as defer-until-friction backlog) is ready to activate. Phase 12 ships v1.3 with WebFetch path; Phase 13 is the fallback.
+- [Phase 12-source-consolidation-drop-tavily]: [Plan 12-05] Deferred test_config::test_required_keys_defined RED finally GREEN — flipped assertion from 'TAVILY_API_KEY in REQUIRED_KEYS' to 'not in'. Plan-12-01 leftover deferred to 12-05 per scope-boundary rule; resolved with the minimum 1-line edit specified in deferred-items.md.
+- [Phase 12-source-consolidation-drop-tavily]: [Plan 12-05] Test fixture scrub strategy — 6 fixture JSONs (ranked_full, ranked_phase3, ranked_no_cpc, ranked_partial_cpc, ranked_with_cpc, keywords_phase2) rewrote tavily / tavily-extract / tavily-tesco / tavily-ocado source strings as serper-ads or websearch-baseline (valid post-Phase-12 sources). 6 consumer test files (test_bid_suggest/test_compliance_check/test_forecast_budget/test_generate_negatives/test_rank_keywords/test_render_report/test_validate_clusters) untouched — they assert on sources array presence, not specific values. Full suite stayed at 250 passed.
+- [Phase 12-source-consolidation-drop-tavily]: [Plan 12-05] Operator-grep must-have re-interpreted: 'zero matches' applies to PRODUCTION CODE only (scripts/ excluding tests/, references/, SKILL.md, lib/, .env.example) — proven by test_repo_grep_tavily_clean GREEN. Test code retains tavily strings intentionally: absence-assertions in test_audit_tavily_removed (43 mentions), test_competitor_intel (20), test_pulse_fetch (14), test_merge_signals (8), test_pulse_synth (2), test_config (2). Wave-0 audit-test SKIP_DIRS already encodes this design (tests/ + fixtures/ skipped). Obfuscating absence-assertions to satisfy a literal grep would be an anti-pattern.
 
 ### Open Questions / Todos
 
@@ -247,11 +255,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T04:16:07.466Z
+**Last session:** 2026-05-15T10:08:34.693Z
 
-**Stopped at:** Completed 12-04-PLAN.md — WFCH-01 + WFCH-02 + PULSE-12 GREEN. 8/8 Wave 0 audit tests GREEN. SKILL.md 486/500. 3 commits: 9028020 (Task 1 docs), 0b21392 (Task 2 SKILL+lib), 36f3a59 (Task 3 render+JOIN). Suite: 249 passed, 1 failed (Plan 12-01 test_config leftover, deferred to 12-05), 0 skipped.
+**Stopped at:** Phase 12 (v1.3) shipped — Tavily dropped; WebFetch replaces COMP-03; Serper /news single-source. 89/89 requirements Complete. Phase 13 (Serper /scrape vendor swap) added to ROADMAP as defer-until-friction backlog (commit 1227cbf).
 
-**Next session:** Milestone v1.2 complete. All 11 / 11 phases shipped (v1.0 + v1.1 + v1.2). No active phase. Options: (1) Define v1.3 milestone scope, (2) Address open-question/todos list (composite ranking calibration, Tavily credit metrics, match-type recommendation validation, v1.1 bid multiplier calibration, FRCS ratio tuning), (3) Triage v2 backlog (VOLM-*, VPRS-*, TOOL-*).
+**Next session:** Milestone v1.3 complete. All 12 / 12 phases shipped (v1.0 + v1.1 + v1.2 + v1.3). 89 / 89 requirements complete. No active phase. Options: (1) Run a real-brief end-to-end smoke in fresh Claude Code session to empirically test WebFetch friction; if disruptive, activate Phase 13 (Serper /scrape vendor swap, defer-until-friction backlog), (2) Define v1.4 milestone scope (open backlog: composite ranking calibration, match-type validation, v1.1 bid multiplier calibration, FRCS ratio tuning, niche-pulse MIN_THEME_MENTIONS_FLOOR re-tune), (3) Triage v2 backlog (VOLM-*, VPRS-*, TOOL-*).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`

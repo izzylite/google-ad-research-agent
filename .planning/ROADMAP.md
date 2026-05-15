@@ -216,13 +216,14 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. `competitor_intel.py` keeps Serper requery for ads block + Serper-organic fallback for advertiser identity; Tavily code path deleted.
   4. `pulse_fetch.py` removes `_tavily_news` call; only Serper `/news` survives; `pulse_synth.py` simplified to single-source.
   5. Full test suite passes after removal (target: 252+ tests, with test_tavily_extract.py deleted and Phase 5/7 tests adapted to new contract).
-**Plans:** 5/6 plans executed
-- [ ] 12-00-PLAN.md — Wave 0: RED test scaffolding (test_audit_tavily_removed.py + test_pulse_fetch.py + extensions to test_pulse_synth/test_merge_signals/test_competitor_intel/test_render_report + 2 fixture JSONs)
-- [ ] 12-01-PLAN.md — Wave 1: pure deletion (TVLY-01..04 — tavily_extract.py + test_tavily_extract.py + tavily fixtures + conftest tavily_fixture + .env.example + lib/config.py + pyproject.toml)
-- [ ] 12-02-PLAN.md — Wave 1: competitor_intel.py + merge_signals.py refactor (WFCH-03, WFCH-04 — Serper-only advertisers shape + 5-source VALID_SOURCES)
-- [ ] 12-03-PLAN.md — Wave 1: pulse_fetch.py + pulse_synth.py single-source (PULSE-10, PULSE-11)
-- [ ] 12-04-PLAN.md — Wave 2: SKILL.md WebFetch + references docs rewrite + render_report.py JOIN (WFCH-01, WFCH-02, PULSE-12)
-- [ ] 12-05-PLAN.md — Wave 3: full suite + e2e human-verify smoke + REQUIREMENTS.md/STATE.md milestone closeout
+**Status:** Complete (shipped 2026-05-15)
+**Plans:** 6/6 plans complete
+- [x] 12-00-PLAN.md — Wave 0: RED test scaffolding (test_audit_tavily_removed.py + test_pulse_fetch.py + extensions to test_pulse_synth/test_merge_signals/test_competitor_intel/test_render_report + 2 fixture JSONs)
+- [x] 12-01-PLAN.md — Wave 1: pure deletion (TVLY-01..04 — tavily_extract.py + test_tavily_extract.py + tavily fixtures + conftest tavily_fixture + .env.example + lib/config.py + pyproject.toml)
+- [x] 12-02-PLAN.md — Wave 1: competitor_intel.py + merge_signals.py refactor (WFCH-03, WFCH-04 — Serper-only advertisers shape + 5-source VALID_SOURCES)
+- [x] 12-03-PLAN.md — Wave 1: pulse_fetch.py + pulse_synth.py single-source (PULSE-10, PULSE-11)
+- [x] 12-04-PLAN.md — Wave 2: SKILL.md WebFetch + references docs rewrite + render_report.py JOIN (WFCH-01, WFCH-02, PULSE-12)
+- [x] 12-05-PLAN.md — Wave 3: full suite + e2e human-verify smoke + REQUIREMENTS.md/STATE.md milestone closeout
 
 ### Phase 13: Landing-Page Extract Vendor Swap (BACKLOG — defer-until-friction)
 **Goal:** If WebFetch flow in Phase 12 proves disruptive in real-operator runs (per-domain permission prompts, reliability issues, parsing friction), migrate landing-page extract from Claude WebFetch → Serper `/scrape` helper script. Vendor consolidation onto existing Serper account, eliminates Claude prompts, restores helper-script + respx-mockable pattern.
@@ -252,7 +253,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 9. Campaign Economics and Compliance | 6/6 | Complete    | 2026-05-14 |
 | 10. Operator Launch Kit | 5/5 | Complete    | 2026-05-14 |
 | 11. Account-Structure Mapping | 5/5 | Complete    | 2026-05-14 |
-| 12. Source Consolidation (Drop Tavily) | 5/6 | In Progress|  |
+| 12. Source Consolidation (Drop Tavily) | 6/6 | Complete   | 2026-05-15 |
 | 13. Landing-Page Extract Vendor Swap | 0/0 | Backlog (defer-until-friction) | — |
 
 ## Coverage Map
@@ -294,3 +295,4 @@ No orphans. No duplicates. Every v1.0 + v1.1 + v1.2 + v1.3 requirement maps to e
 *Phase 6 plans drafted: 2026-05-08*
 *v1.1 milestone phases (9-10) added: 2026-05-14*
 *v1.2 milestone phase 11 shipped: 2026-05-15*
+*v1.3 milestone phase 12 shipped: 2026-05-15 — Tavily dropped; WebFetch replaces COMP-03; Serper /news single-source niche pulse. 89/89 requirements Complete.*
