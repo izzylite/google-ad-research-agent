@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Account-Aware Narrowing
-status: planning_phase
-stopped_at: Milestone v1.5 roadmap landed 2026-05-15 — Phase 15 (Campaign Focus, CAMP-01..06) + Phase 16 (AG Token-Bag Enrichment, ADGM-07..11). Next step is /gsd:plan-phase 15.
-last_updated: "2026-05-15T15:00:00.000Z"
+status: in_progress
+stopped_at: Phase 15 Wave 1 RED scaffolding complete (15-00) — 15 RED tests + 2 fixtures, all SKIP cleanly; full suite 208 passed / 66 skipped / 0 failed. Next step is /gsd:execute-plan 15-01 (perf_fetch --campaign-filter) or 15-02 (render campaign_focus section) — Wave 2 plans run in parallel since different files.
+last_updated: "2026-05-15T15:30:00.000Z"
 progress:
   total_phases: 16
   completed_phases: 13
   total_plans: 55
-  completed_plans: 55
+  completed_plans: 56
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 15 — Campaign Focus |
-| Plan | — |
-| Status | Not started (defining plan) |
-| Last activity | 2026-05-15 — ROADMAP.md updated with Phase 15 (CAMP-01..06) + Phase 16 (ADGM-07..11); REQUIREMENTS.md traceability confirmed (11/11 v1.5 reqs mapped); awaiting `/gsd:plan-phase 15` |
+| Plan | 15-00 complete (next: 15-01 / 15-02 Wave 2 parallel) |
+| Status | In progress — Wave 1 RED scaffolding shipped |
+| Last activity | 2026-05-15 — Plan 15-00 complete: 15 RED tests (6 perf_fetch + 9 render_report) + 2 fixtures landed under per-function skip-guards; full suite 208/66/0; commits ce7e636, 0fa29c2, f40acd2 |
 
 ## Previous Milestone
 
@@ -55,7 +55,8 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | v1.2 requirements complete | 11 / 11 (GEO 5/5, ADGM 6/6) |
 | v1.3 requirements complete | 11 / 11 (TVLY 4/4, WFCH 4/4, PULSE 3/3) |
 | v1.4 requirements complete | 7 / 7 (POS-01..07) |
-| v1.5 requirements complete | 0 / 11 (CAMP 0/6, ADGM 0/5 — Phases 15 + 16 pending) |
+| v1.5 requirements complete | 0 / 11 (CAMP 0/6 — Wave 1 scaffolding only, no production code yet; ADGM 0/5 — Phase 16 pending) |
+| Phase 15 P00 | ~8min | 3 tasks | 2 created + 2 modified |
 | Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
@@ -157,11 +158,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T15:00:00.000Z
+**Last session:** 2026-05-15T15:30:00.000Z
 
-**Stopped at:** v1.5 ROADMAP landed — Phase 15 (Campaign Focus, CAMP-01..06) + Phase 16 (AG Token-Bag Enrichment, ADGM-07..11) detailed with goals, depends-on, requirements, success criteria, ordering rationale. REQUIREMENTS.md traceability confirmed (11/11 v1.5 reqs mapped). Coverage map: 95/95.
+**Stopped at:** Phase 15 Plan 00 (Wave 1 RED scaffolding) complete. 15 RED tests + 2 fixtures landed; all skip-guarded so legacy suite stays GREEN. Wave 2 (Plans 15-01 perf_fetch + 15-02 render_report) ready to run — they touch different files and can execute in parallel.
 
-**Next session:** `/gsd:plan-phase 15` to decompose Phase 15 (Campaign Focus) into executable plans. Phase 16 plans land after Phase 15 ships so AG token-bag calibration uses the narrowed dataset.
+**Next session:** `/gsd:execute-plan 15-01` (perf_fetch.py `--campaign-filter` + thread through 4 GAQL queries) and/or `/gsd:execute-plan 15-02` (render_report.py `_parse_brief_fields` campaign_focus + `render_campaign_focus_section`). Plans land independently; 15-03 SKILL.md wiring follows both.
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
