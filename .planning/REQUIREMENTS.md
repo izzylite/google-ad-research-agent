@@ -358,15 +358,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v1.2 requirements: 11 total (Phase 11, all complete)
 - v1.3 requirements: 11 / 11 Complete (TVLY×4 + WFCH×4 + PULSE×3) — Phase 12
 - v1.4 requirements: 7 / 7 Complete (POS×7) — Phase 14
-- v1.5 requirements: 0 / 11 Complete (CAMP×6 + ADGM×5) — Phases 15 + 16 pending
+- v1.5 requirements: 11 / 11 Complete (CAMP×6 + ADGM×5) — Phase 15 shipped; Phase 16 closed via Plans 16-01/02 (ADGM-07..10) + 16-03/04 structural-fix cycle (ADGM-11) + 16-05 docs closeout
 - v1.3 mapped to phases: 11 (Phase 12)
 - v1.4 mapped to phases: 7 (Phase 14)
 - v1.5 mapped to phases: 11 (Phase 15 + 16)
 - Unmapped: 0
 - Orphaned: 0
 
-**Total: 96 Complete / 11 Pending = 107 v1 requirements** (52 v1.0 + 23 v1.1 + 11 v1.2 + 11 v1.3 + 7 v1.4 + 11 v1.5).
+**Total: 107 Complete / 0 Pending = 107 v1 requirements** (52 v1.0 + 23 v1.1 + 11 v1.2 + 11 v1.3 + 7 v1.4 + 11 v1.5). v1 surface fully shipped.
 
 ---
 *Requirements defined: 2026-05-08*
-*Last updated: 2026-05-15 — Milestone v1.5 (Account-Aware Narrowing) started; 11 new requirements mapped to Phase 15 (CAMP-01..06) + Phase 16 (ADGM-07..11). Total v1 surface: 107 requirements (96 Complete + 11 Pending).*
+*Last updated: 2026-05-15 — Milestone v1.5 (Account-Aware Narrowing) closed; ADGM-11 satisfied via Phase 16 Plans 16-03/04 per-source max-Jaccard structural fix + 16-05 docs closeout (live Lake Worth 50.75%). Total v1 surface: 107 / 107 Complete (52 v1.0 + 23 v1.1 + 11 v1.2 + 11 v1.3 + 7 v1.4 + 11 v1.5).*

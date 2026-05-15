@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: "Completed Plan 16-04 — ADGM-11 satisfied: per-source max-Jaccard shipped (commit 6574f14), thresholds option-d {0.30, 0.08} (commit 78d5851), shape-bug fix nested→flat (commit 56d4196); live Lake Worth coverage 50.75% operator-approved; next is Plan 16-05 final docs closeout"
-last_updated: "2026-05-15T20:00:34.121Z"
+stopped_at: "Completed Plan 16-05 — Phase 16 fully closed (ADGM-07..11 shipped; per-source max-Jaccard structural fix lifted Lake Worth coverage to 50.75%); v1.5 milestone Complete (11/11 reqs)"
+last_updated: "2026-05-15T21:00:00.000Z"
 progress:
   total_phases: 15
-  completed_phases: 12
+  completed_phases: 13
   total_plans: 65
-  completed_plans: 64
+  completed_plans: 65
 ---
 
 # State: Google Ad Research Agent
@@ -26,10 +26,10 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | 16 — Ad-Group Mapping Token-Bag Enrichment (ADGM-07..11 all complete; Plan 16-05 docs closeout next) |
-| Plan | 16-00 + 16-01 + 16-02 + 16-03 + 16-04 complete; Plan 16-05 next (final phase docs closeout / Wave 3 docs) |
-| Status | Plan 16-04 GREEN: per-source max-Jaccard structural fix (commit 6574f14) + threshold option-d {0.30, 0.08} (commit 78d5851) + shape-bug fix nested→flat (commit 56d4196, Rule 3 Blocking deviation surfaced during Task 3 live e2e); live Lake Worth OAuth account observes mapping_coverage_pct = 50.75% (operator-approved); 52/67 matches show non-zero kw_criterion contribution (vs all-zero pre-shape-fix); 23/23 ad_group_match tests pass; 180 passed + 103 skipped overall; Phase 11 80% C2 + C5 garbage-low + ADGM-08 backward-compat all preserved; ADGM-11 ≥50% floor SATISFIED |
-| Last activity | 2026-05-15 — Plan 16-04 closeout: live e2e initial 41.79% (below floor) → investigation revealed preexisting shape mismatch (ad_group_match.py reading nested Google Ads raw API path vs perf_fetch.py:292-303 flat writer; 16-00 fixture hand-reshaped to nested papered over the divergence across 16-01/02/03 — kw_criterion contribution silently zero on every live run) → Task 2.5 Rule 3 Blocking fix applied → live re-run 50.75% → operator-approved |
+| Phase | 16 — Ad-Group Mapping Token-Bag Enrichment (FULLY CLOSED — ADGM-07..11 all complete; Plan 16-05 docs closeout shipped) |
+| Plan | 16-00 + 16-01 + 16-02 + 16-03 + 16-04 + 16-05 all complete — Phase 16 done |
+| Status | Plan 16-05 complete — Phase 16 fully closed (ADGM-07..11 shipped; per-source max-Jaccard structural fix lifted Lake Worth coverage to 50.75%; reference doc Phase 16 section updated with algorithm rationale + calibration sweep + live evidence + shape-bug discovery; STATE.md decisions/open-questions reflect closure; REQUIREMENTS.md ADGM-11 row verified clean; SKILL.md unchanged at 497/500) |
+| Last activity | 2026-05-15 — Plan 16-05 (autonomous gap-closure docs plan) updated `references/phase11-account-structure-mapping.md` Phase 16 section to record per-source max-Jaccard algorithm rationale + final calibration evidence + live e2e closeout + reader/writer shape-fix discovery; STATE.md decisions block records ADGM-11 closure; STATE.md open questions trimmed to forward-looking next-account-calibration + shape-contract follow-ups; REQUIREMENTS.md ADGM-11 row verified accurate (no deferral language). v1.5 milestone fully Complete (11/11 requirements). |
 
 ## Previous Milestone
 
@@ -55,7 +55,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | v1.2 requirements complete | 11 / 11 (GEO 5/5, ADGM 6/6) |
 | v1.3 requirements complete | 11 / 11 (TVLY 4/4, WFCH 4/4, PULSE 3/3) |
 | v1.4 requirements complete | 7 / 7 (POS-01..07) |
-| v1.5 requirements complete | 8 / 11 (CAMP 3/6 — CAMP-01 + CAMP-02 + CAMP-05 shipped via Plans 15-01 + 15-02; CAMP-03 SKILL wiring + CAMP-04 graceful degrade + CAMP-06 test coverage all already met but not yet marked; ADGM 5/5 — ADGM-07..10 shipped via Phase 16 Plans 01 + 02; ADGM-11 satisfied via Phase 16 Plans 16-03/04 structural-fix cycle — live Lake Worth 50.75%) |
+| v1.5 requirements complete | 11 / 11 (CAMP 6/6 — CAMP-01..06 all shipped via Phase 15 plans; ADGM 5/5 — ADGM-07..10 shipped via Phase 16 Plans 01 + 02; ADGM-11 closed via Phase 16 Plans 16-03/04 structural-fix cycle + 16-05 docs closeout — live Lake Worth 50.75% operator-approved) |
 | Phase 15 P00 | ~8min | 3 tasks | 2 created + 2 modified |
 | Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
@@ -110,6 +110,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 16-ad-group-mapping-token-bag-enrichment P02 | ~25min | 2 tasks (1 docs + 1 human-verify live e2e) | 1 modified + 1 created |
 | Phase 16-ad-group-mapping-token-bag-enrichment P03 | ~3min | 1 tasks | 1 files |
 | Phase 16-ad-group-mapping-token-bag-enrichment P04 | ~30min | 3+1 deviation tasks | 4 modified + 1 created files |
+| Phase 16-ad-group-mapping-token-bag-enrichment P05 | ~10min | 3 tasks (autonomous docs gap-closure) | 3 modified + 1 created |
 
 ### Execution History
 
@@ -161,6 +162,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-03] 4 RED tests + xfail-removal pin per-source max-Jaccard contract for Plan 16-04; suite runs 3 FAILED (Lake Worth floor + lynchpin per-source max + tied-sources score-VALUE 0.333 vs full-union 0.50) + 20 PASSED (C2 80% invariant + C5 garbage-low preserved). Score-VALUE assertion in tied-sources test (not score-CLASS) is the key TDD pattern: full-union 0.50 also classifies high, so a class-only assertion would have masked the algorithm shift.
 - [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-04] Per-source max-Jaccard (raw_j = max(name_j, crit_j, term_j)) replaces full-union jaccard; thresholds option-d {0.30, 0.08} (medium lowered from 16-01's 0.10 because garbage scores exactly 0.0 under max — no dilution); live Lake Worth coverage 50.75% clears the ADGM-11 ≥50% floor (operator-approved)
 - [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-04] Shape-bug fix (commit 56d4196): ad_group_match.py was reading nested Google Ads raw API path (kw.ad_group_criterion.keyword.text), but perf_fetch.py:292-303 (the canonical OAuth writer) writes flat shape (kw['keyword']). Preexisting since 16-01; 16-00 fixture hand-reshaped to nested papered over the divergence. Effect: kw_criterion contribution silently zero on every live run from 16-01 → pre-fix. Fix lifts live coverage 41.79% → 50.75% (52/67 matches now show non-zero kw_criterion). Routed as Rule 3 Blocking deviation inside 16-04 rather than spawning a new plan.
+- [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-05] ADGM-11 closed via per-source max-Jaccard structural fix — `raw_j = max(name_j, crit_j, term_j)` replacing full-union Jaccard directly addresses the bag-vs-query token-count asymmetry observed in 16-02's live e2e reason field (`name=0.33 kw-criterion=0.00 search-term=0.00 → full-union=0.10`). Final `_THRESHOLDS = {0.30, 0.08}` (option-d, from 16-04-SUMMARY) lock C1 (Lake Worth ≥50%) + C2 (Phase 11 80%) + C5 (garbage low) simultaneously. Live e2e observed coverage 50.75% on real Lake Worth OAuth account (operator-verified). Reference-doc audit trail: `references/phase11-account-structure-mapping.md` Phase 16 section carries algorithm rationale, calibration sweep, live-evidence citation, and shape-bug discovery (commit `56d4196`). Phase 16 fully closed (ADGM-07..11 all Complete; no remaining deferrals).
 
 ### Open Questions / Todos
 
@@ -175,8 +177,8 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [v1.5] Multi-campaign `campaign_focus` (list form) ergonomics — rare but real (operator running Lake Worth across 2 campaigns). Single-value default keeps common case clean; list form via pipe-separated or YAML list — finalize syntax in Phase 15 plan.
 - [v1.5] Threshold recalibration empirical target — Phase 16 Plans 16-01/16-04 calibrated against Lake Worth (one account) and locked at option-d `{0.30, 0.08}` post-structural-fix. After the next OAuth-enabled real account ships, re-run calibration to confirm thresholds generalize; reference doc `references/phase11-account-structure-mapping.md` carries the audit trail (ADGM-10 satisfied).
 - [v1.5] Search-term-bag top-N cutoff — currently planned at top-10 by clicks with zero-impression filter; revisit if real-account mapping shows noise from lossy / off-topic search terms pulling matches wrong direction.
-- [v1.5] **(RESOLVED 2026-05-15 via Phase 16-04)** ADGM-11 ≥50% Lake Worth coverage floor — closed. Per-source max-Jaccard structural fix (`raw_j = max(name_j, crit_j, term_j)`) replaced full-union Jaccard in `build_mapping`; option-d `{0.30, 0.08}` thresholds applied (medium lowered from 16-01's 0.10 because garbage scores exactly 0.0 under max — no dilution); preexisting shape-mismatch bug between `ad_group_match.py` (nested reader) and `perf_fetch.py:292-303` (flat writer) discovered and fixed during live e2e (commit 56d4196). Live Lake Worth OAuth re-run: `mapping_coverage_pct = 50.75%` (operator-approved); 52/67 matches show non-zero `kw_criterion` contribution. Next-account calibration cycle still open above as a watch-item.
-- [v1.5] **Shape contract follow-up:** Plan 16-04 surfaced that `ad_group_match.py` was reading nested Google Ads raw API shape while `perf_fetch.py:292-303` writes flat shape — a preexisting bug since 16-01 papered over by a hand-reshaped 16-00 goldenfile. Future Phase 14 / Phase 16 changes touching the keyword raw artifact should sample the live OAuth response (flat) directly, not the goldenfile. Consider adding a smoke-test asserting flat shape at the reader boundary.
+- [v1.5] **Next-account calibration cycle for ADGM-11 thresholds:** Plan 16-04 shipped per-source max-Jaccard; thresholds locked at {0.30, 0.08} on Lake Worth + offline goldenfile (one OAuth account). Once a 2nd OAuth-enabled real account is added, re-run the calibration sweep to confirm thresholds generalize. `references/phase11-account-structure-mapping.md` Phase 16 section carries the audit trail.
+- [v1.5] **Shape contract follow-up (carried from 16-04 closeout):** Plan 16-04 Task 2.5 (commit 56d4196) surfaced that `ad_group_match.py` was reading nested Google Ads raw API shape while `perf_fetch.py:292-303` writes flat shape — preexisting bug since 16-01, papered over by hand-reshaped 16-00 goldenfile. Future Phase 14 / Phase 16 changes touching the keyword raw artifact should sample the live OAuth response (flat) directly, not the goldenfile. Consider adding a smoke-test asserting flat shape at the reader boundary.
 
 ### Blockers
 
@@ -184,11 +186,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T20:00:34.117Z
+**Last session:** 2026-05-15T21:00:00.000Z
 
-**Stopped at:** Completed Plan 16-04 — ADGM-11 satisfied: per-source max-Jaccard shipped (commit 6574f14), thresholds option-d {0.30, 0.08} (commit 78d5851), shape-bug fix nested→flat (commit 56d4196); live Lake Worth coverage 50.75% operator-approved; next is Plan 16-05 final docs closeout
+**Stopped at:** Completed Plan 16-05 — Phase 16 fully closed (ADGM-07..11 shipped; per-source max-Jaccard structural fix lifted Lake Worth coverage to 50.75%); reference doc Phase 16 section now records algorithm rationale + final calibration evidence + live e2e closeout + reader/writer shape-fix discovery; STATE.md decisions/open-questions reflect closure; REQUIREMENTS.md ADGM-11 row verified clean; SKILL.md unchanged at 497/500; v1.5 milestone Complete (11/11 reqs).
 
-**Next session:** Author a structural-algorithm follow-up plan for ADGM-11 (>=50% mapping coverage floor). Leading candidate per 16-02 live sample reason-field evidence: per-source max-jaccard replacing full-union Jaccard in `ad_group_match.py::_classify`. Plan should also pin a 2nd real OAuth account for the next-account calibration cycle once the structural fix lands.
+**Next session:** v1.5 milestone closed. Next milestone open for planning. Watch-items carried forward: (a) next-account calibration cycle once a 2nd OAuth-enabled real account is added (re-run threshold sweep to confirm {0.30, 0.08} generalize beyond Lake Worth); (b) shape-contract smoke-test at the `perf_fetch.py` ↔ `ad_group_match.py` reader/writer boundary; (c) Phase 13 landing-page extract vendor swap remains BACKLOG (defer-until-friction).
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
