@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: source-consolidation
-status: defining_requirements
-stopped_at: "Milestone v1.3 started — Phase 12 (drop Tavily, swap to WebFetch + Serper) ahead. Triggered by Tavily quota exhaustion during Lake Worth dogfood re-run."
-last_updated: "2026-05-15T02:00:00.000Z"
+status: in_progress
+stopped_at: "Completed 12-00-PLAN.md — Wave 0 RED scaffolding for Phase 12 (Drop Tavily). 14 RED + 1 SKIPPED Phase 12 tests; 239 legacy tests GREEN. Commits 9ea9ae8 (audit), 8121628 (PULSE-10/11 + WFCH-03/04 unit), 191e997 (WFCH-02 + fixtures)."
+last_updated: "2026-05-15T03:51:31.078Z"
 progress:
   total_phases: 12
   completed_phases: 11
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 49
+  completed_plans: 44
 ---
 
 # State: Google Ad Research Agent
@@ -26,10 +26,10 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | 12 — Source Consolidation (not yet planned) |
-| Plan | — |
-| Status | Defining requirements |
-| Last activity | 2026-05-15 — Milestone v1.3 started; v1.2 Account-Structure Mapping closed (78/78 reqs across 11 phases) |
+| Phase | 12 — Source Consolidation (Drop Tavily) |
+| Plan | 01 (Wave 0 complete via 12-00) |
+| Status | Wave 0 RED scaffolding complete; Wave 1 deletion starts next |
+| Last activity | 2026-05-15 — Plan 12-00 shipped Wave 0 RED contract: 14 failing Phase 12 tests + 1 SKIP; 239 legacy GREEN preserved |
 
 ## Previous Milestone
 
@@ -82,6 +82,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 11 P02 | 6 | 3 tasks | 2 files |
 | Phase 11 P03 | 9 | 2 tasks | 3 files |
 | Phase 11 P04 | ~25min | 3 tasks (2 docs + 1 auto-fix + 1 human-verify) | 3 files (1 created + 2 modified) |
+| Phase 12 P00 | 12min | 3 tasks | 8 files |
 
 ### Execution History
 
@@ -209,6 +210,11 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 11]: [Phase 11-04] render_report._parse_brief_fields regex (auto-fix during e2e smoke) extended to accept BOTH `**Field:**` and `**Field**:` forms — colon can be inside OR outside the bold markers. Discovered when smoke brief used the colon-outside form and Geographic Focus section silently dropped. Rule 1 (bug) fix, no architectural change. Commit 16f5d5d.
 - [Phase 11]: [Phase 11-04] Coverage 0.0% on real urgent-care account (73 keywords vs 83-token search-term bag, all jaccards below 0.4) is MATHEMATICALLY CORRECT, not a bug. Anti-pattern documented in references/phase11 explicitly covers narrow-vertical low coverage. ADGM-06 strict > 50.0 threshold confirmed honored — Next Steps step 4 stayed at default "Create ad groups" template instead of rewriting to "Add keywords to existing ad groups: ...".
 - [Phase 11]: [Phase 11-04] CMPL-05 compliance-first reorder verified end-to-end against real account: Next Steps step 1 = compliance verification (medical + legal verticals matched in urgent-care brief). ADGM-06 rewrite would have targeted step 4 (post-CMPL-05 prepend) had coverage been > 50%. Order of operations (ADGM-06 before CMPL-05 prepend, per plan 11-03 decision) holds in production.
+- [Phase 12-source-consolidation-drop-tavily]: [Phase 12-00] All-surfaces grep test skips tests/ + .venv + site-packages — Phase 12 test files legitimately contain 'tavily' in assertion messages; production audit target is scripts/ (non-test) + references/ + SKILL.md only
+- [Phase 12-source-consolidation-drop-tavily]: [Phase 12-00] WFCH-02 render_report test uses per-function _skip_unless_join_implemented() sentinel (NOT module-level pytestmark) — preserves 41 legacy GREEN tests in same file; mirrors Phase 10 10-00 + Phase 11 11-02 pattern
+- [Phase 12-source-consolidation-drop-tavily]: [Phase 12-00] WFCH-03 competitor_intel guard uses BOTH inspect.getsource substring AND dir() namespace scan — covers Tavily dict-literal keys (raw_content) AND symbol imports (TavilyClient)
+- [Phase 12-source-consolidation-drop-tavily]: [Phase 12-00] Phase 12 fixtures prefixed phase12- (phase12-competitor-intel.json, phase12-competitor-landing-pages.json) — distinguishes from Phase 5 competitor_intel_full.json which still carries Tavily-shape entries used by 41 GREEN render_report tests
+- [Phase 12-source-consolidation-drop-tavily]: [Phase 12-00] Wave 2 plan 12-04 must land _load_competitor_landing_pages helper on render_report — exact symbol name locked by hasattr sentinel in test_render_report.py::_skip_unless_join_implemented
 
 ### Open Questions / Todos
 
@@ -226,9 +232,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T00:35:00.000Z
+**Last session:** 2026-05-15T03:51:18.792Z
 
-**Stopped at:** Completed 11-04-PLAN.md — Phase 11 closeout + milestone v1.2 ship. 2 task commits (6aed701 references/phase11 + f16ef49 SKILL.md wiring) + 1 auto-fix commit (16f5d5d render_report regex). E2E smoke approved against real Phase 8 urgent-care data: 239 tests GREEN, SKILL.md 499/500, references/phase11 240 lines, coverage 0.0% mathematically correct, ADGM-06 rewrite NOT firing at ≤50% (correct), CMPL-05 compliance-first reorder confirmed at step 1. All 11 v1.2 requirements (GEO-01..05 + ADGM-01..06) marked Complete in REQUIREMENTS.md.
+**Stopped at:** Completed 12-00-PLAN.md — Wave 0 RED scaffolding for Phase 12 (Drop Tavily). 14 RED + 1 SKIPPED Phase 12 tests; 239 legacy tests GREEN. Commits 9ea9ae8 (audit), 8121628 (PULSE-10/11 + WFCH-03/04 unit), 191e997 (WFCH-02 + fixtures).
 
 **Next session:** Milestone v1.2 complete. All 11 / 11 phases shipped (v1.0 + v1.1 + v1.2). No active phase. Options: (1) Define v1.3 milestone scope, (2) Address open-question/todos list (composite ranking calibration, Tavily credit metrics, match-type recommendation validation, v1.1 bid multiplier calibration, FRCS ratio tuning), (3) Triage v2 backlog (VOLM-*, VPRS-*, TOOL-*).
 
