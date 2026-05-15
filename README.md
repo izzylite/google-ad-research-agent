@@ -3,7 +3,7 @@
 A [Claude Code](https://claude.com/claude-code) skill that turns one campaign brief into a campaign-ready Google Ads research package — ranked keyword tables, ad-group clusters, competitor ad copy + landing pages, tiered negative keywords, geo/account structure, bid + budget suggestions, compliance flags, and a Google Ads Editor CSV — in a single interactive Claude Code session.
 
 ```
-brief in chat  →  ~10 min  →  report.html + report.md + report.json + Editor CSV
+brief in chat  →  ~10 min  →  report.html + report.pdf + report.md + report.json + Editor CSV
 ```
 
 Built as an **internal team tool** — single-operator, filesystem-only, no multi-tenant. Designed for a PPC team that wants consistent, auditable keyword research without the 4-6 hours of manual cross-tabulation. Not a commercial product.
@@ -53,6 +53,7 @@ Every run lands in a sealed dated folder under `.runs/`:
 ├── report.md                         ← human-readable narrative
 ├── report.json                       ← stable v1 schema for automation
 ├── report.html                       ← interactive: sortable, filterable, CSV export
+├── report.pdf                        ← static print-ready snapshot of report.html (best-effort)
 ├── export/                           ← Google Ads Editor paste-ready (Phase 10)
 │   ├── positives.csv                 ← keywords with Max CPC, match-type
 │   ├── negatives.csv                 ← tiered negatives
@@ -67,7 +68,7 @@ Every run lands in a sealed dated folder under `.runs/`:
     └── ahrefs-*.json
 ```
 
-The HTML report is the recommended deliverable — self-contained (no CDN), opens in any browser, has CSV-export buttons per section, and includes per-section "How to use" guidance so the operator knows what action to take with each list.
+The HTML report is the recommended deliverable for interactive use — self-contained (no CDN), opens in any browser, has CSV-export buttons per section, and includes per-section "How to use" guidance. The PDF is a static snapshot of the same content, generated via the system's headless Edge/Chrome/Chromium (best-effort — if no browser is found on PATH, PDF is skipped with a stderr note and the other three outputs are unaffected). Use the PDF for email / print / stakeholder review.
 
 ---
 

@@ -79,13 +79,17 @@ Run the report renderer:
 uv run "${CLAUDE_SKILL_DIR}/scripts/render_report.py" --run-dir "{run_dir}"
 ```
 
-Parse stdout JSON. Fields: `report_md`, `report_json`, `keywords_in_report`.
+Parse stdout JSON. Fields: `report_md`, `report_json`, `report_html`, `report_pdf` (may be `null`), `keywords_in_report`.
 
 Surface to operator:
 > "Report rendered:
 > - report.md: `{report_md}`
 > - report.json: `{report_json}`
+> - report.html: `{report_html}`
+> - report.pdf: `{report_pdf}` (skipped if no system browser found)
 > - Keywords in report: {keywords_in_report}"
+
+PDF rendering is best-effort — calls the system's headless Edge/Chrome/Chromium to print the HTML report. If no browser is available the field is `null` and the operator gets a stderr line explaining the skip. The other three outputs are unaffected.
 
 **Gate: Do not advance to Step 24 until both `{run_dir}/report.md` and `{run_dir}/report.json` exist.**
 

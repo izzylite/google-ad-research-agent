@@ -18,6 +18,8 @@ Reads:
 Writes:
   {run_dir}/report.md
   {run_dir}/report.json
+  {run_dir}/report.html
+  {run_dir}/report.pdf  (best-effort — requires Edge/Chrome/Chromium on PATH)
 
 Exports: render_full_report(), build_report_json()
 """
@@ -27,6 +29,8 @@ import argparse
 import hashlib
 import json
 import re
+import shutil
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -2309,6 +2313,94 @@ def build_report_json(
 
 
 # ---------------------------------------------------------------------------
+# PDF rendering — calls a headless system browser (Edge/Chrome/Chromium)
+# ---------------------------------------------------------------------------
+
+_BROWSER_CANDIDATES_BY_PLATFORM: dict[str, list[str]] = {
+    "win32": [
+        "msedge", "chrome", "chromium",
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    ],
+    "darwin": [
+        "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "/Applications/Chromium.app/Contents/MacOS/Chromium",
+    ],
+    "linux": [
+        "microsoft-edge", "google-chrome", "chromium", "chromium-browser",
+    ],
+}
+
+
+def _find_headless_browser() -> Path | None:
+    """Return a path to a usable headless-capable browser, or None.
+
+    Tries PATH lookups first (msedge/chrome/chromium), then well-known
+    install paths on Windows/macOS. Returns None if nothing usable found.
+    """
+    for cand in _BROWSER_CANDIDATES_BY_PLATFORM.get(sys.platform, []):
+        if "/" in cand or "\\" in cand:
+            p = Path(cand)
+            if p.exists():
+                return p
+        else:
+            found = shutil.which(cand)
+            if found:
+                return Path(found)
+    return None
+
+
+def _render_pdf_from_html(html_path: Path, pdf_path: Path) -> bool:
+    """Render report.html → report.pdf via headless system browser.
+
+    Best-effort. Returns False (and logs to stderr) on any failure
+    (browser missing, timeout, non-zero exit, empty output). The rest
+    of the pipeline completes regardless — PDF is an optional artifact.
+    """
+    browser = _find_headless_browser()
+    if browser is None:
+        print(
+            "render_report: no headless browser found (msedge/chrome/chromium); skipping PDF",
+            file=sys.stderr,
+        )
+        return False
+    file_url = html_path.resolve().as_uri()
+    cmd = [
+        str(browser),
+        "--headless=new",
+        "--disable-gpu",
+        "--no-pdf-header-footer",
+        f"--print-to-pdf={pdf_path.resolve()}",
+        "--virtual-time-budget=5000",
+        file_url,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, timeout=60, check=False)
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        print(
+            f"render_report: PDF generation failed ({type(exc).__name__}); skipping PDF",
+            file=sys.stderr,
+        )
+        return False
+    if result.returncode != 0:
+        print(
+            f"render_report: browser exited {result.returncode}; skipping PDF",
+            file=sys.stderr,
+        )
+        return False
+    if not pdf_path.exists() or pdf_path.stat().st_size == 0:
+        print(
+            "render_report: browser produced empty/missing PDF; skipping",
+            file=sys.stderr,
+        )
+        return False
+    return True
+
+
+# ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
 
@@ -2444,10 +2536,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     (run_dir / "report.html").write_text(report_html, encoding="utf-8", newline="\n")
 
+    pdf_path = run_dir / "report.pdf"
+    pdf_ok = _render_pdf_from_html(run_dir / "report.html", pdf_path)
+
     print(json.dumps({
         "report_md": str(run_dir / "report.md"),
         "report_json": str(run_dir / "report.json"),
         "report_html": str(run_dir / "report.html"),
+        "report_pdf": str(pdf_path) if pdf_ok else None,
         "keywords_in_report": len(ranked),
     }))
     return 0

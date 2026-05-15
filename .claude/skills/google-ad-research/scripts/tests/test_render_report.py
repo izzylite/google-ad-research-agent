@@ -1481,3 +1481,108 @@ def test_campaign_focus_no_warning_when_perf_path_absent():
     fields = _brief_fields_with_campaign_focus("Anything Goes")
     md = render_report.render_campaign_focus_section(fields, perf_path=None)
     assert "⚠" not in md
+
+
+# ===========================================================================
+# PDF rendering — best-effort headless-browser printout
+# ===========================================================================
+
+
+def test_pdf_generation_skips_gracefully_when_no_browser(run_dir, monkeypatch, capsys):
+    """No browser on PATH → main() still returns 0; report_pdf is null in JSON output."""
+    from render_report import main
+
+    monkeypatch.setattr("render_report._find_headless_browser", lambda: None)
+
+    exit_code = main(["--run-dir", str(run_dir)])
+
+    assert exit_code == 0
+    assert (run_dir / "report.html").exists()
+    assert not (run_dir / "report.pdf").exists()
+
+    out = json.loads(capsys.readouterr().out)
+    assert out["report_pdf"] is None
+
+
+def test_pdf_generation_invokes_browser_with_correct_args(run_dir, monkeypatch, capsys, tmp_path):
+    """When browser is found, main() calls it with --print-to-pdf pointing at report.pdf."""
+    from render_report import main
+
+    fake_browser = tmp_path / "fake-edge"
+    fake_browser.write_text("")
+    monkeypatch.setattr("render_report._find_headless_browser", lambda: fake_browser)
+
+    captured_cmd: list[list[str]] = []
+
+    def fake_run(cmd, **kwargs):
+        captured_cmd.append(cmd)
+        # Simulate successful PDF write
+        pdf_arg = next(a for a in cmd if a.startswith("--print-to-pdf="))
+        pdf_path = Path(pdf_arg.split("=", 1)[1])
+        pdf_path.write_bytes(b"%PDF-1.4 fake")
+        # subprocess.CompletedProcess-like return
+        class _R:
+            returncode = 0
+            stdout = b""
+            stderr = b""
+        return _R()
+
+    monkeypatch.setattr("render_report.subprocess.run", fake_run)
+
+    exit_code = main(["--run-dir", str(run_dir)])
+
+    assert exit_code == 0
+    assert len(captured_cmd) == 1
+    cmd = captured_cmd[0]
+    assert str(fake_browser) in cmd[0]
+    assert "--headless=new" in cmd
+    assert any(a.startswith("--print-to-pdf=") and a.endswith("report.pdf") for a in cmd)
+    assert (run_dir / "report.pdf").exists()
+
+    out = json.loads(capsys.readouterr().out)
+    assert out["report_pdf"] is not None
+    assert out["report_pdf"].endswith("report.pdf")
+
+
+def test_pdf_generation_handles_browser_nonzero_exit(run_dir, monkeypatch, capsys, tmp_path):
+    """Browser exits non-zero → no PDF written; main() still returns 0; report_pdf is null."""
+    from render_report import main
+
+    fake_browser = tmp_path / "fake-edge"
+    fake_browser.write_text("")
+    monkeypatch.setattr("render_report._find_headless_browser", lambda: fake_browser)
+
+    def fake_run(cmd, **kwargs):
+        class _R:
+            returncode = 1
+            stdout = b""
+            stderr = b"crash"
+        return _R()
+
+    monkeypatch.setattr("render_report.subprocess.run", fake_run)
+
+    exit_code = main(["--run-dir", str(run_dir)])
+
+    assert exit_code == 0
+    assert not (run_dir / "report.pdf").exists()
+    out = json.loads(capsys.readouterr().out)
+    assert out["report_pdf"] is None
+
+
+def test_pdf_generation_real_browser_if_available(run_dir, capsys):
+    """Integration: if a real headless browser is on this host, report.pdf is non-empty."""
+    from render_report import _find_headless_browser, main
+
+    if _find_headless_browser() is None:
+        pytest.skip("no headless browser available on this host")
+
+    exit_code = main(["--run-dir", str(run_dir)])
+    assert exit_code == 0
+    pdf_path = run_dir / "report.pdf"
+    assert pdf_path.exists()
+    # PDF magic header
+    assert pdf_path.read_bytes()[:4] == b"%PDF"
+    assert pdf_path.stat().st_size > 1000  # non-trivial content
+
+    out = json.loads(capsys.readouterr().out)
+    assert out["report_pdf"] is not None
