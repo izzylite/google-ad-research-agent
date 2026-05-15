@@ -299,6 +299,35 @@ def main_with_args(argv: list[str]) -> int:
         new_candidates_count = sync["stats"]["new_to_add"]
         already_count = sync["stats"]["already_covered"]
 
+    # POS-02 + POS-05: Positives sync only when both sides present.
+    # Graceful skip when raw/google-ads-keywords.json absent (no OAuth or
+    # Phase 8 keyword_view fetch never ran) — no error, no file written.
+    keywords_existing_path = raw_dir / "google-ads-keywords.json"
+    ranked_path = run_dir / "ranked-enriched.json"
+    if not ranked_path.exists():
+        ranked_path = run_dir / "ranked.json"
+
+    positives_sync_path_out: Path | None = None
+    pos_stats = {"our_total": 0, "already_active": 0,
+                 "paused_in_account": 0, "new_to_add": 0}
+    if keywords_existing_path.exists() and ranked_path.exists():
+        try:
+            existing_kws = json.loads(
+                keywords_existing_path.read_text(encoding="utf-8")
+            ).get("items", [])
+            ranked = json.loads(ranked_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            print(json.dumps({"error": f"Failed to load positives inputs: {exc}"}),
+                  file=sys.stderr)
+            return 3
+        pos_sync = cross_ref_positives(ranked, existing_kws)
+        positives_sync_path_out = run_dir / "positives-sync.json"
+        positives_sync_path_out.write_text(
+            json.dumps(pos_sync, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        pos_stats = pos_sync["stats"]
+
     print(json.dumps({
         "account_perf_path": str(out_perf),
         "negatives_sync_path": str(run_dir / "negatives-sync.json"),
@@ -306,6 +335,11 @@ def main_with_args(argv: list[str]) -> int:
         "lossy_terms_count": len(account_perf.get("lossy_search_terms", [])),
         "already_in_account": already_count,
         "new_candidates": new_candidates_count,
+        "positives_sync_path": str(positives_sync_path_out) if positives_sync_path_out else None,
+        "positives_our_total": pos_stats["our_total"],
+        "positives_already_active": pos_stats["already_active"],
+        "positives_paused": pos_stats["paused_in_account"],
+        "positives_new_to_add": pos_stats["new_to_add"],
     }))
     return 0
 
