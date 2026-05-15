@@ -44,12 +44,13 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _norm_neg(text: str) -> str:
-    """Normalize negative keyword for comparison.
+def _norm_kw(text: str) -> str:
+    """Normalize keyword text for cross-reference comparison.
 
-    Lowercase, strip leading/trailing whitespace + match-type punctuation
-    (Google Ads stores "+phrase" / "[exact]" / "\"phrase\"" depending on
-    match type — strip those for cross-reference).
+    Lowercase, strip leading/trailing whitespace, strip match-type punctuation
+    (Google Ads stores "+phrase" / "[exact]" / "\"phrase\""). Shared by
+    negative-keyword sync (existing) and positives sync (POS-02) so a single
+    normalisation rule governs both directions.
     """
     if not text:
         return ""
@@ -57,6 +58,11 @@ def _norm_neg(text: str) -> str:
     s = s.strip('"[]')
     s = " ".join(t.lstrip("+") for t in s.split())
     return s
+
+
+# Backward-compat alias — existing negatives-sync callers + tests reference
+# _norm_neg; single source of truth lives in _norm_kw.
+_norm_neg = _norm_kw
 
 
 def synth_account_perf(perf: dict, terms_data: dict) -> dict:
@@ -155,6 +161,83 @@ def synth_negatives_sync(our_negs: list[dict],
             "new_strong": len(by_tier["Strong"]),
             "new_considered": len(by_tier["Considered"]),
             "new_investigate": len(by_tier["Investigate"]),
+        },
+    }
+
+
+def cross_ref_positives(ranked: list[dict],
+                        existing_kws: list[dict]) -> dict:
+    """POS-02: Cross-reference ranked keywords vs account keyword_view items.
+
+    Returns a 4-bucket sync dict mirroring synth_negatives_sync envelope:
+        already_active     — ranked kw == ENABLED account kw (_norm_kw match)
+        paused_in_account  — ranked kw == PAUSED account kw
+        covered_by_broad   — ranked kw tokens ⊇ tokens of ENABLED BROAD account kw
+        new_to_add         — no match
+
+    Per CONTEXT.md decisions: bucket priority is fixed (above order); each
+    ranked kw lands in exactly one bucket. covered_by_broad requires the
+    account broad kw to be ≥2 tokens to avoid single-token false positives.
+    """
+    enabled_set: dict[str, dict] = {}
+    paused_set: dict[str, dict] = {}
+    broad_token_sets: list[tuple[frozenset, dict]] = []
+    for k in existing_kws:
+        norm = _norm_kw(k.get("keyword", ""))
+        if not norm:
+            continue
+        status = (k.get("status") or "").upper()
+        match_type = (k.get("match_type") or "").upper()
+        if status == "ENABLED":
+            enabled_set.setdefault(norm, k)
+            if match_type == "BROAD":
+                tokens = frozenset(norm.split())
+                if len(tokens) >= 2:
+                    broad_token_sets.append((tokens, k))
+        elif status == "PAUSED":
+            paused_set.setdefault(norm, k)
+
+    already_active: list[dict] = []
+    paused_in_account: list[dict] = []
+    covered_by_broad: list[dict] = []
+    new_to_add: list[dict] = []
+
+    for r in ranked:
+        norm = _norm_kw(r.get("keyword", ""))
+        if not norm:
+            new_to_add.append({**r, "status": "new_to_add"})
+            continue
+        if norm in enabled_set:
+            already_active.append({**r, "status": "already_active"})
+            continue
+        if norm in paused_set:
+            paused_in_account.append({**r, "status": "paused_in_account"})
+            continue
+        r_tokens = frozenset(norm.split())
+        covered = False
+        for broad_tokens, _broad_kw in broad_token_sets:
+            if broad_tokens.issubset(r_tokens):
+                covered = True
+                break
+        if covered:
+            covered_by_broad.append({**r, "status": "covered_by_broad"})
+            continue
+        new_to_add.append({**r, "status": "new_to_add"})
+
+    return {
+        "synthesized_at": _now_iso(),
+        "our_total": len(ranked),
+        "existing_total": len(existing_kws),
+        "already_active": already_active,
+        "paused_in_account": paused_in_account,
+        "covered_by_broad": covered_by_broad,
+        "new_to_add": new_to_add,
+        "stats": {
+            "our_total": len(ranked),
+            "already_active": len(already_active),
+            "paused_in_account": len(paused_in_account),
+            "covered_by_broad": len(covered_by_broad),
+            "new_to_add": len(new_to_add),
         },
     }
 
