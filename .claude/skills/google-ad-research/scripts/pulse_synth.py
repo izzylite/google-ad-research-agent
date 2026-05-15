@@ -8,7 +8,6 @@
 
 Reads:
   {run_dir}/raw/serper-news.json
-  {run_dir}/raw/tavily-news.json
 
 Produces:
   {run_dir}/niche-pulse.json
@@ -21,7 +20,7 @@ Schema:
       {"theme": "florida pip law amendment",
        "mention_count": N,
        "first_seen": "YYYY-MM-DD",
-       "sources": ["serper-news", "tavily-news"],
+       "sources": ["serper-news"],
        "headlines": [{title, link, date, source}, ...],
        "suggested_keywords": [...]}
     ],
@@ -163,10 +162,12 @@ def _ngrams(tokens: list[str], n: int) -> list[tuple[str, ...]]:
     return [tuple(tokens[i : i + n]) for i in range(len(tokens) - n + 1)]
 
 
-def load_news_items(serper_path: Path, tavily_path: Path) -> list[dict]:
-    """Read both raws; return flat list of news items with consistent shape."""
-    items: list[dict] = []
+def load_news_items(serper_path: Path) -> list[dict]:
+    """Read serper-news.json; return flat list of news items.
 
+    Phase 12: single-source niche pulse (PULSE-11).
+    """
+    items: list[dict] = []
     if serper_path.exists():
         try:
             data = json.loads(serper_path.read_text(encoding="utf-8"))
@@ -175,16 +176,6 @@ def load_news_items(serper_path: Path, tavily_path: Path) -> list[dict]:
                     items.append(item)
         except (json.JSONDecodeError, OSError):
             pass
-
-    if tavily_path.exists():
-        try:
-            data = json.loads(tavily_path.read_text(encoding="utf-8"))
-            for block in data.get("by_seed", []):
-                for item in block.get("items", []):
-                    items.append(item)
-        except (json.JSONDecodeError, OSError):
-            pass
-
     return items
 
 
@@ -236,7 +227,7 @@ def find_themes(items: list[dict]) -> list[dict]:
         first_seen = min(dates) if dates else None
         # Suggested kw: the n-gram itself + with parent topic suffix
         suggested = [" ".join(ng)]
-        # Headlines (top by score if Tavily, else first N)
+        # Headlines (first N items)
         headlines = []
         for it in theme_items[:HEADLINES_PER_THEME]:
             headlines.append({
@@ -443,16 +434,14 @@ def main_with_args(argv: list[str]) -> int:
 
     raw_dir = args.run_dir / "raw"
     serper_path = raw_dir / "serper-news.json"
-    tavily_path = raw_dir / "tavily-news.json"
 
-    if not serper_path.exists() and not tavily_path.exists():
+    if not serper_path.exists():
         print(json.dumps({
-            "error": "Neither serper-news.json nor tavily-news.json found — "
-                     "run pulse_fetch.py first.",
+            "error": "serper-news.json not found — run pulse_fetch.py first.",
         }), file=sys.stderr)
         return 3
 
-    items = load_news_items(serper_path, tavily_path)
+    items = load_news_items(serper_path)
 
     horizon_days = 7
     if serper_path.exists():

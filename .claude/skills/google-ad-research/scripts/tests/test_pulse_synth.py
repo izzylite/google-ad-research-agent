@@ -22,20 +22,19 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 def _items_from_fixtures():
     s = FIXTURES_DIR / "serper_news.json"
-    t = FIXTURES_DIR / "tavily_news.json"
     if PS_MISSING:
         return []
-    return pulse_synth.load_news_items(s, t)
+    return pulse_synth.load_news_items(s)
 
 
-def test_load_news_items_combines_sources():
+def test_load_news_items_serper_source():
+    """Phase 12 (PULSE-11): load_news_items now reads serper-news.json only."""
     if PS_MISSING:
         pytest.skip("pulse_synth not yet implemented")
     items = _items_from_fixtures()
-    assert len(items) == 5
+    assert len(items) == 4
     sources = {it.get("_source") for it in items}
-    assert "serper-news" in sources
-    assert "tavily-news" in sources
+    assert sources == {"serper-news"}
 
 
 def test_find_themes_clusters_repeated_phrases():

@@ -6,8 +6,8 @@
       "seed": "florida pip law",
       "fetched_at": "2026-05-08T07:00:00Z",
       "items": [
-        {"title": "Florida lawmakers debate PIP law amendment", "link": "https://news.example.com/pip-amend", "snippet": "Florida senate proposes changes to PIP insurance regulations covering car accident victims.", "date": "2026-05-05", "source": "ExampleNews", "from_seed": "florida pip law", "_source": "serper-news"},
-        {"title": "PIP law lawsuit filed against MD Now", "link": "https://news.example.com/mdnow-pip-lawsuit", "snippet": "Insurance lawsuit alleges PIP fraud at MD Now urgent care clinics.", "date": "2026-05-04", "source": "ExampleNews", "from_seed": "florida pip law", "_source": "serper-news"}
+        {"title": "Florida lawmakers debate PIP law amendment", "link": "https://news.example.com/pip-amend", "snippet": "Florida PIP law amendment proposes changes to insurance regulations covering car accident victims.", "date": "2026-05-05", "source": "ExampleNews", "from_seed": "florida pip law", "_source": "serper-news"},
+        {"title": "PIP law lawsuit filed against MD Now", "link": "https://news.example.com/mdnow-pip-lawsuit", "snippet": "Florida PIP law lawsuit alleges insurance fraud at MD Now urgent care clinics.", "date": "2026-05-04", "source": "ExampleNews", "from_seed": "florida pip law", "_source": "serper-news"}
       ]
     },
     {
