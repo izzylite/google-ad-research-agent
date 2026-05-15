@@ -186,6 +186,27 @@ Milestone v1.4 — Phase 14 only. Mirror negatives-sync UX for positives: diff r
 - [x] **POS-06**: SKILL.md adds optional LLM re-tag step after `cross_ref_positives` — re-classifies borderline cases (semantic dupes like `urgent care lake worth` vs `lake worth urgent care`, match-type drift like ranked exact vs account broad covering same kw) by reading `positives-sync.json` + emitting refined tags.
 - [x] **POS-07**: Test coverage: `test_perf_synth.py` adds `cross_ref_positives` unit tests (each bucket exercised); `tests/fixtures/golden_positives_sync.json` byte-exact fixture; `test_perf_fetch.py` mocks `keyword_view` GAQL response via respx.
 
+## v1.5 Requirements (Account-Aware Narrowing)
+
+Milestone v1.5 — Phases 15 + 16. Narrows skill output from OAuth account scope to operator's actual target campaign + AGs inside it. Mirrors v1.2's `geo_focus` architectural pattern. No new external APIs — reuses existing Google Ads OAuth + Phase 14 raw data.
+
+### Campaign Focus (Phase 15)
+
+- [ ] **CAMP-01**: `_parse_brief_fields` extracts optional `campaign_focus` from brief.md (single value or pipe-separated list; mirrors `geo_focus` parsing pattern from Phase 11)
+- [ ] **CAMP-02**: `perf_fetch.py --campaign-filter '<name>'` adds `AND campaign.name = '<name>'` clause to all 4 GAQL queries (`keyword_view`, `search_term_view`, `ad_group`, `campaign_criterion`); list variant uses `IN ('a','b',...)`
+- [ ] **CAMP-03**: SKILL.md Phase 8 step auto-passes `campaign_focus` from brief.md to `perf_fetch.py --campaign-filter` (no per-run typing required)
+- [ ] **CAMP-04**: Graceful degrade — when brief omits `campaign_focus`, `perf_fetch.py` runs account-wide (current v1.4 behavior preserved); Positives Sync, Negatives Sync, Ad Group Mapping all inherit narrowed dataset automatically
+- [ ] **CAMP-05**: `render_report.py` renders "Campaign Focus" callout in report header beside Geographic Focus when `campaign_focus` set; validates focus name appears in `raw/google-ads-perf.json` campaigns list and warns operator on typo
+- [ ] **CAMP-06**: Test coverage — `test_perf_fetch.py` respx mock asserts campaign filter clause appears in outgoing GAQL when `--campaign-filter` set; `test_render_report.py` asserts Campaign Focus callout renders + typo warning fires
+
+### Ad Group Mapping Token-Bag Enrichment (Phase 16)
+
+- [ ] **ADGM-07**: `ad_group_match.py` `_build_ag_token_bag(ag_name, kw_criteria, search_terms)` produces token set = AG name tokens ∪ kw_criterion tokens (from `raw/google-ads-keywords.json`) ∪ top-10 search-term tokens by clicks (from `raw/google-ads-search-terms.json`)
+- [ ] **ADGM-08**: Jaccard scoring uses enriched token bag as the comparison surface; falls back to name-only Jaccard when Phase 14 `raw/google-ads-keywords.json` absent (backward compat for pre-Phase-14 runs)
+- [ ] **ADGM-09**: Match `reason` field surfaces which evidence source contributed (e.g. `"jaccard=0.32 on kw-criterion bag, name overlap 0"`) so operator can audit the routing decision
+- [ ] **ADGM-10**: Threshold recalibration — likely tighter (e.g. 0.5 high / 0.25 medium vs current 0.7 / 0.4) because larger bags inflate denominator; documented in `references/phase11-account-structure-mapping.md` with calibration rationale
+- [ ] **ADGM-11**: Test coverage — golden mapping fixture from Lake Worth real-account data asserts ≥50% high+medium coverage post-enrichment; backward-compat test asserts current 0% behavior preserved when Phase 14 raw absent
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -319,20 +340,33 @@ Which phases cover which requirements. Updated during roadmap creation.
 | POS-05 | Phase 14 | Complete |
 | POS-06 | Phase 14 | Complete |
 | POS-07 | Phase 14 | Complete (Plan 14-00 scaffolding; flips fully GREEN as Wave 1/2 plans land) |
+| CAMP-01 | Phase 15 | Pending |
+| CAMP-02 | Phase 15 | Pending |
+| CAMP-03 | Phase 15 | Pending |
+| CAMP-04 | Phase 15 | Pending |
+| CAMP-05 | Phase 15 | Pending |
+| CAMP-06 | Phase 15 | Pending |
+| ADGM-07 | Phase 16 | Pending |
+| ADGM-08 | Phase 16 | Pending |
+| ADGM-09 | Phase 16 | Pending |
+| ADGM-10 | Phase 16 | Pending |
+| ADGM-11 | Phase 16 | Pending |
 
 **Coverage:**
 - v1.0 requirements: 52 total (Phases 1-8, all complete)
 - v1.1 requirements: 23 total (Phase 9 + 10, all complete)
 - v1.2 requirements: 11 total (Phase 11, all complete)
 - v1.3 requirements: 11 / 11 Complete (TVLY×4 + WFCH×4 + PULSE×3) — Phase 12
-- v1.4 requirements: 0 / 7 Complete (POS×7) — Phase 14 pending
+- v1.4 requirements: 7 / 7 Complete (POS×7) — Phase 14
+- v1.5 requirements: 0 / 11 Complete (CAMP×6 + ADGM×5) — Phases 15 + 16 pending
 - v1.3 mapped to phases: 11 (Phase 12)
 - v1.4 mapped to phases: 7 (Phase 14)
+- v1.5 mapped to phases: 11 (Phase 15 + 16)
 - Unmapped: 0
 - Orphaned: 0
 
-**Total: 89 Complete / 7 Pending = 96 v1 requirements** (52 v1.0 + 23 v1.1 + 11 v1.2 + 11 v1.3 + 7 v1.4).
+**Total: 96 Complete / 11 Pending = 107 v1 requirements** (52 v1.0 + 23 v1.1 + 11 v1.2 + 11 v1.3 + 7 v1.4 + 11 v1.5).
 
 ---
 *Requirements defined: 2026-05-08*
-*Last updated: 2026-05-15 — Milestone v1.4 (Positives Sync) started; 7 new requirements POS-01..07 mapped to Phase 14 (pending). Total v1 surface: 96 requirements (89 Complete + 7 Pending).*
+*Last updated: 2026-05-15 — Milestone v1.5 (Account-Aware Narrowing) started; 11 new requirements mapped to Phase 15 (CAMP-01..06) + Phase 16 (ADGM-07..11). Total v1 surface: 107 requirements (96 Complete + 11 Pending).*
