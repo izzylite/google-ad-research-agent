@@ -293,7 +293,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. Each match entry in `ad-group-mapping.json` carries a `reason` field naming which evidence source(s) contributed (e.g. `"jaccard=0.32 on kw-criterion bag, name overlap 0"`) so operator can audit any auto-routing decision.
   4. Recalibrated thresholds (likely tighter, e.g. 0.5 high / 0.25 medium vs current 0.7 / 0.4) are documented in `references/phase11-account-structure-mapping.md` with empirical rationale from at least 2 real-account calibration runs.
   5. Operator pastes new ranked keywords into Google Ads Editor and lands them in the right existing ad groups (high+medium tier) without re-thinking account structure — the original v1.2 promise of "respect client's existing AG structure" finally lands operationally on short-name-AG accounts.
-**Plans:** TBD
+**Plans:** 1/3 plans executed
 
 
 ## Progress
@@ -315,7 +315,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 13. Landing-Page Extract Vendor Swap | 0/0 | Backlog (defer-until-friction) | — |
 | 14. Positives Sync | 6/6 | Complete    | 2026-05-15 |
 | 15. Campaign Focus | 4/4 | Complete    | 2026-05-15 |
-| 16. Ad Group Mapping Token-Bag Enrichment | 0/3 | Planned | — |
+| 16. Ad Group Mapping Token-Bag Enrichment | 1/3 | In Progress|  |
 
 ## Coverage Map
 

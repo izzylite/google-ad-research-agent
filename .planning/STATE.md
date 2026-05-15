@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: Completed 15-03-PLAN.md (SKILL.md + references wiring; live e2e Lake Worth approved; Phase 15 ready for verification gate)
-last_updated: "2026-05-15T15:57:14.228Z"
+stopped_at: Completed 16-00-PLAN.md (Lake Worth golden fixtures + 5 RED Phase 16 tests scaffolded; 1 threshold sentinel FAILING by design — Wave 2 / plan 16-01 next)
+last_updated: "2026-05-15T16:36:25.258Z"
 progress:
   total_phases: 15
   completed_phases: 12
-  total_plans: 59
-  completed_plans: 59
+  total_plans: 62
+  completed_plans: 60
 ---
 
 # State: Google Ad Research Agent
@@ -26,10 +26,10 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | 15 — Campaign Focus |
-| Plan | 15-03 complete (Phase 15 ready for verification gate; Phase 16 next milestone) |
-| Status | Phase complete — all 4 plans shipped (00 RED + 01 perf_fetch + 02 render_report + 03 SKILL wiring); live e2e Lake Worth approved |
-| Last activity | 2026-05-15 — Plan 15-03 complete: SKILL.md Step 3/4 (commit bfaa97f) + references/phase8-account-data.md Step 33 contract + downstream-inheritance + anti-patterns (commit 23eb1f3); live e2e Lake Worth approved (30+ campaigns → 1, 35+ AGs → 3, 47 focused keywords); REQUIREMENTS CAMP-03 + CAMP-04 marked complete (commit 146b6f6) |
+| Phase | 16 — Ad-Group Mapping Token-Bag Enrichment |
+| Plan | 16-00 complete; 16-01 next (Wave 2 implementation — `_build_ag_token_bag` + threshold recalibration) |
+| Status | Wave 0 scaffold shipped — 5 Lake Worth golden fixtures + 5 RED tests (4 SKIPPED + 1 threshold sentinel FAILING by design) |
+| Last activity | 2026-05-15 — Plan 16-00 complete: Lake Worth fixtures staged (5144f8f) + RED tests appended with PHASE16_INCOMPLETE guard (43de949); reproducible slimming script under scripts/; pytest = 14 PASSED + 4 SKIPPED + 1 FAILED (threshold sentinel — TDD wiring proven) |
 
 ## Previous Milestone
 
@@ -105,6 +105,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 15-campaign-focus P01 | 3 min | 2 tasks | 1 files |
 | Phase 15-campaign-focus P02 | 2 min | 2 tasks | 1 files |
 | Phase 15-campaign-focus P03 | 12 min | 3 tasks | 3 files |
+| Phase 16 P00 | 12min | 2 tasks | 7 files |
 
 ### Execution History
 
@@ -145,6 +146,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 15-campaign-focus]: [15-02]: render_campaign_focus_section bypasses escape_md_cell — Google Ads campaign names like 'Search | Lake Worth Accident Exams | Manual CPC' use pipes by convention; escaping breaks operator recognition. Name validation against perf.json is case-sensitive (Google Ads API preserves case + enforces uniqueness).
 - [Phase 15-campaign-focus]: [15-03]: SKILL.md stays at 497/500 lines by offloading Step 33 --campaign-filter contract to references/phase8-account-data.md — trigger row + template line are the only SKILL.md edits; detailed contract loads on demand via progressive disclosure
 - [Phase 15-campaign-focus]: [15-03]: Live e2e on real Lake Worth OAuth account is the closeout gate, not unit tests alone — Plan 15-00/15-01/15-02 unit tests are necessary but not sufficient; only a real Google Ads pull confirms the GAQL clause narrows server-side (verified: 30+ campaigns → 1, 35+ AGs → 3, 47 focused keywords)
+- [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-00]: Used real-run row counts (66 ranked, 1 ENABLED AG) over plan estimates (47, 3) — plan philosophy 'fidelity to real run' wins over planner's pre-flight estimate
+- [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-00]: Keywords fixture re-shaped from flat real-data schema into nested ad_group_criterion.keyword.text form to match plan 16-01 _build_ag_token_bag contract — defers Wave 2 adapter complexity into the fixture
+- [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-00]: Threshold sentinel test ships WITHOUT skip guard — must FAIL at Wave 0 against 0.7/0.4 stub values to prove TDD wiring is connected; flips green when Wave 2 lands recalibration delta
 
 ### Open Questions / Todos
 
@@ -166,9 +170,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T15:52:57.513Z
+**Last session:** 2026-05-15T16:35:54.275Z
 
-**Stopped at:** Completed 15-03-PLAN.md (SKILL.md + references wiring; live e2e Lake Worth approved; Phase 15 ready for verification gate)
+**Stopped at:** Completed 16-00-PLAN.md (Lake Worth golden fixtures + 5 RED Phase 16 tests scaffolded; 1 threshold sentinel FAILING by design — Wave 2 / plan 16-01 next)
 
 **Next session:** `/gsd:execute-plan 15-01` (perf_fetch.py `--campaign-filter` + thread through 4 GAQL queries) and/or `/gsd:execute-plan 15-02` (render_report.py `_parse_brief_fields` campaign_focus + `render_campaign_focus_section`). Plans land independently; 15-03 SKILL.md wiring follows both.
 

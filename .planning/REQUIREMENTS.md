@@ -205,7 +205,7 @@ Milestone v1.5 — Phases 15 + 16. Narrows skill output from OAuth account scope
 - [ ] **ADGM-08**: Jaccard scoring uses enriched token bag as the comparison surface; falls back to name-only Jaccard when Phase 14 `raw/google-ads-keywords.json` absent (backward compat for pre-Phase-14 runs)
 - [ ] **ADGM-09**: Match `reason` field surfaces which evidence source contributed (e.g. `"jaccard=0.32 on kw-criterion bag, name overlap 0"`) so operator can audit the routing decision
 - [ ] **ADGM-10**: Threshold recalibration — likely tighter (e.g. 0.5 high / 0.25 medium vs current 0.7 / 0.4) because larger bags inflate denominator; documented in `references/phase11-account-structure-mapping.md` with calibration rationale
-- [ ] **ADGM-11**: Test coverage — golden mapping fixture from Lake Worth real-account data asserts ≥50% high+medium coverage post-enrichment; backward-compat test asserts current 0% behavior preserved when Phase 14 raw absent
+- [x] **ADGM-11**: Test coverage — golden mapping fixture from Lake Worth real-account data asserts ≥50% high+medium coverage post-enrichment; backward-compat test asserts current 0% behavior preserved when Phase 14 raw absent
 
 ## v2 Requirements
 
@@ -350,7 +350,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADGM-08 | Phase 16 | Pending |
 | ADGM-09 | Phase 16 | Pending |
 | ADGM-10 | Phase 16 | Pending |
-| ADGM-11 | Phase 16 | Pending |
+| ADGM-11 | Phase 16 | Complete |
 
 **Coverage:**
 - v1.0 requirements: 52 total (Phases 1-8, all complete)
