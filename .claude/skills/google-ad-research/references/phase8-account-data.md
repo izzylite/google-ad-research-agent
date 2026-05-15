@@ -70,7 +70,8 @@ uv run "${CLAUDE_SKILL_DIR}/scripts/perf_fetch.py" \
   --run-dir "{run_dir}" \
   [--customer-id 4580213643] \
   [--login-customer-id 4580213643] \
-  [--days 30]
+  [--days 30] \
+  [--campaign-filter "{campaign_focus}"]
 ```
 
 Defaults pulled from `GOOGLE_ADS_CUSTOMER_ID` env var.
@@ -88,6 +89,74 @@ Exit codes:
 - 0 → continue
 - 2 → API transient; offer retry
 - 3 → auth/perm fatal; surface error from stderr
+
+### Campaign focus auto-pass (CAMP-03 / CAMP-04)
+
+> **CAMP-03 (v1.5):** When `brief.md` carries a `**Campaign focus:**` line, read
+> it (grep `^- \*\*Campaign focus:\*\*` or via `_parse_brief_fields`) and
+> auto-append `--campaign-filter "<value>"` to the `perf_fetch.py` invocation
+> above — one quoted arg, pipe-separated list form `'A|B|C'` for multi-campaign.
+> The flag adds `AND campaign.name = '<focus>'` (single) or
+> `AND campaign.name IN (...)` (list) to all 4 GAQL queries (`keyword_view`,
+> `search_term_view`, `campaign`+`ad_group`, `campaign_criterion`+`ad_group_criterion`).
+> Announce to the operator BEFORE fetch: `Narrowing to campaign: <focus>`.
+>
+> **CAMP-04 graceful degrade:** Omit `--campaign-filter` and `perf_fetch.py`
+> runs account-wide — current v1.4 behavior preserved bit-for-bit. No code
+> path changes; the GAQL queries simply omit the `campaign.name` clause when
+> the kwarg is `None`/empty (helper returns `""`). Re-running an existing
+> pre-v1.5 brief produces identical raw artifacts.
+>
+> **Single-quote escape:** Campaign names containing apostrophes (e.g.
+> `O'Brien Auto`) are SQL-escaped by `perf_fetch.py` automatically
+> (`'O''Brien Auto'`). Operator passes the raw name; the script handles
+> GAQL string escaping.
+>
+> **Pipe-list parsing rule:** ` | ` (space-pipe-space) inside a single quoted
+> value is part of a Google-Ads campaign-naming convention (e.g.
+> `Search | Lake Worth Accident Exams | Manual CPC` is ONE campaign name).
+> Use the bare-pipe form `'A|B|C'` (no spaces) for the multi-campaign list
+> form. `perf_fetch.py` applies the same `' | '` vs `'|'` heuristic as
+> `render_report.py` so brief field and CLI flag agree.
+>
+> **Typo handling:** When the focus name doesn't exist in the account, the
+> GAQL query returns 0 rows — raw artifacts are empty but valid. The typo
+> warning fires later at Step 35 (`render_report.py` cross-checks the focus
+> name against `raw/google-ads-perf.json` campaigns list and renders
+> `⚠ Campaign name not found in account: '<name>' — check for typo` in
+> `## Campaign Focus`). Do NOT fail-fast here; empty raw is its own signal.
+
+### 5 anchor cases (verbatim from CAMP-01..04 design)
+
+1. **Single value (the common case)** — brief has
+   `**Campaign focus:** Search | Lake Worth Accident Exams | Manual CPC` →
+   skill appends `--campaign-filter "Search | Lake Worth Accident Exams | Manual CPC"`
+   (one quoted arg, spaced pipes preserved as one name). GAQL gains
+   `AND campaign.name = 'Search | Lake Worth Accident Exams | Manual CPC'`.
+2. **List form (rare but real)** — brief has
+   `**Campaign focus:** Campaign A|Campaign B|Campaign C` → skill appends
+   `--campaign-filter "Campaign A|Campaign B|Campaign C"` (one quoted arg,
+   bare pipes split). GAQL gains
+   `AND campaign.name IN ('Campaign A', 'Campaign B', 'Campaign C')`.
+3. **Single-quote escape** — brief has
+   `**Campaign focus:** O'Brien Auto Search` → skill appends
+   `--campaign-filter "O'Brien Auto Search"`. GAQL gains
+   `AND campaign.name = 'O''Brien Auto Search'` (single quote doubled per
+   SQL-string convention; `perf_fetch.py._escape_gaql_string` handles this).
+4. **Typo (focus name not in account)** — brief has
+   `**Campaign focus:** Search | Lake Worth Accident Examzz | Manual CPC` →
+   skill still appends the flag; `perf_fetch.py` returns empty raw artifacts
+   (0 rows match the misspelled name); Step 35 `render_report.py` renders
+   `⚠ Campaign name not found in account: 'Search | Lake Worth Accident Examzz | Manual CPC' — check for typo`
+   in the `## Campaign Focus` section. Operator fixes the brief and re-runs
+   Step 33 — the fetch is free quota.
+5. **Absent (account-wide v1.4 behavior)** — brief has NO
+   `**Campaign focus:**` line → skill omits `--campaign-filter` entirely
+   from the invocation; `perf_fetch.py` runs every GAQL query account-wide
+   (no `campaign.name` clause); raw artifacts contain every campaign in the
+   account; `report.md` has NO `## Campaign Focus` section. Pre-v1.5 briefs
+   are unaffected — bit-for-bit byte-identical raw output modulo the
+   `campaign_filter: null` traceability key in stdout JSON.
 
 ## Step 34: Synthesize performance + negative cross-reference
 
@@ -185,6 +254,14 @@ Surface to operator: report.md / report.json / report.html updated. Phase 8 done
 - **Don't bid on keywords with KD > 70 in the same campaign budget as
   KD ≤ 30 keywords.** Different ad group strategy required. Skill report
   presents data; bidding decisions remain operator's call.
+- **Don't manually filter raw artifacts by campaign after fetching
+  account-wide.** That defeats CAMP-04's clean separation. If you forgot
+  the `--campaign-filter` flag, re-run `perf_fetch.py` with the flag set
+  — the fetch is free quota; no penalty.
+- **Don't quote the pipe-list value with surrounding pipes.** `'A|B|C'`
+  (correct) vs `'|A|B|C|'` (wrong — produces empty-name list entries that
+  get filtered out, silently turning a 3-campaign list into a 0-clause /
+  account-wide fetch).
 
 ## Failure modes
 
@@ -197,3 +274,32 @@ Surface to operator: report.md / report.json / report.html updated. Phase 8 done
 - **MCC mismatch**: `login_customer_id` must parent the `customer_id`
   being queried, OR `login = customer` for direct access. Empirically,
   for Appflow's setup direct access (`login == target`) works.
+
+## Phase 15 downstream contract (CAMP-04 inheritance)
+
+The `--campaign-filter` flag narrows the 4 raw artifacts at the source.
+Every downstream consumer reads `raw/google-ads-*.json` as-is — no
+per-script wiring needed:
+
+- **`perf_synth.py` → `negatives-sync.json`** (Phase 8 GADS-04): cross-refs
+  use the already-narrowed `raw/google-ads-negatives.json`; sync section
+  reflects only target-campaign negatives.
+- **`perf_synth.py` → `positives-sync.json`** (Phase 14 POS-02): same —
+  `already_active` / `paused_in_account` buckets reflect only the
+  target campaign's keywords. Step 34a LLM re-tag (POS-06) operates on
+  the already-narrowed buckets — no campaign-awareness needed in the
+  LLM prompt.
+- **`ad_group_match.py` → `ad-group-mapping.json`** (Phase 11 ADGM-01..04):
+  maps against ad groups inside the target campaign only (e.g. 3 AGs
+  under "Lake Worth Accident Exams" instead of 35 account-wide).
+  Coverage percentages calibrate against the narrowed denominator —
+  Phase 16 enrichment thresholds tune against this narrowed dataset.
+- **`render_report.py`**: `## Campaign Focus` callout renders in the
+  report header beside `## Geographic Focus` (CAMP-05); typo warning
+  fires when brief's focus name not in `raw/google-ads-perf.json`
+  campaigns list.
+
+No script needs to know about `campaign_focus` — narrowing is a property
+of the raw data, not the synth layer. This is the same architectural
+pattern as Phase 11 `geo_focus` (filters at SERP harvest + city-token
+merge_signals layer; downstream rank/cluster/render unaware).
