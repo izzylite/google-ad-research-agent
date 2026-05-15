@@ -197,7 +197,7 @@ Milestone v1.5 — Phases 15 + 16. Narrows skill output from OAuth account scope
 - [x] **CAMP-03**: SKILL.md Phase 8 step auto-passes `campaign_focus` from brief.md to `perf_fetch.py --campaign-filter` (no per-run typing required)
 - [x] **CAMP-04**: Graceful degrade — when brief omits `campaign_focus`, `perf_fetch.py` runs account-wide (current v1.4 behavior preserved); Positives Sync, Negatives Sync, Ad Group Mapping all inherit narrowed dataset automatically
 - [x] **CAMP-05**: `render_report.py` renders "Campaign Focus" callout in report header beside Geographic Focus when `campaign_focus` set; validates focus name appears in `raw/google-ads-perf.json` campaigns list and warns operator on typo
-- [ ] **CAMP-06**: Test coverage — `test_perf_fetch.py` respx mock asserts campaign filter clause appears in outgoing GAQL when `--campaign-filter` set; `test_render_report.py` asserts Campaign Focus callout renders + typo warning fires
+- [x] **CAMP-06**: Test coverage — `test_perf_fetch.py` respx mock asserts campaign filter clause appears in outgoing GAQL when `--campaign-filter` set; `test_render_report.py` asserts Campaign Focus callout renders + typo warning fires
 
 ### Ad Group Mapping Token-Bag Enrichment (Phase 16)
 
@@ -345,7 +345,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CAMP-03 | Phase 15 | Complete |
 | CAMP-04 | Phase 15 | Complete |
 | CAMP-05 | Phase 15 | Complete |
-| CAMP-06 | Phase 15 | Pending |
+| CAMP-06 | Phase 15 | Complete |
 | ADGM-07 | Phase 16 | Pending |
 | ADGM-08 | Phase 16 | Pending |
 | ADGM-09 | Phase 16 | Pending |

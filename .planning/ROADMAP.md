@@ -314,7 +314,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 12. Source Consolidation (Drop Tavily) | 6/6 | Complete    | 2026-05-15 |
 | 13. Landing-Page Extract Vendor Swap | 0/0 | Backlog (defer-until-friction) | — |
 | 14. Positives Sync | 6/6 | Complete    | 2026-05-15 |
-| 15. Campaign Focus | 4/4 | Complete   | 2026-05-15 |
+| 15. Campaign Focus | 4/4 | Complete    | 2026-05-15 |
 | 16. Ad Group Mapping Token-Bag Enrichment | 0/0 | Not started | — |
 
 ## Coverage Map
