@@ -178,7 +178,7 @@ Milestone v1.4 — Phase 14 only. Mirror negatives-sync UX for positives: diff r
 
 ### Positives Sync (Phase 14)
 
-- [ ] **POS-01**: `perf_fetch.py` adds new GAQL against `keyword_view` (last 30d) pulling `ad_group_criterion.keyword.text`, `ad_group_criterion.keyword.match_type`, `ad_group_criterion.status`, `metrics.impressions/clicks/conversions/cost_micros`; writes `raw/google-ads-keywords.json`. PMax campaigns excluded (no kw-level data).
+- [x] **POS-01**: `perf_fetch.py` adds new GAQL against `keyword_view` (last 30d) pulling `ad_group_criterion.keyword.text`, `ad_group_criterion.keyword.match_type`, `ad_group_criterion.status`, `metrics.impressions/clicks/conversions/cost_micros`; writes `raw/google-ads-keywords.json`. PMax campaigns excluded (no kw-level data).
 - [ ] **POS-02**: `perf_synth.py` adds `cross_ref_positives(ranked, existing_kws)` producing `positives-sync.json` with 4 buckets — `already_active` / `paused_in_account` / `covered_by_broad` / `new_to_add` — plus stats block mirroring `negatives-sync.json` structure.
 - [ ] **POS-03**: `render_report.py` adds `render_positives_sync_section()` — markdown + HTML — surfacing stats line + enumerated `new_to_add` list (with category/justification per row) + count-only `already_active` + collapsible `paused_in_account` + `covered_by_broad`; mirrors negatives-sync UX.
 - [ ] **POS-04**: `export_csv.py` filters `positives.csv` rows to `new_to_add` only by default when `positives-sync.json` present; new `--include-existing` CLI flag opts back into full ranked list.
@@ -312,7 +312,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PULSE-10 | Phase 12 | Complete |
 | PULSE-11 | Phase 12 | Complete |
 | PULSE-12 | Phase 12 | Complete |
-| POS-01 | Phase 14 | Pending |
+| POS-01 | Phase 14 | Complete |
 | POS-02 | Phase 14 | Pending |
 | POS-03 | Phase 14 | Pending |
 | POS-04 | Phase 14 | Pending |

@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.4
-milestone_name: Positives Sync
-status: in_progress
-stopped_at: Phase 14 Plan 00 (Wave 0 RED scaffolding) shipped 2026-05-15. 14 RED-via-SKIP tests + 4 byte-exact fixtures locked. Next, /gsd:execute-plan 14-01 (Wave 1 perf_fetch fetch_keyword_view).
-last_updated: "2026-05-15T12:00:00.000Z"
+milestone: v1.1
+milestone_name: Phases
+status: unknown
+stopped_at: "Completed 14-01-PLAN.md (perf_fetch.fetch_keyword_view + raw/google-ads-keywords.json writer). 244 passed, 12 skipped. Next: /gsd:execute-plan 14-02 (perf_synth.cross_ref_positives)."
+last_updated: "2026-05-15T12:25:58.877Z"
 progress:
   total_phases: 13
-  completed_phases: 12
+  completed_phases: 10
   total_plans: 55
-  completed_plans: 50
+  completed_plans: 51
 ---
 
 # State: Google Ad Research Agent
@@ -93,6 +93,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 12-source-consolidation-drop-tavily P04 | 45min | 3 tasks | 7 files |
 | Phase 12-source-consolidation-drop-tavily P05 | ~20min | 3 tasks | 10 files |
 | Phase 14 P00 | ~18min | 3 tasks | 5 created + 3 modified |
+| Phase 14 P01 | 2min | 2 tasks | 1 files |
 
 ### Execution History
 
@@ -251,6 +252,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 14-00]: export_csv._POSITIVES_SYNC_SUPPORTED module-level sentinel locked as the Wave 2 14-04 detection point. Per-function _skip_unless_positives_sync_filter() checks both MODULE_INCOMPLETE (file-level pytestmark) AND the sentinel — stacks cleanly with existing legacy guards. Wave 2 14-04 plan MUST set _POSITIVES_SYNC_SUPPORTED = True at module scope when the filter logic lands; argparse-introspection alternative rejected as more brittle.
 - [Phase 14-00]: Fixture seed strategy — 5 ranked rows align verbatim with 4 account-keyword rows so each of the 4 bucket scenarios + the unmatched sanity case fires exactly once. urgent-care-lake-worth → ENABLED EXACT → already_active. auto-accident-clinic → PAUSED PHRASE → paused_in_account. pip-insurance-clinic → BROAD pip-clinic covers → covered_by_broad. accident-chiropractor-lake-worth + walk-in-clinic-boca-raton → no match → new_to_add. wellness-exam exists in account only → never surfaces in sync (sanity).
 - [Phase 14-00]: Python `_` digit separators (4_200_000) caused initial JSON parse failures in ranked_phase14.json + google-ads-keywords-fixture.json. Caught at fixture validation step (Bash python -c "json.load"), regex-stripped to 4200000. Future JSON fixtures: never paste Python int-literal underscores; JSON spec disallows them.
+- [Phase 14]: [14-01] fetch_keyword_view mirrors fetch_search_terms line-for-line (same client surface, same _date_literal, same enum .name pattern); no LIMIT (account-wide kw lists bounded, mirrors fetch_perf campaigns query); no per-keyword cost_usd derived field (keep raw faithful to API, perf_synth does USD math downstream). 2 commits: d8ade67 (function), 33f36e5 (wiring).
 
 ### Open Questions / Todos
 
@@ -270,9 +272,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T12:00:00.000Z
+**Last session:** 2026-05-15T12:25:58.872Z
 
-**Stopped at:** Phase 14 Plan 00 (Wave 0 RED scaffolding) executed. 4 fixtures + 14 RED-via-SKIP tests + 1 PASSING omit-when-absent test landed across 4 shared test files. Per-function guards preserve all legacy GREEN tests. Full suite 242 passed, 14 skipped (was 241+0 pre-Phase-14).
+**Stopped at:** Completed 14-01-PLAN.md (perf_fetch.fetch_keyword_view + raw/google-ads-keywords.json writer). 244 passed, 12 skipped. Next: /gsd:execute-plan 14-02 (perf_synth.cross_ref_positives).
 
 **Next session:** Run `/gsd:execute-plan 14-01` (Wave 1 perf_fetch.fetch_keyword_view + raw/google-ads-keywords.json writer — POS-01). Parallel-runnable with 14-02 (perf_synth.cross_ref_positives). RED stubs in test_perf_fetch.py + test_perf_synth.py will flip SKIP → GREEN as Wave 1 lands.
 
