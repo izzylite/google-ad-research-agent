@@ -253,7 +253,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 9. Campaign Economics and Compliance | 6/6 | Complete    | 2026-05-14 |
 | 10. Operator Launch Kit | 5/5 | Complete    | 2026-05-14 |
 | 11. Account-Structure Mapping | 5/5 | Complete    | 2026-05-14 |
-| 12. Source Consolidation (Drop Tavily) | 6/6 | Complete   | 2026-05-15 |
+| 12. Source Consolidation (Drop Tavily) | 6/6 | Complete    | 2026-05-15 |
 | 13. Landing-Page Extract Vendor Swap | 0/0 | Backlog (defer-until-friction) | — |
 
 ## Coverage Map
