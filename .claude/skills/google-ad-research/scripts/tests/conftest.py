@@ -51,12 +51,6 @@ def serper_empty_ads_fixture():
 
 
 @pytest.fixture
-def tavily_fixture():
-    """Tavily extract response with 1 success and 1 failed_result."""
-    return json.loads((FIXTURES_DIR / "tavily_extract_2urls.json").read_text())
-
-
-@pytest.fixture
 def sample_brief_text() -> str:
     """A minimal-but-valid brief.md body for write_brief() tests."""
     return (
