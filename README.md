@@ -6,7 +6,7 @@ A [Claude Code](https://claude.com/claude-code) skill that turns one campaign br
 brief in chat  →  ~10 min  →  report.html + report.md + report.json + Editor CSV
 ```
 
-Built for in-house PPC operators and agency teams that want consistent, auditable keyword research without the 4-6 hours of manual cross-tabulation.
+Built as an **internal team tool** — single-operator, filesystem-only, no multi-tenant. Designed for a PPC team that wants consistent, auditable keyword research without the 4-6 hours of manual cross-tabulation. Not a commercial product.
 
 ---
 
@@ -128,9 +128,9 @@ Multi-source agreement dominates ranking. `signal_count` is **not** search volum
 - [`uv`](https://docs.astral.sh/uv/) ≥ 0.4 — handles all Python deps via PEP 723
 - Python ≥ 3.11
 - API keys:
-  - **[Serper.dev](https://serper.dev/)** — required. ~$50/mo for 50k queries; ~$0.20 per full run
-  - **[Ahrefs API](https://ahrefs.com/api)** — optional (Phase 8 volume enrichment)
-  - **[Google Ads API](https://developers.google.com/google-ads/api)** — optional (Phase 8 performance context)
+  - **[Serper.dev](https://serper.dev/)** — required. Free tier ships with **2,500 credits on signup** (~80-100 internal runs) — covers internal-team usage indefinitely. Paid tier only if you exhaust free credits.
+  - **[Ahrefs API](https://ahrefs.com/api)** — required for Phase 8 (real volume/CPC/KD). Phase 9 + Phase 10 (Launch Kit Editor CSVs) chain off Phase 8, so this is effectively required for launch-ready output.
+  - **[Google Ads API](https://developers.google.com/google-ads/api)** — required for Phase 8 (account performance pull) and Phase 11 (existing-ad-group preservation). Free quota.
 
 ### Setup
 
@@ -144,14 +144,15 @@ Edit `.env`:
 
 ```
 SERPER_API_KEY=...
-# Optional Phase 8 enrichment:
-# AHREFS_API_TOKEN=...
-# GOOGLE_ADS_DEVELOPER_TOKEN=...
-# GOOGLE_ADS_CLIENT_ID=...
-# GOOGLE_ADS_CLIENT_SECRET=...
-# GOOGLE_ADS_REFRESH_TOKEN=...
-# GOOGLE_ADS_LOGIN_CUSTOMER_ID=...
+AHREFS_API_TOKEN=...
+GOOGLE_ADS_DEVELOPER_TOKEN=...
+GOOGLE_ADS_CLIENT_ID=...
+GOOGLE_ADS_CLIENT_SECRET=...
+GOOGLE_ADS_REFRESH_TOKEN=...
+GOOGLE_ADS_LOGIN_CUSTOMER_ID=...
 ```
+
+All keys are needed for the full pipeline (Phases 1-11). Skill will run core Phases 1-6 with Serper alone but skip Phase 8-10 and Phase 11's existing-ad-group preservation if Ahrefs / Google Ads creds are missing.
 
 That's it. The skill is at `.claude/skills/google-ad-research/` and Claude Code auto-discovers project-scoped skills when you launch a session in this directory.
 
@@ -204,28 +205,33 @@ Open Claude Code in this directory and paste a brief. The skill activates on phr
 > Account Mapping) optional — say which to run.
 ```
 
-### Optional sidecars (run after the core)
+### Phase 7-11: default behavior
 
-| Sidecar | What it adds | When to run |
-|---------|--------------|-------------|
-| **Phase 7 — Niche Pulse** | Trending news themes, regulatory alerts, competitor news, time-sensitive negative candidates | Weekly refresh; before launch in volatile niches (insurance, healthcare, finance) |
-| **Phase 8 — Account Data + Volume** | Ahrefs MSV + CPC + Keyword Difficulty per keyword (`ranked-enriched.json`); Google Ads MCC performance baseline (`account-perf.json`); existing-account negatives sync (`negatives-sync.json`). **Prerequisite for Phase 9 + Phase 10.** | When client provides Ahrefs API key + Ads MCC OAuth — required if you want Phase 9/10 outputs |
-| **Phase 9 — Economics + Compliance** | Max-CPC suggestions per keyword (intent × baseline CPC × bid multipliers, mutated into `ranked-enriched.json`), daily budget forecast bands (low/mid/high in `forecast.json`), vertical compliance flags (HIPAA, finance UDAP, employment EEO — `compliance-flags.json`). Pure-compute, no API cost. **Needs Phase 8.** | Always before launch — gates Phase 10 |
-| **Phase 10 — Operator Launch Kit** | Google Ads Editor-paste CSVs in `{run}/export/` — `positives.csv` (with Max CPC + match-type), `negatives.csv` (tiered), `ad_groups.csv` (structure). Next-Steps checklist with daily budget + Max CPC pre-filled. **Needs Phase 9.** | Always before launch |
-| **Phase 11 — Account-Structure Mapping** | Geo eligibility filter (state/county/city), ad-group structure suggestion with bid modifiers | Local-services and geo-targeted campaigns |
+Only Phase 7 prompts. Phases 8-11 auto-run when prerequisites are present in `.env` + brief:
 
-### Cost per run
+| Phase | Default | Auto-run trigger | What it adds |
+|-------|---------|------------------|--------------|
+| **7 — Niche Pulse** | **Opt-in** (operator prompted) | n/a | Trending news themes, regulatory alerts, competitor news, time-sensitive negative candidates. Useful for volatile niches (insurance, healthcare, finance) — weekly refresh. |
+| **8 — Account Data + Volume** | **Auto-run** | `AHREFS_API_KEY` AND Google Ads OAuth creds in `.env` | Ahrefs MSV + CPC + Keyword Difficulty (`ranked-enriched.json`); Google Ads MCC performance baseline (`account-perf.json`); existing-account negatives sync (`negatives-sync.json`). |
+| **9 — Economics + Compliance** | **Auto-run** | Phase 8 produced `cpc_micros` | Max CPC per keyword (mutated into `ranked-enriched.json`), budget forecast bands (`forecast.json`), vertical compliance flags (`compliance-flags.json`). Pure compute. |
+| **10 — Operator Launch Kit** | **Auto-run** | Phase 9 completed | `{run}/export/` Editor v2.x CSVs: `positives.csv` (with Max CPC), `negatives.csv` (tiered), `ad_groups.csv`. Next-Steps checklist with daily budget + Max CPC pre-filled. |
+| **11 — Account-Structure Mapping** | **Auto-run** | Brief has `Geo focus:` field OR Phase 8 produced account data | Geo eligibility filter (state/county/city — drops out-of-area keywords), existing-ad-group preservation (skill won't re-create ad groups your account already has). |
 
-| Phase | API | Typical cost |
-|-------|-----|--------------|
-| 2: Signal collection | Serper × ~12 | ~$0.012 |
-| 5: Competitor intel | Serper × N clusters | ~$0.02 |
+**To get the full pipeline by default**, set all 7 keys in `.env`. Skill announces a skip + reason whenever a phase can't run. No silent skips, no per-phase prompts.
+
+### Credits per run
+
+| Phase | Source | Cost |
+|-------|--------|------|
+| 2: Signal collection | Serper × ~12 | 12 credits |
+| 5: Competitor intel | Serper × N clusters | ~14 credits |
 | 5: Landing-page extract | WebFetch (Claude built-in) | $0 |
-| 7: Niche pulse (optional) | Serper /news × ~10 | ~$0.01 |
-| 8: Volume enrichment (optional) | Ahrefs API | metered |
-| 8: Perf context (optional) | Google Ads API | $0 |
-| **Core total (Phases 1-6)** | | **~$0.03 / run** |
-| **+ all sidecars except Ahrefs** | | **~$0.05 / run** |
+| 7: Niche pulse (opt-in) | Serper /news × ~10 | ~12 credits |
+| 8: Volume enrichment | Ahrefs API | ~73 units |
+| 8: Perf context | Google Ads API | free quota |
+| **Total Serper per run** | | **~26 credits (full pipeline ~38)** |
+
+Serper free tier = **2,500 credits**. At ~30 credits/run that's ~80 runs free — comfortably covers internal-team usage. No paid plan required for normal volume.
 
 ---
 

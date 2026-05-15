@@ -465,22 +465,35 @@ Phase 5 (competitor intel) begins at Step 18 below.
 
 > See `.claude/skills/google-ad-research/references/phase6-negatives-report.md` for full step instructions (Steps 21-26). Load it with the Read tool when entering Phase 6.
 
-## Phase 7: Niche Pulse (optional, time-sensitive sidecar)
+## Phase 7: Niche Pulse (opt-in — timing-driven)
 
-> See `.claude/skills/google-ad-research/references/phase7-niche-pulse.md` for full step instructions (Steps 27-30). Load it with the Read tool when entering Phase 7. Phase 7 is optional — ask the operator before running. It surfaces trending news themes, regulatory alerts, competitor news, and trending negative candidates from the last 7 days. Costs ~12 Serper credits per run. Does NOT merge into the main `keywords.json` — produces its own `niche-pulse.json`.
+> See `.claude/skills/google-ad-research/references/phase7-niche-pulse.md` for full step instructions (Steps 27-30). Load it with the Read tool when entering Phase 7. **Opt-in: ask the operator before running.** Only useful for time-sensitive verticals (insurance, healthcare news, regulatory shifts). Surfaces trending news themes, regulatory alerts, competitor news, and trending negative candidates from the last 7 days. Costs ~12 Serper credits per run. Does NOT merge into the main `keywords.json` — produces its own `niche-pulse.json`.
 
-## Phase 8: Account Data + Volume Enrichment (optional, account-aware sidecar)
+## Phase 8: Account Data + Volume Enrichment (auto-run when creds present)
 
-> See `.claude/skills/google-ad-research/references/phase8-account-data.md` for full step instructions (Steps 31-35). Load it with the Read tool when entering Phase 8. Phase 8 is optional — ask the operator before running. It enriches the keyword table with Ahrefs volume / CPC / KD / parent_topic, pulls real search terms and campaign performance from the Google Ads account, and cross-references generated negatives against existing account negatives. Requires `AHREFS_API_KEY` + Google Ads OAuth creds in `.env`. Costs ~73 Ahrefs units + free Google Ads quota per run. Produces `ranked-enriched.json`, `account-perf.json`, `negatives-sync.json` alongside existing artifacts.
+> See `.claude/skills/google-ad-research/references/phase8-account-data.md` for full step instructions (Steps 31-35). Load it with the Read tool when entering Phase 8. **Auto-run when `AHREFS_API_KEY` AND Google Ads OAuth creds are present in `.env`** — do NOT prompt the operator. Enriches the keyword table with Ahrefs volume / CPC / KD / parent_topic, pulls real search terms and campaign performance from the Google Ads account, and cross-references generated negatives against existing account negatives. Costs ~73 Ahrefs units + free Google Ads quota per run. Produces `ranked-enriched.json`, `account-perf.json`, `negatives-sync.json` alongside existing artifacts.
+>
+> **Skip-and-announce conditions (and only these):**
+> - `AHREFS_API_KEY` missing → announce `Phase 8 skipped: AHREFS_API_KEY not set. Add to .env to enable real volume/CPC/KD enrichment. Continuing to Phase 9 is impossible without it.`
+> - Google Ads OAuth creds missing (`GOOGLE_ADS_DEVELOPER_TOKEN` / `GOOGLE_ADS_CLIENT_ID` / `GOOGLE_ADS_CLIENT_SECRET` / `GOOGLE_ADS_REFRESH_TOKEN` / `GOOGLE_ADS_LOGIN_CUSTOMER_ID`) → announce `Phase 8 skipped: Google Ads OAuth creds incomplete. Skill is internal-team tool — these are required for the launch kit and account mapping. Configure .env and rerun.`
+> - Operator explicitly says "skip Phase 8" (rare; honor it but warn that Phase 9, 10, 11 chain breaks).
 
 ---
 
-## Phase 9: Campaign Economics and Compliance (optional, launch-kit prep)
+## Phase 9: Campaign Economics and Compliance (auto-run when Phase 8 ran)
 
-> See `.claude/skills/google-ad-research/references/phase9-economics-compliance.md` for full step instructions (Steps 36-40). Load it with the Read tool when entering Phase 9. Phase 9 is optional in the v1.0 workflow but **mandatory for Phase 10 (Operator Launch Kit)** — it adds Suggested Max CPC per keyword, per-cluster + campaign-level budget forecast bands, and a regulated-vertical compliance scan. Pure-compute phase — no API costs. Requires Phase 8 (`ranked-enriched.json` with `cpc_micros`) to have run. Produces an additive mutation of `ranked-enriched.json` plus two new sidecars (`forecast.json`, `compliance-flags.json`).
+> See `.claude/skills/google-ad-research/references/phase9-economics-compliance.md` for full step instructions (Steps 36-40). Load it with the Read tool when entering Phase 9. **Auto-run when Phase 8 produced `ranked-enriched.json` with `cpc_micros`** — do NOT prompt. Adds Suggested Max CPC per keyword, per-cluster + campaign-level budget forecast bands, and a regulated-vertical compliance scan. Pure-compute phase — no API costs. Produces an additive mutation of `ranked-enriched.json` plus two new sidecars (`forecast.json`, `compliance-flags.json`).
+>
+> **Skip only if** Phase 8 was skipped or `cpc_micros` is absent from every row — announce `Phase 9 skipped: no Phase 8 CPC data to derive bid suggestions.`
 
-## Phase 10: Operator Launch Kit (optional, campaign-launch artifacts)
-> See `.claude/skills/google-ad-research/references/phase10-operator-launch-kit.md` for full step instructions (Steps 41-43). Optional; turns report into ready-to-import campaign. Emits 3 Editor v2.x CSVs (`positives.csv`, `negatives.csv`, `ad_groups.csv`) + appends bespoke Next Steps checklist. Pure compute, no API costs. Requires Phase 9. Produces `{run_dir}/export/*.csv` + extends `report.md`/`report.json`/`report.html`.
+## Phase 10: Operator Launch Kit (auto-run when Phase 9 ran)
 
-## Phase 11: Account-Structure Mapping (optional, geo refinement + existing ad-group preservation)
-> See `.claude/skills/google-ad-research/references/phase11-account-structure-mapping.md` for full step instructions (Steps 44-47). Load it with the Read tool when entering Phase 11. Optional; refines research to specific counties/cities (GEO-01..05) and maps ranked keywords to the client's existing ad groups (ADGM-01..06). Pure compute, no API costs. Requires Phase 8 (`raw/google-ads-perf.json` + `raw/google-ads-search-terms.json`); graceful skip if absent. Produces `{run_dir}/ad-group-mapping.json` + rewrites `report.md` Next Steps step 3 when coverage > 50% + filters `export/ad_groups.csv` to skip existing names.
+> See `.claude/skills/google-ad-research/references/phase10-operator-launch-kit.md` for full step instructions (Steps 41-43). **Auto-run when Phase 9 completed** — do NOT prompt. Turns report into ready-to-import campaign. Emits 3 Editor v2.x CSVs (`positives.csv`, `negatives.csv`, `ad_groups.csv`) under `{run_dir}/export/` + appends bespoke Next Steps checklist. Pure compute, no API costs. Extends `report.md`/`report.json`/`report.html`.
+>
+> **Skip only if** Phase 9 was skipped — announce `Phase 10 skipped: no Phase 9 economics to populate Editor CSVs.`
+
+## Phase 11: Account-Structure Mapping (auto-run when brief has geo_focus OR Phase 8 ran)
+
+> See `.claude/skills/google-ad-research/references/phase11-account-structure-mapping.md` for full step instructions (Steps 44-47). Load it with the Read tool when entering Phase 11. **Auto-run when EITHER the brief has a `Geo focus:` field OR Phase 8 produced `raw/google-ads-perf.json` + `raw/google-ads-search-terms.json`** — do NOT prompt. Refines research to specific counties/cities (GEO-01..05) and maps ranked keywords to the client's existing ad groups (ADGM-01..06). Pure compute, no API costs. Produces `{run_dir}/ad-group-mapping.json` + rewrites `report.md` Next Steps step 3 when coverage > 50% + filters `export/ad_groups.csv` to skip existing names.
+>
+> **Skip only if** brief has no `Geo focus:` field AND Phase 8 did not produce account data. Internal-team skill: every brief targets a specific FL geography + pastes into an existing Ads account — geo-filtering + existing-ad-group preservation are primary value, not polish.
