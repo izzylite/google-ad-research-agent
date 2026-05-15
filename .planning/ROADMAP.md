@@ -258,6 +258,40 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - [ ] 14-04-PLAN.md — Wave 4: export_csv.py positives-sync filter + --include-existing flag — POS-04, POS-05
 - [ ] 14-05-PLAN.md — Wave 5: SKILL.md Step 34a pointer + references/phase8-account-data.md LLM re-tag rubric + end-to-end human-verify — POS-06
 
+---
+
+## Milestone v1.5: Account-Aware Narrowing
+
+**Started:** 2026-05-15
+**Goal:** Narrow skill output from OAuth-account scope to the operator's actual target campaign + the AGs inside it. Mirrors v1.2's `geo_focus` architectural pattern at the campaign + AG-criterion level. Two related contamination issues from Lake Worth dogfood fixed: (1) Phase 8 GAQL pulls all 30+ campaigns when brief targets one → Positives/Negatives Sync + AG Mapping show irrelevant data; (2) AG Mapping Jaccard uses AG name only (~4 tokens) vs ranked kw (long phrases) → 0% coverage. No new external APIs — reuses existing Google Ads OAuth + Phase 14 raw data.
+**Granularity:** standard (2 phases for 11 requirements)
+**Coverage:** 11/11 v1.5 requirements mapped (100%)
+
+### Phase 15: Campaign Focus
+**Goal:** Operator declares an optional `campaign_focus` in brief.md; `perf_fetch.py` adds `AND campaign.name = '<focus>'` to all 4 GAQL queries so every Phase 8 raw artifact, plus the downstream Positives Sync, Negatives Sync, and Ad Group Mapping that consume them, narrows to the single target campaign without per-script wiring. Omitting `campaign_focus` preserves current v1.4 account-wide behavior.
+**Depends on:** Phase 14 (extends `perf_fetch.py` 4-query surface including `keyword_view`), Phase 11 (mirrors `geo_focus` brief-parsing + report-callout pattern), Phase 8 (Google Ads OAuth wiring).
+**Requirements:** CAMP-01, CAMP-02, CAMP-03, CAMP-04, CAMP-05, CAMP-06
+**Success Criteria** (what must be TRUE):
+  1. Operator includes `Campaign focus: Search | Lake Worth Accident Exams | Manual CPC` in `brief.md`; `raw/google-ads-keywords.json` + `raw/google-ads-perf.json` + `raw/google-ads-search-terms.json` + `raw/google-ads-negatives.json` contain only that campaign's data — no Palm Springs / FL PIP / Hybrid noise.
+  2. Positives Sync stats and Negatives Sync stats accurately reflect the narrowed campaign — no contamination from keywords or negatives running in unrelated campaigns inflating the `already_active` / `already_in_account` buckets.
+  3. Ad Group Mapping section shows only the ad groups inside the focused campaign (e.g. the 3 AGs under "Lake Worth Accident Exams") instead of all 35 account-wide ad groups.
+  4. Operator omits `campaign_focus` from `brief.md` → skill runs account-wide unchanged (current v1.4 behavior preserved end-to-end; backward compat verified by re-running an existing pre-v1.5 brief).
+  5. Operator types a `campaign_focus` value that does not match any campaign name in `raw/google-ads-perf.json` → `render_report.py` emits a warning callout in the report header before downstream sections render against the (empty) narrowed result.
+**Plans:** TBD
+
+### Phase 16: Ad Group Mapping Token-Bag Enrichment
+**Goal:** `ad_group_match.py` Jaccard scoring uses an enriched per-AG token bag (AG name ∪ active kw_criteria tokens ∪ top-N search-term tokens) instead of AG name only, lifting high+medium mapping coverage from 0% to 50%+ on real client accounts whose AG names are short labels. When Phase 14 `raw/google-ads-keywords.json` is absent, falls back silently to current name-only Jaccard (backward compat for pre-Phase-14 accounts).
+**Depends on:** Phase 15 (calibrates against the narrowed dataset Phase 15 produces — running token-bag enrichment against the full-account dataset gives noisier threshold calibration), Phase 14 (consumes `raw/google-ads-keywords.json` for AG kw-criteria evidence), Phase 11 (extends existing `ad_group_match.py` algorithm + threshold config).
+**Requirements:** ADGM-07, ADGM-08, ADGM-09, ADGM-10, ADGM-11
+**Success Criteria** (what must be TRUE):
+  1. Operator runs the skill on a real account (Lake Worth-shape: short AG names, deep kw_criteria) that previously showed 0% high+medium coverage in Phase 11; post-Phase-16 mapping shows ≥50% high+medium coverage when Phase 14 + Phase 15 raw data is present.
+  2. Operator runs the skill on an account without Phase 14 OAuth (`raw/google-ads-keywords.json` absent) → current name-only Jaccard behavior preserved with no errors; mapping section renders as it did in pre-Phase-14 Phase 11 runs.
+  3. Each match entry in `ad-group-mapping.json` carries a `reason` field naming which evidence source(s) contributed (e.g. `"jaccard=0.32 on kw-criterion bag, name overlap 0"`) so operator can audit any auto-routing decision.
+  4. Recalibrated thresholds (likely tighter, e.g. 0.5 high / 0.25 medium vs current 0.7 / 0.4) are documented in `references/phase11-account-structure-mapping.md` with empirical rationale from at least 2 real-account calibration runs.
+  5. Operator pastes new ranked keywords into Google Ads Editor and lands them in the right existing ad groups (high+medium tier) without re-thinking account structure — the original v1.2 promise of "respect client's existing AG structure" finally lands operationally on short-name-AG accounts.
+**Plans:** TBD
+
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -276,6 +310,8 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 12. Source Consolidation (Drop Tavily) | 6/6 | Complete    | 2026-05-15 |
 | 13. Landing-Page Extract Vendor Swap | 0/0 | Backlog (defer-until-friction) | — |
 | 14. Positives Sync | 6/6 | Complete    | 2026-05-15 |
+| 15. Campaign Focus | 0/0 | Not started (defining plans) | — |
+| 16. Ad Group Mapping Token-Bag Enrichment | 0/0 | Not started | — |
 
 ## Coverage Map
 
@@ -293,9 +329,11 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 11 | GEO-01, GEO-02, GEO-03, GEO-04, GEO-05, ADGM-01, ADGM-02, ADGM-03, ADGM-04, ADGM-05, ADGM-06 | 11 |
 | 12 | TVLY-01..04, WFCH-01..04 (PULSE-10..12 removed with Phase 7) | 8 |
 | 14 | POS-01, POS-02, POS-03, POS-04, POS-05, POS-06, POS-07 | 7 |
-| **Total** | | **84 / 84** (Phase 7 PULSE-01..09 + Phase 12 PULSE-10..12 removed post-v1.3) |
+| 15 | CAMP-01, CAMP-02, CAMP-03, CAMP-04, CAMP-05, CAMP-06 | 6 |
+| 16 | ADGM-07, ADGM-08, ADGM-09, ADGM-10, ADGM-11 | 5 |
+| **Total** | | **95 / 95** (Phase 7 PULSE-01..09 + Phase 12 PULSE-10..12 removed post-v1.3) |
 
-No orphans. No duplicates. Every v1.0 + v1.1 + v1.2 + v1.3 + v1.4 requirement maps to exactly one phase.
+No orphans. No duplicates. Every v1.0 + v1.1 + v1.2 + v1.3 + v1.4 + v1.5 requirement maps to exactly one phase.
 
 ## Phase Ordering Rationale
 
@@ -308,6 +346,7 @@ No orphans. No duplicates. Every v1.0 + v1.1 + v1.2 + v1.3 + v1.4 requirement ma
 - **Economics before launch kit (v1.1):** Phase 10 CSVs need Phase 9's `suggested_max_cpc_micros` for the Max-CPC column; Phase 10 Next-Steps checklist needs Phase 9's mid-forecast spend for the daily-budget step and Phase 9's compliance flags to decide checklist ordering. Splitting data layer from output layer keeps each phase's success criteria observable in isolation.
 - **Why not one fat Phase 9?** 23 requirements in one phase produces ~13 plans and a coverage map where success criteria mix data-shape concerns (does `forecast.json` exist?) with output concerns (does CSV import into Editor?). Splitting yields two phases of ~5-7 plans each with crisper success criteria.
 - **Positives Sync (v1.4) deferred until after v1.0 ships, not bundled with Phase 8:** the negatives-sync architecture (Phase 8 GADS-04) had to prove out before mirroring it for positives; v1.4 inherits the same OAuth wiring + `perf_synth.py` shape, so the engineering surface is small (~3 scripts touched, no new APIs) and the phase stays single — coverage of POS-01..07 in one delivery boundary keeps success criteria observable end-to-end.
+- **Phase 15 before Phase 16 (v1.5):** Phase 16 token-bag enrichment must calibrate against the narrowed dataset Phase 15 produces. Running enrichment against the full-account dataset yields noisier thresholds (denominators inflated by AGs that aren't even in scope), and the operator-visible payoff — 50%+ coverage on the target campaign — is only verifiable end-to-end once Phase 15 has already filtered the comparison surface.
 
 ---
 *Roadmap created: 2026-05-08*
@@ -320,3 +359,4 @@ No orphans. No duplicates. Every v1.0 + v1.1 + v1.2 + v1.3 + v1.4 requirement ma
 *v1.2 milestone phase 11 shipped: 2026-05-15*
 *v1.3 milestone phase 12 shipped: 2026-05-15 — Tavily dropped; WebFetch replaces COMP-03; Serper /news single-source niche pulse. 89/89 requirements Complete.*
 *v1.4 milestone phase 14 added: 2026-05-15 — Positives Sync (POS-01..07) pending; 96 total v1 requirements (89 Complete + 7 Pending).*
+*v1.5 milestone phases 15 + 16 added: 2026-05-15 — Account-Aware Narrowing (CAMP-01..06 + ADGM-07..11) pending; 107 total v1 requirements (96 Complete + 11 Pending).*
