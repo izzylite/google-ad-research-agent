@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Positives Sync
-status: roadmap_drafted
-stopped_at: Milestone v1.4 — Phase 14 added to ROADMAP.md 2026-05-15. POS-01..07 mapped, 100% coverage. Next, `/gsd:plan-phase 14`.
-last_updated: "2026-05-15T11:30:00.000Z"
+status: in_progress
+stopped_at: Phase 14 Plan 00 (Wave 0 RED scaffolding) shipped 2026-05-15. 14 RED-via-SKIP tests + 4 byte-exact fixtures locked. Next, /gsd:execute-plan 14-01 (Wave 1 perf_fetch fetch_keyword_view).
+last_updated: "2026-05-15T12:00:00.000Z"
 progress:
   total_phases: 13
   completed_phases: 12
-  total_plans: 49
-  completed_plans: 49
+  total_plans: 55
+  completed_plans: 50
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 14 — Positives Sync |
-| Plan | — (not yet drafted) |
-| Status | Not started — defining plan |
-| Last activity | 2026-05-15 — REQUIREMENTS.md POS-01..07 added; ROADMAP.md Phase 14 section + coverage map updated (96/96 mapped). Awaiting `/gsd:plan-phase 14`. |
+| Plan | 14-00 complete; 14-01 next |
+| Status | In progress — Wave 0 RED scaffolding shipped |
+| Last activity | 2026-05-15 — Plan 14-00 executed: 4 fixtures + 14 RED-via-SKIP tests + 1 PASSING omit-when-absent test across 4 test files. Full suite 242 passed, 14 skipped (was 241+0). Commits 954e4a3, ae0a73f, 71790dd. |
 
 ## Previous Milestone
 
@@ -92,6 +92,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 12-source-consolidation-drop-tavily P02 | 25min | 2 tasks | 4 files |
 | Phase 12-source-consolidation-drop-tavily P04 | 45min | 3 tasks | 7 files |
 | Phase 12-source-consolidation-drop-tavily P05 | ~20min | 3 tasks | 10 files |
+| Phase 14 P00 | ~18min | 3 tasks | 5 created + 3 modified |
 
 ### Execution History
 
@@ -244,6 +245,12 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [v1.4 roadmap]: POS-06 (SKILL.md LLM re-tag step) treated as REQUIRED scope per user, not optional polish — the ~20% script-miss rate on semantic dupes (e.g. token-reorder `urgent care lake worth` vs `lake worth urgent care`, match-type drift like ranked-exact vs account-broad) is the most operator-visible failure mode of the sync. Shipping without LLM re-tag would leave the manual-dedup pain partially intact, defeating the milestone goal.
 - [v1.4 roadmap]: Phase 13 (Landing-Page Extract Vendor Swap) stays parked as defer-until-friction backlog under v1.3 — WebFetch real-run pass on Lake Worth brief means trigger condition not met. Phase 14 (Positives Sync) skips ahead in the numbering; Phase 13 is NOT a prerequisite to Phase 14, the two are orthogonal.
 - [Phase 7 removal 2026-05-15]: Niche Pulse dropped entirely post-v1.3. Internal-team skill in single vertical (urgent care PIP, FL) — operators live in the niche daily; trending-news synthesis produced noise on repeated runs. Manual Google News checks faster than the sidecar. Deleted: pulse_fetch.py, pulse_synth.py, test_pulse_fetch.py, test_pulse_synth.py, serper_news.json fixture, references/phase7-niche-pulse.md. render_report.py stripped of niche-pulse rendering (USAGE_PULSE_* constants, render_niche_pulse_section, HTML section + JS, JSON twin pass-through, load logic). PULSE-01..12 marked REMOVED in REQUIREMENTS.md. Coverage map: 96 → 84 reqs. Test suite: 250 → 241 passing. Bonus: skill now fully auto — no per-run prompts left (Phase 7 was the only opt-in).
+- [Phase 14-00]: test_perf_fetch.py created from scratch (Rule 3 deviation) — plan listed file under files_modified but no such file existed. Built minimal _FakeGAdsClient + _FakeRow + _FakeBatch + _FakeGoogleAdsService stub using SimpleNamespace. Captures GAQL query string passed to search_stream on a dict on the client; yields synthetic rows from google-ads-keywords-fixture.json. No respx (google-ads SDK is gRPC, not HTTP). No extra dependencies. Pattern reusable for any future test that needs to assert against a fake gads search_stream call.
+- [Phase 14-00]: synthesized_at pinned to 2026-05-15T00:00:00Z in golden_positives_sync.json + monkeypatched at the test level via perf_synth._now_iso. Locks byte-exact dict equality without timezone drift. Same hook pattern Wave 1 14-02 cross_ref_positives implementation must respect.
+- [Phase 14-00]: render_positives_sync_section omit-when-absent test uses getattr(render_report, "render_positives_sync_section", lambda _: "") so it PASSES against Wave 0 — gives one GREEN signal for the section feature contract before Wave 2 14-03 lands. Other 3 section tests SKIP via hasattr-guarded _skip_unless_positives_sync_section() helper. Pattern: lock the most-invariant contract (graceful omit) as PASS, gate the rest as SKIP.
+- [Phase 14-00]: export_csv._POSITIVES_SYNC_SUPPORTED module-level sentinel locked as the Wave 2 14-04 detection point. Per-function _skip_unless_positives_sync_filter() checks both MODULE_INCOMPLETE (file-level pytestmark) AND the sentinel — stacks cleanly with existing legacy guards. Wave 2 14-04 plan MUST set _POSITIVES_SYNC_SUPPORTED = True at module scope when the filter logic lands; argparse-introspection alternative rejected as more brittle.
+- [Phase 14-00]: Fixture seed strategy — 5 ranked rows align verbatim with 4 account-keyword rows so each of the 4 bucket scenarios + the unmatched sanity case fires exactly once. urgent-care-lake-worth → ENABLED EXACT → already_active. auto-accident-clinic → PAUSED PHRASE → paused_in_account. pip-insurance-clinic → BROAD pip-clinic covers → covered_by_broad. accident-chiropractor-lake-worth + walk-in-clinic-boca-raton → no match → new_to_add. wellness-exam exists in account only → never surfaces in sync (sanity).
+- [Phase 14-00]: Python `_` digit separators (4_200_000) caused initial JSON parse failures in ranked_phase14.json + google-ads-keywords-fixture.json. Caught at fixture validation step (Bash python -c "json.load"), regex-stripped to 4200000. Future JSON fixtures: never paste Python int-literal underscores; JSON spec disallows them.
 
 ### Open Questions / Todos
 
@@ -263,11 +270,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T11:30:00.000Z
+**Last session:** 2026-05-15T12:00:00.000Z
 
-**Stopped at:** Milestone v1.4 roadmap entry added. ROADMAP.md Phase 14 section + coverage map updated (96/96 mapped). REQUIREMENTS.md traceability already had POS-01..07 mapped Pending. STATE.md current position now points at Phase 14.
+**Stopped at:** Phase 14 Plan 00 (Wave 0 RED scaffolding) executed. 4 fixtures + 14 RED-via-SKIP tests + 1 PASSING omit-when-absent test landed across 4 shared test files. Per-function guards preserve all legacy GREEN tests. Full suite 242 passed, 14 skipped (was 241+0 pre-Phase-14).
 
-**Next session:** Run `/gsd:plan-phase 14` to draft the Phase 14 plans (Positives Sync — perf_fetch GAQL extension, perf_synth cross_ref_positives, render_report sync section, export_csv --include-existing flag, SKILL.md LLM re-tag step, test coverage).
+**Next session:** Run `/gsd:execute-plan 14-01` (Wave 1 perf_fetch.fetch_keyword_view + raw/google-ads-keywords.json writer — POS-01). Parallel-runnable with 14-02 (perf_synth.cross_ref_positives). RED stubs in test_perf_fetch.py + test_perf_synth.py will flip SKIP → GREEN as Wave 1 lands.
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
