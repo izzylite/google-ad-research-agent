@@ -59,10 +59,40 @@ def _date_literal(days: int) -> str:
     return "LAST_30_DAYS"
 
 
-def fetch_search_terms(client, customer_id: str, *, days: int = 30) -> list[dict]:
+def _escape_gaql_string(value: str) -> str:
+    """Escape a string for safe inclusion in a single-quoted GAQL literal.
+
+    GAQL string literals are single-quoted; embedded single quotes are
+    escaped by doubling them: `O'Brien` → `O''Brien`. Newlines / backslashes
+    are NOT special in GAQL string literals — only single quotes need handling.
+    Campaign names with pipes are fine (pipe is only a CLI-level list separator).
+    """
+    return value.replace("'", "''")
+
+
+def _apply_campaign_filter(campaign_filter: list[str] | None) -> str:
+    """Build the `AND campaign.name = '...'` (single) or `IN (...)` (list) GAQL fragment.
+
+    Returns an empty string when filter is None or [] — caller appends to
+    the WHERE clause unconditionally, so empty string preserves v1.4
+    behavior bit-for-bit (CAMP-04 backward compat).
+    """
+    if not campaign_filter:
+        return ""
+    names = [n.strip() for n in campaign_filter if n.strip()]
+    if not names:
+        return ""
+    if len(names) == 1:
+        return f"AND campaign.name = '{_escape_gaql_string(names[0])}'"
+    quoted = ", ".join(f"'{_escape_gaql_string(n)}'" for n in names)
+    return f"AND campaign.name IN ({quoted})"
+
+
+def fetch_search_terms(client, customer_id: str, *, days: int = 30, campaign_filter: list[str] | None = None) -> list[dict]:
     """Pull last-N-day search terms with metrics."""
     svc = client.get_service("GoogleAdsService")
     date_lit = _date_literal(days)
+    campaign_clause = _apply_campaign_filter(campaign_filter)
     query = f"""
         SELECT
             search_term_view.search_term,
@@ -76,6 +106,7 @@ def fetch_search_terms(client, customer_id: str, *, days: int = 30) -> list[dict
             ad_group.name
         FROM search_term_view
         WHERE segments.date DURING {date_lit}
+        {campaign_clause}
         ORDER BY metrics.cost_micros DESC
         LIMIT 500
     """
@@ -97,10 +128,11 @@ def fetch_search_terms(client, customer_id: str, *, days: int = 30) -> list[dict
     return out
 
 
-def fetch_perf(client, customer_id: str, *, days: int = 30) -> dict:
+def fetch_perf(client, customer_id: str, *, days: int = 30, campaign_filter: list[str] | None = None) -> dict:
     """Pull campaign + ad_group performance metrics."""
     svc = client.get_service("GoogleAdsService")
     date_lit = _date_literal(days)
+    campaign_clause = _apply_campaign_filter(campaign_filter)
 
     campaigns: list[dict] = []
     q1 = f"""
@@ -111,6 +143,7 @@ def fetch_perf(client, customer_id: str, *, days: int = 30) -> dict:
             metrics.conversions, metrics.conversions_value
         FROM campaign
         WHERE segments.date DURING {date_lit}
+        {campaign_clause}
         ORDER BY metrics.cost_micros DESC
     """
     for batch in svc.search_stream(customer_id=customer_id, query=q1):
@@ -139,6 +172,7 @@ def fetch_perf(client, customer_id: str, *, days: int = 30) -> dict:
             metrics.conversions, metrics.conversions_value
         FROM ad_group
         WHERE segments.date DURING {date_lit}
+        {campaign_clause}
         ORDER BY metrics.cost_micros DESC
         LIMIT 200
     """
@@ -165,13 +199,14 @@ def fetch_perf(client, customer_id: str, *, days: int = 30) -> dict:
     }
 
 
-def fetch_existing_negatives(client, customer_id: str) -> list[dict]:
+def fetch_existing_negatives(client, customer_id: str, *, campaign_filter: list[str] | None = None) -> list[dict]:
     """Pull all current negative keywords from campaign + ad group level."""
     svc = client.get_service("GoogleAdsService")
+    campaign_clause = _apply_campaign_filter(campaign_filter)
     negatives: list[dict] = []
 
     # Campaign-level negatives
-    q1 = """
+    q1 = f"""
         SELECT
             campaign.name,
             campaign_criterion.keyword.text,
@@ -180,6 +215,7 @@ def fetch_existing_negatives(client, customer_id: str) -> list[dict]:
         FROM campaign_criterion
         WHERE campaign_criterion.negative = TRUE
           AND campaign_criterion.type = 'KEYWORD'
+          {campaign_clause}
     """
     try:
         for batch in svc.search_stream(customer_id=customer_id, query=q1):
@@ -195,7 +231,7 @@ def fetch_existing_negatives(client, customer_id: str) -> list[dict]:
         log.warning(f"Campaign-level negatives query failed: {exc}")
 
     # Ad group-level negatives
-    q2 = """
+    q2 = f"""
         SELECT
             campaign.name,
             ad_group.name,
@@ -204,6 +240,7 @@ def fetch_existing_negatives(client, customer_id: str) -> list[dict]:
         FROM ad_group_criterion
         WHERE ad_group_criterion.negative = TRUE
           AND ad_group_criterion.type = 'KEYWORD'
+          {campaign_clause}
     """
     try:
         for batch in svc.search_stream(customer_id=customer_id, query=q2):
@@ -221,7 +258,7 @@ def fetch_existing_negatives(client, customer_id: str) -> list[dict]:
     return negatives
 
 
-def fetch_keyword_view(client, customer_id: str, *, days: int = 30) -> list[dict]:
+def fetch_keyword_view(client, customer_id: str, *, days: int = 30, campaign_filter: list[str] | None = None) -> list[dict]:
     """Pull last-N-day account keywords (active + paused) with metrics.
 
     Used by perf_synth.cross_ref_positives for POS-02 sync.
@@ -230,6 +267,7 @@ def fetch_keyword_view(client, customer_id: str, *, days: int = 30) -> list[dict
     """
     svc = client.get_service("GoogleAdsService")
     date_lit = _date_literal(days)
+    campaign_clause = _apply_campaign_filter(campaign_filter)
     query = f"""
         SELECT
             ad_group.id,
@@ -245,6 +283,7 @@ def fetch_keyword_view(client, customer_id: str, *, days: int = 30) -> list[dict
         FROM keyword_view
         WHERE segments.date DURING {date_lit}
           AND ad_group_criterion.status != 'REMOVED'
+          {campaign_clause}
     """
     out: list[dict] = []
     for batch in svc.search_stream(customer_id=customer_id, query=query):
