@@ -221,6 +221,49 @@ def fetch_existing_negatives(client, customer_id: str) -> list[dict]:
     return negatives
 
 
+def fetch_keyword_view(client, customer_id: str, *, days: int = 30) -> list[dict]:
+    """Pull last-N-day account keywords (active + paused) with metrics.
+
+    Used by perf_synth.cross_ref_positives for POS-02 sync.
+    PMax campaigns silently absent (no keyword-level data exposed).
+    REMOVED keywords excluded — only ENABLED + PAUSED matter for sync.
+    """
+    svc = client.get_service("GoogleAdsService")
+    date_lit = _date_literal(days)
+    query = f"""
+        SELECT
+            ad_group.id,
+            ad_group.name,
+            ad_group_criterion.keyword.text,
+            ad_group_criterion.keyword.match_type,
+            ad_group_criterion.status,
+            campaign.name,
+            metrics.impressions,
+            metrics.clicks,
+            metrics.cost_micros,
+            metrics.conversions
+        FROM keyword_view
+        WHERE segments.date DURING {date_lit}
+          AND ad_group_criterion.status != 'REMOVED'
+    """
+    out: list[dict] = []
+    for batch in svc.search_stream(customer_id=customer_id, query=query):
+        for row in batch.results:
+            out.append({
+                "keyword": row.ad_group_criterion.keyword.text,
+                "match_type": row.ad_group_criterion.keyword.match_type.name,
+                "status": row.ad_group_criterion.status.name,
+                "ad_group_id": str(row.ad_group.id),
+                "ad_group_name": row.ad_group.name,
+                "campaign_name": row.campaign.name,
+                "impressions": row.metrics.impressions,
+                "clicks": row.metrics.clicks,
+                "conversions": row.metrics.conversions,
+                "cost_micros": row.metrics.cost_micros,
+            })
+    return out
+
+
 def main_with_args(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         description="Pull live Google Ads data (search terms, perf, negatives).",
