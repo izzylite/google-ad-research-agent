@@ -5,7 +5,7 @@ Phase 1 + Phase 2 tests use ad-hoc `uv run --with` invocation (no pyproject.toml
 ```bash
 uv run --with pytest --with python-dotenv --with python-slugify \
   --with respx --with httpx --with httpx-retries \
-  --with tavily-python --with inflect \
+  --with inflect \
   pytest .claude/skills/google-ad-research/scripts/tests/ -x
 ```
 

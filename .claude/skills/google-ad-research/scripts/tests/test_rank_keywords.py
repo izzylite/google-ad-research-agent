@@ -72,11 +72,11 @@ def test_sort_tiebreak():
     # Two keywords with same source_diversity and intent → score tie; higher signal_count wins
     kws = [
         {"canonical": "z keyword", "lemma_hash": "hash_z", "signal_count": 3, "source_diversity": 2,
-         "sources": [{"source": "serper-organic"}, {"source": "tavily-extract"}]},
+         "sources": [{"source": "serper-organic"}, {"source": "websearch-baseline"}]},
         {"canonical": "a keyword", "lemma_hash": "hash_a", "signal_count": 5, "source_diversity": 2,
-         "sources": [{"source": "serper-organic"}, {"source": "tavily-extract"}]},
+         "sources": [{"source": "serper-organic"}, {"source": "websearch-baseline"}]},
         {"canonical": "b keyword", "lemma_hash": "hash_b", "signal_count": 5, "source_diversity": 2,
-         "sources": [{"source": "serper-organic"}, {"source": "tavily-extract"}]},
+         "sources": [{"source": "serper-organic"}, {"source": "websearch-baseline"}]},
     ]
     labels_list = [
         {"canonical": "z keyword", "lemma_hash": "hash_z", "intent": "commercial", "match_type": "phrase"},

@@ -35,7 +35,6 @@ def tmp_run_dir(tmp_path):
 def mock_env(monkeypatch):
     """Inject stub API keys so lib/config.load_env() does not raise."""
     monkeypatch.setenv("SERPER_API_KEY", "test-serper-key")
-    monkeypatch.setenv("TAVILY_API_KEY", "test-tavily-key")
 
 
 @pytest.fixture

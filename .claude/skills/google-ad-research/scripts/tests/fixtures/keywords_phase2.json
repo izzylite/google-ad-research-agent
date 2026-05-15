@@ -6,7 +6,7 @@
     "source_diversity": 4,
     "sources": [
       {"source": "serper-organic"}, {"source": "serper-paa"},
-      {"source": "tavily-extract"}, {"source": "websearch-baseline"}
+      {"source": "websearch-baseline"}, {"source": "websearch-baseline"}
     ]
   },
   {
@@ -44,7 +44,7 @@
     "signal_count": 6,
     "source_diversity": 2,
     "sources": [
-      {"source": "serper-organic"}, {"source": "tavily-extract"}
+      {"source": "serper-organic"}, {"source": "websearch-baseline"}
     ]
   }
 ]

@@ -6,7 +6,7 @@
     "theme": "",
     "signal_count": 3,
     "source_diversity": 4,
-    "sources": ["serper-organic", "serper-paa", "tavily", "serper-related"],
+    "sources": ["serper-organic", "serper-paa", "serper-ads", "serper-related"],
     "score": 325
   },
   {
@@ -16,7 +16,7 @@
     "theme": "",
     "signal_count": 3,
     "source_diversity": 3,
-    "sources": ["serper-organic", "serper-paa", "tavily"],
+    "sources": ["serper-organic", "serper-paa", "serper-ads"],
     "score": 310
   },
   {
@@ -26,7 +26,7 @@
     "theme": "",
     "signal_count": 3,
     "source_diversity": 3,
-    "sources": ["serper-organic", "serper-paa", "tavily"],
+    "sources": ["serper-organic", "serper-paa", "serper-ads"],
     "score": 290
   },
   {
@@ -36,7 +36,7 @@
     "theme": "",
     "signal_count": 3,
     "source_diversity": 3,
-    "sources": ["serper-organic", "serper-paa", "tavily"],
+    "sources": ["serper-organic", "serper-paa", "serper-ads"],
     "score": 275
   },
   {
@@ -46,7 +46,7 @@
     "theme": "",
     "signal_count": 3,
     "source_diversity": 3,
-    "sources": ["serper-organic", "serper-paa", "tavily"],
+    "sources": ["serper-organic", "serper-paa", "serper-ads"],
     "score": 220
   },
   {
