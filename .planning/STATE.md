@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: Completed 15-01-PLAN.md (perf_fetch.py --campaign-filter)
-last_updated: "2026-05-15T15:17:51.405Z"
+stopped_at: Completed 15-02-PLAN.md (render_report.py campaign_focus + report.json + 9 RED→GREEN)
+last_updated: "2026-05-15T15:23:05.784Z"
 progress:
   total_phases: 15
   completed_phases: 11
   total_plans: 59
-  completed_plans: 57
+  completed_plans: 58
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 15 — Campaign Focus |
-| Plan | 15-01 complete (next: 15-02 render_report; 15-03 SKILL.md wiring) |
-| Status | In progress — Wave 2 perf_fetch shipped |
-| Last activity | 2026-05-15 — Plan 15-01 complete: perf_fetch.py --campaign-filter + 4 fetch_* kwargs threaded; all 6 Plan 15-00 RED tests (9 cases) GREEN; full suite 217/57/0; commits 3a9b7ea, b21ab7f |
+| Plan | 15-02 complete (next: 15-03 SKILL.md wiring) |
+| Status | In progress — Wave 2 perf_fetch + render_report both shipped |
+| Last activity | 2026-05-15 — Plan 15-02 complete: render_report.py _parse_brief_fields campaign_focus key + render_campaign_focus_section + pipeline wiring + report.json campaign_focus key; all 9 Plan 15-00 RED render tests GREEN; full suite 226/48/0; commits 9e589d2, 6bbad29 |
 
 ## Previous Milestone
 
@@ -55,7 +55,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | v1.2 requirements complete | 11 / 11 (GEO 5/5, ADGM 6/6) |
 | v1.3 requirements complete | 11 / 11 (TVLY 4/4, WFCH 4/4, PULSE 3/3) |
 | v1.4 requirements complete | 7 / 7 (POS-01..07) |
-| v1.5 requirements complete | 0 / 11 (CAMP 0/6 — Wave 1 scaffolding only, no production code yet; ADGM 0/5 — Phase 16 pending) |
+| v1.5 requirements complete | 3 / 11 (CAMP 3/6 — CAMP-01 + CAMP-02 + CAMP-05 shipped via Plans 15-01 + 15-02; CAMP-03 SKILL wiring + CAMP-04 graceful degrade + CAMP-06 test coverage all already met but not yet marked; ADGM 0/5 — Phase 16 pending) |
 | Phase 15 P00 | ~8min | 3 tasks | 2 created + 2 modified |
 | Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
@@ -103,6 +103,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 14 P03 | ~4min | 2 tasks | 1 files |
 | Phase 14 P05 | 12min | 3 tasks | 2 files |
 | Phase 15-campaign-focus P01 | 3 min | 2 tasks | 1 files |
+| Phase 15-campaign-focus P02 | 2 min | 2 tasks | 1 files |
 
 ### Execution History
 
@@ -140,6 +141,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 14]: [14-05] Live e2e on real Lake Worth car-accident/urgent-care account approved Phase 14 closeout: positives-sync.json stats {our_total:83, already_active:11, paused:0, covered_by_broad:8, new_to_add:64} sums correctly; positives.csv = 64 rows + header matches stats.new_to_add. paused_in_account empty is legitimate (no paused kw in account). LLM re-tag invocation deferred to next real operator session (script-only output already operator-actionable; not blocking).
 - [Phase 15-campaign-focus]: [15-01]: Pipe-split heuristic for --campaign-filter — ' | ' (space-pipe-space) preserved as single Google-Ads-naming-convention campaign name; bare '|' (no spaces) splits into list. Single-quoted operator copy-paste of names like 'Search | Lake Worth Accident Exams | Manual CPC' stays one filter value.
 - [Phase 15-campaign-focus]: [15-01]: Empty-clause contract — _apply_campaign_filter returns '' when filter is None/empty so callers inject {campaign_clause} unconditionally; preserves v1.4 GAQL byte-identical modulo whitespace (CAMP-04 backward compat).
+- [Phase 15-campaign-focus]: [15-02]: render_campaign_focus_section bypasses escape_md_cell — Google Ads campaign names like 'Search | Lake Worth Accident Exams | Manual CPC' use pipes by convention; escaping breaks operator recognition. Name validation against perf.json is case-sensitive (Google Ads API preserves case + enforces uniqueness).
 
 ### Open Questions / Todos
 
@@ -161,9 +163,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T15:17:51.401Z
+**Last session:** 2026-05-15T15:23:05.780Z
 
-**Stopped at:** Completed 15-01-PLAN.md (perf_fetch.py --campaign-filter)
+**Stopped at:** Completed 15-02-PLAN.md (render_report.py campaign_focus + report.json + 9 RED→GREEN)
 
 **Next session:** `/gsd:execute-plan 15-01` (perf_fetch.py `--campaign-filter` + thread through 4 GAQL queries) and/or `/gsd:execute-plan 15-02` (render_report.py `_parse_brief_fields` campaign_focus + `render_campaign_focus_section`). Plans land independently; 15-03 SKILL.md wiring follows both.
 
