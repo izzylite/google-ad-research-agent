@@ -1,9 +1,9 @@
 Campaign,Ad Group,Keyword,Match Type,Max CPC,Final URL
-Phase 10 Test Brief,same_day_delivery_transactional,same-day grocery delivery,Exact,0.38,
-Phase 10 Test Brief,same_day_delivery_transactional,order groceries online uk,Exact,0.46,
-Phase 10 Test Brief,same_day_delivery_transactional,grocery delivery near me,Exact,0.54,
 Phase 10 Test Brief,grocery_comparison_commercial,best grocery delivery uk,Phrase,0.17,
 Phase 10 Test Brief,grocery_comparison_commercial,ocado vs tesco delivery,Phrase,0.14,
 Phase 10 Test Brief,grocery_comparison_commercial,grocery delivery comparison,Phrase,0.13,
 Phase 10 Test Brief,grocery_delivery_basics_informational,how does grocery delivery work,Phrase,0.00,
 Phase 10 Test Brief,grocery_delivery_basics_informational,what is same day grocery delivery,Phrase,0.00,
+Phase 10 Test Brief,same_day_delivery_transactional,same-day grocery delivery,Exact,0.38,
+Phase 10 Test Brief,same_day_delivery_transactional,order groceries online uk,Exact,0.46,
+Phase 10 Test Brief,same_day_delivery_transactional,grocery delivery near me,Exact,0.54,

@@ -318,6 +318,10 @@ def _build_positives_rows(
     ordered = sorted(
         ranked_enriched, key=lambda r: r.get("score", 0) or 0, reverse=True
     )
+    # _row_score: needed for the post-sort by ad group; track score per row
+    # so the final sort can keep same-ad-group rows contiguous AND order
+    # within each ad group by score desc.
+    interim: list[tuple[str, float, dict]] = []
     for row in ordered:
         kw = (row.get("keyword") or "")
         cluster_slug = cluster_index.get(kw.lower())
@@ -327,14 +331,25 @@ def _build_positives_rows(
         ag = _resolve_ad_group_from_mapping(kw, cluster_slug or "", mapping)
         if not ag:
             continue
-        rows.append({
-            "Campaign": campaign,
-            "Ad Group": ag,
-            "Keyword": kw,
-            "Match Type": _titlecase_match_type(row.get("match_type")),
-            "Max CPC": _micros_to_csv_usd(row.get("suggested_max_cpc_micros")),
-            "Final URL": "",
-        })
+        interim.append((
+            ag,
+            float(row.get("score", 0) or 0),
+            {
+                "Campaign": campaign,
+                "Ad Group": ag,
+                "Keyword": kw,
+                "Match Type": _titlecase_match_type(row.get("match_type")),
+                "Max CPC": _micros_to_csv_usd(row.get("suggested_max_cpc_micros")),
+                "Final URL": "",
+            },
+        ))
+    # Sort by (Ad Group asc, Score desc) so same-ad-group rows are contiguous
+    # in the CSV — operator pastes one ad group's keywords together in Editor
+    # without manual re-grouping. "Sort the keywords by the structure of ads
+    # and ad groups we have" (team request, Phase 11 follow-up).
+    interim.sort(key=lambda t: (t[0].lower(), -t[1]))
+    for _ag, _sc, payload in interim:
+        rows.append(payload)
     return rows
 
 

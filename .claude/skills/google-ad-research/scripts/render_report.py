@@ -638,7 +638,7 @@ def render_ad_group_mapping_section(ad_group_mapping: dict | None) -> str:
         m for m in matches if m.get("confidence") in ("high", "medium")
     ]
     if mapped:
-        # Sort by score descending; top 15.
+        # Sort by score descending; top 15 flat view.
         mapped_sorted = sorted(
             mapped, key=lambda m: m.get("score", 0) or 0, reverse=True
         )[:15]
@@ -655,6 +655,39 @@ def render_ad_group_mapping_section(ad_group_mapping: dict | None) -> str:
         parts.append("### Matched Keywords (top 15)\n\n")
         parts.append(tabulate(rows, headers=headers, tablefmt="github"))
         parts.append("\n\n")
+
+        # Grouped view — team's "sort by structure" request: same-ad-group
+        # keywords listed under each existing ad group header for paste-and-go.
+        from collections import defaultdict
+        by_ag: dict[str, list[dict]] = defaultdict(list)
+        for m in mapped:
+            by_ag[m.get("existing_ad_group", "") or "(unknown)"].append(m)
+        parts.append("### Keywords by Existing Ad Group\n\n")
+        parts.append(
+            "_Same-ad-group keywords contiguous. positives.csv is sorted to "
+            "match — paste each block into the corresponding existing ad "
+            "group in Google Ads Editor._\n\n"
+        )
+        for ag_name in sorted(by_ag.keys(), key=lambda s: s.lower()):
+            kw_list = sorted(
+                by_ag[ag_name],
+                key=lambda m: m.get("score", 0) or 0,
+                reverse=True,
+            )
+            parts.append(
+                f"**{escape_md_cell(ag_name)}** "
+                f"<span style=\"color:#666\">({len(kw_list)} keyword"
+                f"{'s' if len(kw_list) != 1 else ''})</span>\n\n"
+            )
+            for m in kw_list:
+                kw = escape_md_cell(m.get("keyword", ""))
+                conf = m.get("confidence", "")
+                score = m.get("score", 0) or 0
+                parts.append(
+                    f"- {kw} <span class=\"cluster-meta\">"
+                    f"{conf} · {score:.2f}</span>\n"
+                )
+            parts.append("\n")
     else:
         parts.append(
             "_No high or medium-confidence matches in this run. All ranked "
@@ -1861,6 +1894,7 @@ function renderAdGroupMapping() {{
   var top15 = mapped.slice(0, 15);
   var html = "";
   if (top15.length) {{
+    html += '<h3 style="margin-top:8px">Matched Keywords (top 15)</h3>';
     html += '<table><thead><tr><th>Keyword</th><th>Existing Ad Group</th><th>Confidence</th><th>Score</th></tr></thead><tbody>';
     html += top15.map(function(m){{
       var conf = m.confidence || "";
@@ -1874,6 +1908,30 @@ function renderAdGroupMapping() {{
     if (mapped.length > 15) {{
       html += '<p style="color:#666;font-size:13px">…and ' + (mapped.length - 15) + ' more matched keyword(s).</p>';
     }}
+
+    // Grouped view — same-ad-group keywords contiguous (team's "sort by
+    // structure" request). Each existing ad group as collapsible <details>.
+    var byAg = {{}};
+    mapped.forEach(function(m){{
+      var ag = m.existing_ad_group || "(unknown)";
+      if (!byAg[ag]) byAg[ag] = [];
+      byAg[ag].push(m);
+    }});
+    var agNames = Object.keys(byAg).sort(function(a, b){{
+      return a.toLowerCase().localeCompare(b.toLowerCase());
+    }});
+    html += '<h3 style="margin-top:16px">Keywords by Existing Ad Group</h3>';
+    html += '<p style="color:#666;font-size:13px"><em>positives.csv is sorted to match — paste each block into the corresponding existing ad group in Google Ads Editor.</em></p>';
+    html += agNames.map(function(ag){{
+      var kws = byAg[ag].slice().sort(function(a, b){{ return (b.score || 0) - (a.score || 0); }});
+      var items = kws.map(function(m){{
+        var conf = m.confidence || "";
+        var color = conf === "high" ? "#15803d" : "#a16207";
+        return '<li>' + htmlEscape(m.keyword || "")
+          + ' <span class="cluster-meta" style="color:' + color + '">' + htmlEscape(conf) + ' · ' + (m.score || 0).toFixed(2) + '</span></li>';
+      }}).join("");
+      return '<details><summary><strong>' + htmlEscape(ag) + '</strong> <span class="cluster-meta">' + kws.length + ' keyword' + (kws.length !== 1 ? 's' : '') + '</span></summary><ul>' + items + '</ul></details>';
+    }}).join("");
   }} else {{
     html += '<p style="color:#666;font-size:13px"><em>No high or medium-confidence matches in this run. All ranked keywords fall back to new cluster ad groups (see Ad Group Clusters section above).</em></p>';
   }}
