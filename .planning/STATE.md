@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.5
-milestone_name: Account-Aware Narrowing
-status: in_progress
-stopped_at: Phase 15 Wave 1 RED scaffolding complete (15-00) — 15 RED tests + 2 fixtures, all SKIP cleanly; full suite 208 passed / 66 skipped / 0 failed. Next step is /gsd:execute-plan 15-01 (perf_fetch --campaign-filter) or 15-02 (render campaign_focus section) — Wave 2 plans run in parallel since different files.
-last_updated: "2026-05-15T15:30:00.000Z"
+milestone: v1.1
+milestone_name: Phases
+status: unknown
+stopped_at: Completed 15-01-PLAN.md (perf_fetch.py --campaign-filter)
+last_updated: "2026-05-15T15:17:51.405Z"
 progress:
-  total_phases: 16
-  completed_phases: 13
-  total_plans: 55
-  completed_plans: 56
+  total_phases: 15
+  completed_phases: 11
+  total_plans: 59
+  completed_plans: 57
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 15 — Campaign Focus |
-| Plan | 15-00 complete (next: 15-01 / 15-02 Wave 2 parallel) |
-| Status | In progress — Wave 1 RED scaffolding shipped |
-| Last activity | 2026-05-15 — Plan 15-00 complete: 15 RED tests (6 perf_fetch + 9 render_report) + 2 fixtures landed under per-function skip-guards; full suite 208/66/0; commits ce7e636, 0fa29c2, f40acd2 |
+| Plan | 15-01 complete (next: 15-02 render_report; 15-03 SKILL.md wiring) |
+| Status | In progress — Wave 2 perf_fetch shipped |
+| Last activity | 2026-05-15 — Plan 15-01 complete: perf_fetch.py --campaign-filter + 4 fetch_* kwargs threaded; all 6 Plan 15-00 RED tests (9 cases) GREEN; full suite 217/57/0; commits 3a9b7ea, b21ab7f |
 
 ## Previous Milestone
 
@@ -102,6 +102,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 14 P04 | 3min | 2 tasks | 1 files |
 | Phase 14 P03 | ~4min | 2 tasks | 1 files |
 | Phase 14 P05 | 12min | 3 tasks | 2 files |
+| Phase 15-campaign-focus P01 | 3 min | 2 tasks | 1 files |
 
 ### Execution History
 
@@ -137,6 +138,8 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - Run-folder isolation, no caching, no cross-run mutable state — reproducibility over efficiency in v1.
 - CLAUDE.md capped at 56 lines — directive not exhaustive; each section is a pointer so future executors stay on-rails without re-debating conventions.
 - [Phase 14]: [14-05] Live e2e on real Lake Worth car-accident/urgent-care account approved Phase 14 closeout: positives-sync.json stats {our_total:83, already_active:11, paused:0, covered_by_broad:8, new_to_add:64} sums correctly; positives.csv = 64 rows + header matches stats.new_to_add. paused_in_account empty is legitimate (no paused kw in account). LLM re-tag invocation deferred to next real operator session (script-only output already operator-actionable; not blocking).
+- [Phase 15-campaign-focus]: [15-01]: Pipe-split heuristic for --campaign-filter — ' | ' (space-pipe-space) preserved as single Google-Ads-naming-convention campaign name; bare '|' (no spaces) splits into list. Single-quoted operator copy-paste of names like 'Search | Lake Worth Accident Exams | Manual CPC' stays one filter value.
+- [Phase 15-campaign-focus]: [15-01]: Empty-clause contract — _apply_campaign_filter returns '' when filter is None/empty so callers inject {campaign_clause} unconditionally; preserves v1.4 GAQL byte-identical modulo whitespace (CAMP-04 backward compat).
 
 ### Open Questions / Todos
 
@@ -158,9 +161,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T15:30:00.000Z
+**Last session:** 2026-05-15T15:17:51.401Z
 
-**Stopped at:** Phase 15 Plan 00 (Wave 1 RED scaffolding) complete. 15 RED tests + 2 fixtures landed; all skip-guarded so legacy suite stays GREEN. Wave 2 (Plans 15-01 perf_fetch + 15-02 render_report) ready to run — they touch different files and can execute in parallel.
+**Stopped at:** Completed 15-01-PLAN.md (perf_fetch.py --campaign-filter)
 
 **Next session:** `/gsd:execute-plan 15-01` (perf_fetch.py `--campaign-filter` + thread through 4 GAQL queries) and/or `/gsd:execute-plan 15-02` (render_report.py `_parse_brief_fields` campaign_focus + `render_campaign_focus_section`). Plans land independently; 15-03 SKILL.md wiring follows both.
 
