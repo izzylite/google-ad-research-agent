@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: "Completed 14-03-PLAN.md (render_positives_sync_section + HTML + JSON + main wiring; POS-03 + POS-05 satisfied). 256 passed, 0 skipped. Next: /gsd:execute-plan 14-04 (export_csv filter)."
-last_updated: "2026-05-15T12:44:50.100Z"
+stopped_at: Completed 14-05-PLAN.md (Step 34a LLM re-tag rubric + SKILL.md pointer; live e2e approved on Lake Worth account). Phase 14 ready for verification gate; v1.4 shippable on green.
+last_updated: "2026-05-15T13:35:33.020Z"
 progress:
   total_phases: 13
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 55
-  completed_plans: 54
+  completed_plans: 55
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 14 — Positives Sync |
-| Plan | 14-00..14-04 complete; 14-05 next |
-| Status | In progress — Wave 3 closed (14-03 render + 14-04 export shipped in parallel); Wave 4 (14-05 SKILL.md LLM re-tag) pending |
-| Last activity | 2026-05-15 — Plan 14-04 executed: export_csv positives-sync filter + --include-existing flag + Status column path + POS-05 graceful CSV-side fallback. 3 Wave 0 export_csv Phase 14 RED stubs flipped GREEN. Full suite 256 passed (was 250+6 skipped). Commit 65bb6f6. |
+| Plan | 14-00..14-05 complete (6/6); Phase 14 awaiting verification gate |
+| Status | Ready for verification — all 6 plans shipped; live e2e approved on Lake Worth account; POS-01..07 Complete. v1.4 ships on gsd-verifier green. |
+| Last activity | 2026-05-15 — Plan 14-05 executed: Step 34a LLM re-tag rubric (+49 lines in references/phase8-account-data.md) + SKILL.md Phase 8 pointer extended (495/500 lines). Live e2e on real Google Ads account confirmed positives-sync.json stats (our_total=83, new_to_add=64, csv=64 rows). Commits 8983c68 + f7e80ef. |
 
 ## Previous Milestone
 
@@ -52,7 +52,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | v1.1 requirements complete | 23 / 23 (BIDS 4/4, FRCS 5/5, CMPL 5/5, EXPT 5/5, STEP 4/4) |
 | v1.2 requirements complete | 11 / 11 (GEO 5/5, ADGM 6/6) |
 | v1.3 requirements complete | 11 / 11 (TVLY 4/4, WFCH 4/4, PULSE 3/3) |
-| v1.4 requirements complete | 5 / 7 (POS 5/7 — POS-01, POS-02, POS-04, POS-05, POS-07 complete; POS-03, POS-06 pending) |
+| v1.4 requirements complete | 7 / 7 (POS-01..07 all complete; Phase 14 awaiting verification gate) |
 | Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
@@ -97,6 +97,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 14 P02 | 2min | 2 tasks | 1 files |
 | Phase 14 P04 | 3min | 2 tasks | 1 files |
 | Phase 14 P03 | ~4min | 2 tasks | 1 files |
+| Phase 14 P05 | 12min | 3 tasks | 2 files |
 
 ### Execution History
 
@@ -263,6 +264,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 14]: [14-03] render_positives_sync_section mirrors render_negatives_sync_section line-for-line. Markdown: audit buckets render count-only (operator drills into positives-sync.json); new_to_add enumerated. HTML: parallel <section id='positives-sync'> + renderPositivesSync() JS with collapsible audit buckets. POS-05 graceful absent-path: section omits when sidecar missing.
 - [Phase 14]: [14-03] Empty-stats guard tighter than negatives-sync: returns '' when stats key absent (malformed sidecar = silent omit, not half-rendered section). Justification fallback chain: justification -> theme -> '' with if-just guard avoids trailing em-dash.
 - [Phase 14]: [14-03] Test-suite side effect: 6 SKIPs cleared, not 3. The 3 Plan 14-04 export-filter SKIPs flipped unexpectedly — Plan 14-04 should re-verify whether those test assertions remain substantive or have become tautologies.
+- [Phase 14]: [14-05] Step 34a placed in references/phase8-account-data.md (not SKILL.md top-level Phase 14) — SKILL.md at 494/500 had no budget for a new Phase section; perf_synth invocation producing positives-sync.json already lives in Step 34, so 34a is the natural slot. Mirrors Phase 5/7/8/9/10/11 references-rubric + SKILL.md-pointer precedent. Final SKILL.md = 495/500.
+- [Phase 14]: [14-05] 5 anchor borderline cases verbatim from 14-CONTEXT.md (token reorder / match-type drift / semantic synonym / narrowing opportunity / locale variant) — same examples flow through CONTEXT decisions → references rubric → SKILL.md pointer. Single source of truth eliminates doc drift. Output contract forbids bucket-name invention; retag_reason field appended on every re-tagged entry for operator audit.
+- [Phase 14]: [14-05] Live e2e on real Lake Worth car-accident/urgent-care account approved Phase 14 closeout: positives-sync.json stats {our_total:83, already_active:11, paused:0, covered_by_broad:8, new_to_add:64} sums correctly; positives.csv = 64 rows + header matches stats.new_to_add. paused_in_account empty is legitimate (no paused kw in account). LLM re-tag invocation deferred to next real operator session (script-only output already operator-actionable; not blocking).
 
 ### Open Questions / Todos
 
@@ -282,9 +286,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T12:44:50.096Z
+**Last session:** 2026-05-15T13:35:04.601Z
 
-**Stopped at:** Completed 14-03-PLAN.md (render_positives_sync_section + HTML + JSON + main wiring; POS-03 + POS-05 satisfied). 256 passed, 0 skipped. Next: /gsd:execute-plan 14-04 (export_csv filter).
+**Stopped at:** Completed 14-05-PLAN.md (Step 34a LLM re-tag rubric + SKILL.md pointer; live e2e approved on Lake Worth account). Phase 14 ready for verification gate; v1.4 shippable on green.
 
 **Next session:** Run `/gsd:execute-plan 14-05` (Wave 4 SKILL.md LLM re-tag step + Phase 8 sub-flow doc updates — POS-03 + POS-06 prose work; all Python now done). With 14-03 also complete, all 6 Wave-0 SKIP stubs are now GREEN; suite at 256 passed.
 
