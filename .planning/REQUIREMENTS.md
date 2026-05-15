@@ -180,7 +180,7 @@ Milestone v1.4 — Phase 14 only. Mirror negatives-sync UX for positives: diff r
 
 - [x] **POS-01**: `perf_fetch.py` adds new GAQL against `keyword_view` (last 30d) pulling `ad_group_criterion.keyword.text`, `ad_group_criterion.keyword.match_type`, `ad_group_criterion.status`, `metrics.impressions/clicks/conversions/cost_micros`; writes `raw/google-ads-keywords.json`. PMax campaigns excluded (no kw-level data).
 - [x] **POS-02**: `perf_synth.py` adds `cross_ref_positives(ranked, existing_kws)` producing `positives-sync.json` with 4 buckets — `already_active` / `paused_in_account` / `covered_by_broad` / `new_to_add` — plus stats block mirroring `negatives-sync.json` structure.
-- [ ] **POS-03**: `render_report.py` adds `render_positives_sync_section()` — markdown + HTML — surfacing stats line + enumerated `new_to_add` list (with category/justification per row) + count-only `already_active` + collapsible `paused_in_account` + `covered_by_broad`; mirrors negatives-sync UX.
+- [x] **POS-03**: `render_report.py` adds `render_positives_sync_section()` — markdown + HTML — surfacing stats line + enumerated `new_to_add` list (with category/justification per row) + count-only `already_active` + collapsible `paused_in_account` + `covered_by_broad`; mirrors negatives-sync UX.
 - [x] **POS-04**: `export_csv.py` filters `positives.csv` rows to `new_to_add` only by default when `positives-sync.json` present; new `--include-existing` CLI flag opts back into full ranked list.
 - [x] **POS-05**: Phase 14 graceful-skips when `raw/google-ads-keywords.json` absent (no Google Ads OAuth in `.env`) — report omits Positives Sync section, `positives.csv` falls back to full ranked list.
 - [ ] **POS-06**: SKILL.md adds optional LLM re-tag step after `cross_ref_positives` — re-classifies borderline cases (semantic dupes like `urgent care lake worth` vs `lake worth urgent care`, match-type drift like ranked exact vs account broad covering same kw) by reading `positives-sync.json` + emitting refined tags.
@@ -314,7 +314,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PULSE-12 | Phase 12 | Complete |
 | POS-01 | Phase 14 | Complete |
 | POS-02 | Phase 14 | Complete |
-| POS-03 | Phase 14 | Pending |
+| POS-03 | Phase 14 | Complete |
 | POS-04 | Phase 14 | Complete |
 | POS-05 | Phase 14 | Complete |
 | POS-06 | Phase 14 | Pending |
