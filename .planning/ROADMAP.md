@@ -216,7 +216,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   3. `competitor_intel.py` keeps Serper requery for ads block + Serper-organic fallback for advertiser identity; Tavily code path deleted.
   4. `pulse_fetch.py` removes `_tavily_news` call; only Serper `/news` survives; `pulse_synth.py` simplified to single-source.
   5. Full test suite passes after removal (target: 252+ tests, with test_tavily_extract.py deleted and Phase 5/7 tests adapted to new contract).
-**Plans:** 4/6 plans executed
+**Plans:** 5/6 plans executed
 - [ ] 12-00-PLAN.md — Wave 0: RED test scaffolding (test_audit_tavily_removed.py + test_pulse_fetch.py + extensions to test_pulse_synth/test_merge_signals/test_competitor_intel/test_render_report + 2 fixture JSONs)
 - [ ] 12-01-PLAN.md — Wave 1: pure deletion (TVLY-01..04 — tavily_extract.py + test_tavily_extract.py + tavily fixtures + conftest tavily_fixture + .env.example + lib/config.py + pyproject.toml)
 - [ ] 12-02-PLAN.md — Wave 1: competitor_intel.py + merge_signals.py refactor (WFCH-03, WFCH-04 — Serper-only advertisers shape + 5-source VALID_SOURCES)
@@ -239,7 +239,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 9. Campaign Economics and Compliance | 6/6 | Complete    | 2026-05-14 |
 | 10. Operator Launch Kit | 5/5 | Complete    | 2026-05-14 |
 | 11. Account-Structure Mapping | 5/5 | Complete    | 2026-05-14 |
-| 12. Source Consolidation (Drop Tavily) | 4/6 | In Progress|  |
+| 12. Source Consolidation (Drop Tavily) | 5/6 | In Progress|  |
 
 ## Coverage Map
 

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: "Completed 12-02-PLAN.md — Wave 1 parallel refactor done. WFCH-03 + WFCH-04 GREEN. competitor_intel.py + merge_signals.py Tavily-free. 2 commits: a20b597 (Task 1), 0a572fc (Task 2). Suite: 245 passed, 4 failed (Plans 12-04/05 territory), 1 skipped."
-last_updated: "2026-05-15T04:04:51.635Z"
+stopped_at: "Completed 12-04-PLAN.md — WFCH-01 + WFCH-02 + PULSE-12 GREEN. 8/8 Wave 0 audit tests GREEN. SKILL.md 486/500. 3 commits: 9028020 (Task 1 docs), 0b21392 (Task 2 SKILL+lib), 36f3a59 (Task 3 render+JOIN). Suite: 249 passed, 1 failed (Plan 12-01 test_config leftover, deferred to 12-05), 0 skipped."
+last_updated: "2026-05-15T04:16:19.661Z"
 progress:
   total_phases: 11
   completed_phases: 9
   total_plans: 49
-  completed_plans: 47
+  completed_plans: 48
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 12 — Source Consolidation (Drop Tavily) |
-| Plan | 02 complete (Wave 1 parallel: 12-01 + 12-02 + 12-03 done; 12-04 next) |
-| Status | WFCH-03 + WFCH-04 GREEN; competitor_intel.py + merge_signals.py Tavily-free; Wave 2 (Plan 12-04) ready |
-| Last activity | 2026-05-15 — Plan 12-02 stripped Tavily from competitor_intel.py + merge_signals.py. Suite: 4 failed (Plans 12-04/05 territory), 245 passed, 1 skipped. |
+| Plan | 04 complete (Wave 2 done; Plan 12-05 final-gate next) |
+| Status | WFCH-01 + WFCH-02 + PULSE-12 GREEN; 8/8 Wave 0 audit tests GREEN; SKILL.md 486/500; Plan 12-05 (full-suite gate + e2e smoke) ready |
+| Last activity | 2026-05-15 — Plan 12-04 rewrote Phase 5 + Phase 7 docs for WebFetch; render_report.py JOINs raw/competitor-landing-pages.json. Suite: 249 passed, 1 failed (test_config Plan-12-01 leftover, deferred), 0 skipped. |
 
 ## Previous Milestone
 
@@ -86,6 +86,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 12-source-consolidation-drop-tavily P01 | 2min | 2 tasks | 9 files |
 | Phase 12-source-consolidation-drop-tavily P03 | 5min | 2 tasks | 4 files |
 | Phase 12-source-consolidation-drop-tavily P02 | 25min | 2 tasks | 4 files |
+| Phase 12-source-consolidation-drop-tavily P04 | 45min | 3 tasks | 7 files |
 
 ### Execution History
 
@@ -226,6 +227,9 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 12-source-consolidation-drop-tavily]: [Plan 12-02] Comment-text purity for substring audit — Removed Phase 12 archaeological comments (Phase 12: tavily-extract removed) from production .py files; would have left 'tavily' substrings violating the strict must-have. Deletion archaeology lives in 12-02-SUMMARY.md instead. Future Phase 12 cleanups should follow the same pattern: prose narrative goes in SUMMARY.md, not in surviving code files.
 - [Phase 12-source-consolidation-drop-tavily]: [Plan 12-02] Co-located test refactor — Pre-existing Phase 5 + Phase 2 tests that asserted on Tavily-shape fields (raw_content, extract_status, source_diversity == 6, _write_tavily helper) were updated in the SAME commit as the production refactor. Atomic per-task review: each commit is one self-consistent change. Wave 0 audit shape is the source of truth for what assertions should look like post-refactor.
 - [Phase 12-source-consolidation-drop-tavily]: [Plan 12-02] Orphan helper detection before deletion — _extract_first_phrase + _PUNCT_STRIP regex in merge_signals.py had read_tavily as their only consumer (verified via grep). Deleted alongside read_tavily rather than keeping them as dead code; keeping them would also have inflated the source-text 'tavily' count via the docstring reference. Pattern: grep for callers before deleting any function, then aggressively prune orphans in the same commit.
+- [Phase 12-source-consolidation-drop-tavily]: [Plan 12-04] render_competitor_section signature extended with optional run_dir kwarg (not required) — preserves backward compat with every existing test in test_render_report.py while enabling Wave 0 WFCH-02 JOIN. Adding required arg would have cascade-broken 41 pre-existing GREEN tests.
+- [Phase 12-source-consolidation-drop-tavily]: [Plan 12-04] Out-of-scope file scrubs (lib/http.py 1-line docstring + render_report.py 5 Tavily mentions) bundled with their owning task commits rather than spawning separate deviation commits — Rule 3 (blocking) justification: test_repo_grep_tavily_clean is the gate, and decoupling would have forced Plan 12-05 to redo this work.
+- [Phase 12-source-consolidation-drop-tavily]: [Plan 12-04] Wave 0 test fixture bug (Rule 1) — test_competitor_section_joins_webfetch_results wrote negatives.json as tier-keyed dict; Phase 6 contract is flat list. Fixed inline because the test's actual contract is competitor-section content assertions, not negatives shape; without fix, render_negatives_section crashes before reaching the section under test.
 
 ### Open Questions / Todos
 
@@ -243,9 +247,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T04:04:51.631Z
+**Last session:** 2026-05-15T04:16:07.466Z
 
-**Stopped at:** Completed 12-02-PLAN.md — Wave 1 parallel refactor done. WFCH-03 + WFCH-04 GREEN. competitor_intel.py + merge_signals.py Tavily-free. 2 commits: a20b597 (Task 1), 0a572fc (Task 2). Suite: 245 passed, 4 failed (Plans 12-04/05 territory), 1 skipped.
+**Stopped at:** Completed 12-04-PLAN.md — WFCH-01 + WFCH-02 + PULSE-12 GREEN. 8/8 Wave 0 audit tests GREEN. SKILL.md 486/500. 3 commits: 9028020 (Task 1 docs), 0b21392 (Task 2 SKILL+lib), 36f3a59 (Task 3 render+JOIN). Suite: 249 passed, 1 failed (Plan 12-01 test_config leftover, deferred to 12-05), 0 skipped.
 
 **Next session:** Milestone v1.2 complete. All 11 / 11 phases shipped (v1.0 + v1.1 + v1.2). No active phase. Options: (1) Define v1.3 milestone scope, (2) Address open-question/todos list (composite ranking calibration, Tavily credit metrics, match-type recommendation validation, v1.1 bid multiplier calibration, FRCS ratio tuning), (3) Triage v2 backlog (VOLM-*, VPRS-*, TOOL-*).
 

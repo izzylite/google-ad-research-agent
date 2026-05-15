@@ -168,8 +168,8 @@ Milestone v1.3 — Phase 12 only. Replace Tavily landing-page extraction w/ Clau
 
 ### WebFetch Replacement for COMP-03
 
-- [ ] **WFCH-01**: SKILL.md Phase 5 step (Step 19) rewrites — Claude invokes WebFetch from skill prompt for top 3-5 advertisers per cluster, mirrors WebSearch baseline pattern in Step 7
-- [ ] **WFCH-02**: Skill writes extracted `{headline, cta, offer}` per advertiser to `raw/competitor-landing-pages.json` via Write tool (replaces `raw/tavily-<domain>.json` files)
+- [x] **WFCH-01**: SKILL.md Phase 5 step (Step 19) rewrites — Claude invokes WebFetch from skill prompt for top 3-5 advertisers per cluster, mirrors WebSearch baseline pattern in Step 7
+- [x] **WFCH-02**: Skill writes extracted `{headline, cta, offer}` per advertiser to `raw/competitor-landing-pages.json` via Write tool (replaces `raw/tavily-<domain>.json` files)
 - [x] **WFCH-03**: `competitor_intel.py` drops Tavily call path; keeps Serper requery for ads block + Serper-organic fallback for advertiser identity discovery
 - [x] **WFCH-04**: Source taxonomy in `merge_signals.py` removes `tavily-extract` from 6-source list; the new `webfetch-landing` source is NOT merged into main keyword pool (landing-page extraction is Phase 5 competitor intel only, not keyword harvest)
 
@@ -177,7 +177,7 @@ Milestone v1.3 — Phase 12 only. Replace Tavily landing-page extraction w/ Clau
 
 - [x] **PULSE-10**: `pulse_fetch.py` removes `_tavily_news` call; only Serper `/news` (PULSE-01) survives; `raw/tavily-news.json` no longer written
 - [x] **PULSE-11**: `pulse_synth.py` drops Tavily branch in trending-themes source merging; single-source niche pulse logic simplified
-- [ ] **PULSE-12**: SKILL.md Steps 27-30 (Phase 7) drop Tavily news mention; REQUIREMENTS.md marks original PULSE-02 deprecated (was Tavily news search; now N/A — superseded by PULSE-10)
+- [x] **PULSE-12**: SKILL.md Steps 27-30 (Phase 7) drop Tavily news mention; REQUIREMENTS.md marks original PULSE-02 deprecated (was Tavily news search; now N/A — superseded by PULSE-10)
 
 ## v2 Requirements
 
@@ -298,13 +298,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TVLY-02 | Phase 12 | Complete |
 | TVLY-03 | Phase 12 | Complete |
 | TVLY-04 | Phase 12 | Complete |
-| WFCH-01 | Phase 12 | Pending |
-| WFCH-02 | Phase 12 | Pending |
+| WFCH-01 | Phase 12 | Complete |
+| WFCH-02 | Phase 12 | Complete |
 | WFCH-03 | Phase 12 | Complete |
 | WFCH-04 | Phase 12 | Complete |
 | PULSE-10 | Phase 12 | Complete |
 | PULSE-11 | Phase 12 | Complete |
-| PULSE-12 | Phase 12 | Pending |
+| PULSE-12 | Phase 12 | Complete |
 
 **Coverage:**
 - v1.0 requirements: 52 total (Phases 1-8, all complete)
