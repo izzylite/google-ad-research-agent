@@ -241,67 +241,37 @@ This contract is the upstream API spec for any v2 work
 
 ## Phase 16: Token-Bag Enrichment (ADGM-07..11)
 
-**Why Phase 16 exists.** Phase 11 used a search-terms-only token bag per ad
-group. The Lake Worth dogfood run (2026-05-15) returned 0% mapping coverage
-even after Phase 15 narrowed the perf/search-terms artifacts to a single
-campaign — Lake Worth's three ad groups have sparse 30-day search history
-(one ENABLED AG, two PAUSED), so the search-terms-only bag was too thin to
-overlap the ranked-keyword vocabulary. Phase 16 unions the AG name + active
-`kw_criteria` (from Phase 14's `raw/google-ads-keywords.json`) + the top-10
-search terms by clicks so the per-AG bag carries enough signal to score.
+**Why Phase 16 exists.** Phase 11's search-terms-only token bag returned 0%
+Lake Worth coverage (2026-05-15 dogfood) — three ad groups with sparse
+30-day search history (one ENABLED, two PAUSED) yielded bags too thin to
+overlap ranked-keyword vocabulary. Phase 16 unions the AG name + active
+`kw_criteria` (from Phase 14's `raw/google-ads-keywords.json`) + top-10
+search terms by clicks so each AG bag carries enough signal to score.
 
-**Bag composition.**
+**Bag composition.** `bag(ag) = _tokens(ag.name) ∪ _tokens(kw.text) for kw
+in active kw_criteria where ad_group_name == ag.name ∪ _tokens(st.search_term)
+for st in top-10 search_terms by clicks desc (tiebreak impressions desc, drop
+impressions==0)`. Active = `kw.status != "REMOVED"`. Top-N defaults to 10
+(`_build_ag_token_bag(top_n_terms=10)`). Same `_tokens()` regex + stopword
+filter from Phase 11 across all sources — no per-source vocabulary drift.
 
-```
-bag(ad_group) =
-    _tokens(ag.name)
-  ∪ _tokens(kw.text) for kw in active kw_criteria where ad_group_name == ag.name
-  ∪ _tokens(st.search_term) for st in top-10 search_terms by clicks desc
-                                    (tiebreak impressions desc, drop impressions==0)
-```
+**Per-source attribution.** High/medium matches carry partial Jaccards in
+`match.reason` so operators can audit which source pulled the match. Format:
+`jaccard=X.XX (name=Y.YY kw-criterion=Z.ZZ search-term=W.WW) intent_match=B`.
+`jaccard` is the score pre-intent-multiplier — pre-16-04: full-union;
+post-16-04: `max(name_j, crit_j, term_j)`. Low matches keep the simpler
+`jaccard=X.XX intent_match=B` shape (no spurious partials against unmatched
+bags).
 
-Active = `kw.ad_group_criterion.status != "REMOVED"`. Top-N defaults to 10
-(`_build_ag_token_bag(top_n_terms=10)`). The same `_tokens()` regex + stopword
-filter from Phase 11 applies to every source — no per-source vocabulary drift.
-
-**Per-source attribution.** When a match lands `high` or `medium`,
-`match.reason` carries the per-source partial Jaccards alongside the full
-union score so the operator can audit which source pulled the match:
-
-| Component             | Meaning                                                                |
-|-----------------------|------------------------------------------------------------------------|
-| `jaccard=0.12`        | Full-union Jaccard score (after intent multiplier) — used for classify |
-| `name=0.10`           | Partial Jaccard against AG name tokens only                            |
-| `kw-criterion=0.08`   | Partial Jaccard against active `kw_criteria` tokens                    |
-| `search-term=0.07`    | Partial Jaccard against top-10 search-term tokens                      |
-| `intent_match=True`   | Inferred AG intent == ranked-keyword intent                            |
-
-Low-confidence matches keep the simpler Phase 11 `jaccard=X.XX intent_match=B`
-shape (no spurious partials against unmatched bags).
-
-**Threshold calibration.**
-
-| Threshold | Phase 11 | Phase 16 | Rationale                                                                                                                |
-|-----------|----------|----------|--------------------------------------------------------------------------------------------------------------------------|
-| high      | 0.7      | 0.30     | Lake Worth coverage went from 0% (Phase 11) to 16.67% (Phase 16) at this floor; full-union Jaccard caps at ~0.15–0.25.   |
-| medium    | 0.4      | 0.10     | Larger bags inflate the Jaccard denominator (|A ∪ B|), compressing observed scores; recalibrated empirically.            |
-
-The {0.30, 0.10} pair is the **loosening-cap FLOOR** chosen by operator
-option-a (plan 16-01): it is the lowest pair that preserves Phase 11's 80%
-coverage invariant on the Phase 11 fixture AND keeps garbage queries (e.g.
-"tomato sandwich" vs a medical AG) classified as `low`. Going lower breaks
-the garbage-low guard; going higher loses Lake Worth's 11 medium matches.
-
-**Lake Worth result is a structural ceiling, not a tuning miss.** Lake
-Worth's enriched AG bag carries 34 distinct tokens (post-stopword); ranked
-queries average 4–6 tokens. The Jaccard denominator dominates, capping
-observed scores at 0.15–0.25 — no `{high, medium}` pair within the loosening
-cap reaches the ADGM-11 ≥50% floor. ADGM-11 is deferred to a follow-up
-plan that explores structural fixes (per-source max-Jaccard instead of
-full-union Jaccard, token-bag subsampling, or asymmetric similarity
-`|A ∩ B| / |A|`). The xfail-with-rationale on
-`test_lake_worth_coverage_floor` (strict=True) preserves test intent until
-that structural fix lands.
+**Threshold calibration.** 16-01 lowered `_THRESHOLDS` from Phase 11
+`{high: 0.7, medium: 0.4}` to the loosening-cap FLOOR `{0.30, 0.10}`
+(operator option-a, lowest pair preserving Phase 11's 80% invariant + C5
+garbage-low guard). **Superseded by 16-04** which ships `{0.30, 0.08}`
+under the max-Jaccard algorithm (next subsection). Under full-union, no
+threshold pair in the loosening cap reached ADGM-11's ≥50% floor —
+Lake Worth's 34-token bag vs 4-6-token queries capped scores at
+0.15-0.25 (structural ceiling, not tuning miss). Plans 16-03 + 16-04
+closed ADGM-11 via per-source max-Jaccard.
 
 **Backward-compat contract.** When `raw/google-ads-keywords.json` is absent
 (no Phase 14 OAuth opt-in, or pre-v1.4 account), the bag gracefully
@@ -310,9 +280,67 @@ Lake Worth-shape accounts will sit in the Phase 11 ballpark (<20%) in that
 mode — the enrichment is additive, not load-bearing. Test fixture:
 `tests/test_ad_group_match.py::test_backward_compat_keywords_absent`.
 
-**Open question — next-account calibration.** Final threshold lock requires
-calibration against one additional real OAuth-enabled account beyond Lake
-Worth. The current {0.30, 0.10} values are evidence-based for Lake Worth
-only. The follow-up structural-fix plan should re-evaluate thresholds
-after the algorithmic change; until then, treat these values as the
-loosening-cap floor under the existing full-union Jaccard algorithm.
+### Plan 16-04: Per-Source Max-Jaccard Structural Fix (ADGM-11)
+
+**Why full-union Jaccard underperformed.** 16-02 live e2e reason field:
+`jaccard=0.10 (name=0.33 kw-criterion=0.00 search-term=0.00) intent_match=True`.
+Name alone scored 0.33 — well above the high threshold — but the full-union
+denominator (~34 AG bag tokens vs 4–6 query tokens) diluted the combined
+score to 0.10, structurally masking the strongest channel. Per-source
+max-Jaccard preserves it directly: same match → 0.33.
+
+**Algorithm one-liner.** `ad_group_match.py::build_mapping` (Plan 16-04):
+
+```python
+# 16-04: per-source max replaces full-union jaccard.
+name_j = _jaccard(kw_tokens, ag["name_tokens"])
+crit_j = _jaccard(kw_tokens, ag["criterion_tokens"])
+term_j = _jaccard(kw_tokens, ag["search_term_tokens"])
+raw_j  = max(name_j, crit_j, term_j)
+# intent_multiplier still applies multiplicatively to raw_j
+```
+
+The cached `best_partials` tuple inside the per-AG loop powers the
+reason-field rendering — reason now causally aligned with the score (was
+decorative under full-union).
+
+**Calibration sweep (Plan 16-04 Task 2).** Sweep over the goldenfile +
+Phase 11 fixture under max-Jaccard:
+
+| `{high, medium}` | Lake Worth (offline/live) | Phase 11 | C5 garbage-low | Outcome |
+|------------------|---------------------------|----------|----------------|---------|
+| {0.30, 0.10}     | 54.55% / 50.75%           | 80%      | 0.0%           | PASS (16-01 floor; medium guard structurally obsolete under max) |
+| {0.30, 0.08}     | 54.55% / 50.75%           | 80%      | 0.0%           | **PASS (option-d shipped)** — admits `name_j ≈ 0.083` borderline matches |
+
+Garbage keywords (`tomato sandwich`, `quantum mechanics tutorial`) score
+exactly 0.0 under max-Jaccard (no shared tokens → all partials 0.0). The
+16-01 medium=0.10 floor was a defensive guard against full-union dilution
+producing low-but-nonzero garbage scores — structurally eliminated by
+`max()`. Option-d lowers medium to 0.08 to admit legitimate name-only
+matches where `name_j = 1/12 ≈ 0.083`.
+
+**Live e2e closeout.** Real Lake Worth OAuth account observed
+`mapping_coverage_pct = 50.75%` post-Plan 16-04 (operator-approved); 52
+of 67 matches show non-zero `kw_criterion` contribution (vs all-zero
+pre-shape-fix). Trajectory: 0% (Phase 11) → 16.67% / 16.42% (16-01/02
+full-union) → 41.79% (16-04 max-Jaccard pre-shape-fix) → **50.75%**
+(16-04 post-shape-fix).
+
+**Reader/writer shape-contract fix (Task 2.5 deviation, commit `56d4196`).**
+Task 3 initial measurement was 41.79% (below offline prediction).
+Investigation surfaced a **preexisting** bug latent since 16-01:
+`ad_group_match.py` read keywords via nested Google Ads raw API shape
+(`kw.ad_group_criterion.keyword.text` / `.status` / `.ad_group.name`),
+while the canonical OAuth writer at `perf_fetch.py:292-303` emits **flat**
+shape (`kw["keyword"]`, `kw["status"]`, `kw["ad_group_name"]`). The 16-00
+fixture was hand-reshaped to nested, matching the broken reader and papering
+over the divergence offline (both sides wrong-but-matched). Every live run
+from 16-01 through pre-fix silently had zero `kw_criterion` contribution.
+Fix: 4 field accesses flipped nested→flat (Rule 3 Blocking deviation).
+Lesson: shape contracts surface at live e2e, not unit tests — sample the
+live OAuth response, not just the goldenfile.
+
+**ADGM-11 status: Complete.** Floor met (>=50%); 16-01's `xfail` removed
+in 16-03; per-source max-Jaccard + shape-fix shipped 16-04. Watch-item:
+next-account calibration cycle (2nd OAuth account) — re-run the sweep
+table on that account before treating {0.30, 0.08} as universally locked.
