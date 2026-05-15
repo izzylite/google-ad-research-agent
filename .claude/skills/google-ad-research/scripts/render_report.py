@@ -104,6 +104,15 @@ USAGE_NEG_SYNC = (
     "**Investigate** before adding. Saves duplicate work between research "
     "and account audit."
 )
+USAGE_POS_SYNC = (
+    "**How to use:** compare our ranked positives against the live Google "
+    "Ads account. `new to add` rows are what to paste into positives.csv "
+    "for the Editor import. `already active` / `paused` / `covered by "
+    "broad` are surfaced as count-only audit signals — drill into "
+    "`positives-sync.json` if you want the full per-row breakdown. Section "
+    "omits gracefully when `positives-sync.json` is absent (no Google Ads "
+    "OAuth wired)."
+)
 
 TIER_ORDER = ["Strong", "Considered", "Investigate"]
 
@@ -480,6 +489,67 @@ def render_negatives_sync_section(sync: dict) -> str:
             cat = n.get("category", "")
             just = escape_md_cell(n.get("justification", ""))
             parts.append(f"- `{kw}` · _{cat}_ — {just}\n")
+    return "".join(parts)
+
+
+def render_positives_sync_section(sync: dict) -> str:
+    """POS-03: Render the Positives Sync section.
+
+    Mirrors render_negatives_sync_section. Returns "" when sync is None /
+    empty (graceful omit per POS-05 — caller appends unconditionally).
+
+    Bucket display strategy:
+        - new_to_add        enumerated (this is what the operator acts on)
+        - already_active    count-only (audit trail, full list in JSON)
+        - paused_in_account count-only
+        - covered_by_broad  count-only
+    """
+    if not sync or not isinstance(sync, dict):
+        return ""
+    stats = sync.get("stats") or {}
+    if not stats:
+        return ""
+
+    parts = [
+        "## Positives Sync\n\n",
+        USAGE_POS_SYNC, "\n",
+        f"\n**Stats:** our list = {stats.get('our_total', 0)} · "
+        f"already active = {stats.get('already_active', 0)} · "
+        f"paused = {stats.get('paused_in_account', 0)} · "
+        f"covered by broad = {stats.get('covered_by_broad', 0)} · "
+        f"new to add = **{stats.get('new_to_add', 0)}**\n",
+    ]
+
+    new_to_add = sync.get("new_to_add") or []
+    parts.append(f"\n### New positives to add ({len(new_to_add)})\n\n")
+    if not new_to_add:
+        parts.append(
+            "_None — your ranked list is fully covered by the active "
+            "account._\n"
+        )
+    else:
+        for r in new_to_add:
+            kw = escape_md_cell(r.get("keyword", ""))
+            intent = r.get("intent", "") or ""
+            just = escape_md_cell(
+                r.get("justification", "") or r.get("theme", "") or ""
+            )
+            if just:
+                parts.append(f"- `{kw}` · _{intent}_ — {just}\n")
+            else:
+                parts.append(f"- `{kw}` · _{intent}_\n")
+
+    # Count-only audit sections — operator drills into positives-sync.json
+    # for full per-row data. Keeps the report scannable.
+    for label, key in (
+        ("Already active", "already_active"),
+        ("Paused in account", "paused_in_account"),
+        ("Covered by broad-match", "covered_by_broad"),
+    ):
+        items = sync.get(key) or []
+        parts.append(f"\n### {label} ({len(items)})\n")
+        parts.append("_See positives-sync.json for the full list._\n")
+
     return "".join(parts)
 
 
