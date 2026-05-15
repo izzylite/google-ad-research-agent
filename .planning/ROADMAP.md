@@ -224,6 +224,19 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - [ ] 12-04-PLAN.md — Wave 2: SKILL.md WebFetch + references docs rewrite + render_report.py JOIN (WFCH-01, WFCH-02, PULSE-12)
 - [ ] 12-05-PLAN.md — Wave 3: full suite + e2e human-verify smoke + REQUIREMENTS.md/STATE.md milestone closeout
 
+### Phase 13: Landing-Page Extract Vendor Swap (BACKLOG — defer-until-friction)
+**Goal:** If WebFetch flow in Phase 12 proves disruptive in real-operator runs (per-domain permission prompts, reliability issues, parsing friction), migrate landing-page extract from Claude WebFetch → Serper `/scrape` helper script. Vendor consolidation onto existing Serper account, eliminates Claude prompts, restores helper-script + respx-mockable pattern.
+**Trigger:** Operator runs 1-2 real briefs in Phase 12 mode. If WebFetch flow is fine → skip Phase 13 entirely. If friction observed → activate.
+**Depends on:** Phase 12 shipped.
+**Requirements:** TBD (write `serper_scrape.py` helper; rewrite SKILL.md Step 19 from "Claude WebFetch" → "run `serper_scrape.py`"; preserve `raw/competitor-landing-pages.json` schema + render_report JOIN; add respx tests).
+**Success Criteria** (when activated):
+  1. `scripts/serper_scrape.py` exists, uses existing `lib/http.py` + `SerperClient` pattern; calls Serper `/scrape` endpoint.
+  2. SKILL.md Step 19 invokes helper script (no Claude WebFetch); no per-domain permission prompts.
+  3. `raw/competitor-landing-pages.json` schema unchanged; `render_report.py` JOIN unchanged.
+  4. respx-mocked tests cover happy path + retry + 4xx fallback.
+  5. Full test suite passes; e2e smoke produces equivalent report.md competitor section quality.
+**Plans:** TBD — defer until trigger condition met.
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -240,6 +253,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 10. Operator Launch Kit | 5/5 | Complete    | 2026-05-14 |
 | 11. Account-Structure Mapping | 5/5 | Complete    | 2026-05-14 |
 | 12. Source Consolidation (Drop Tavily) | 5/6 | In Progress|  |
+| 13. Landing-Page Extract Vendor Swap | 0/0 | Backlog (defer-until-friction) | — |
 
 ## Coverage Map
 
