@@ -591,6 +591,86 @@ def _load_ad_group_mapping_for_render(run_dir: Path) -> dict | None:
         return None
 
 
+def render_ad_group_mapping_section(ad_group_mapping: dict | None) -> str:
+    """Render the Ad Group Mapping section (ADGM-04 visualization).
+
+    Returns "" when ad_group_mapping is None/empty — caller appends
+    unconditionally; graceful-degrade built in.
+
+    Sections:
+      * Coverage % + tier counts (high/medium/low)
+      * Top 15 matches table (Keyword | Existing Ad Group | Confidence | Score)
+      * Unmapped count
+    """
+    if not ad_group_mapping or not isinstance(ad_group_mapping, dict):
+        return ""
+    matches = ad_group_mapping.get("matches") or []
+    if not matches:
+        return ""
+
+    high = sum(1 for m in matches if m.get("confidence") == "high")
+    medium = sum(1 for m in matches if m.get("confidence") == "medium")
+    low = sum(1 for m in matches if m.get("confidence") == "low")
+    total = len(matches)
+    coverage = ad_group_mapping.get("mapping_coverage_pct", 0.0) or 0.0
+    skipped_reason = ad_group_mapping.get("skipped_reason")
+
+    parts = ["## Ad Group Mapping\n\n"]
+    if skipped_reason:
+        parts.append(
+            f"_Skipped: {escape_md_cell(skipped_reason)}._\n\n"
+        )
+        return "".join(parts)
+
+    parts.append(
+        "_Maps our ranked keywords to your existing Google Ads ad groups via "
+        "Jaccard token overlap × intent match (Phase 8 perf data). "
+        "**High** = ≥0.7 (paste into existing); **medium** = 0.4–0.7 (review "
+        "first); **low** = <0.4 (create new ad group)._\n\n"
+    )
+    parts.append(
+        f"**Coverage:** {coverage:.1f}% "
+        f"(high+medium of {total} ranked keywords) · "
+        f"High **{high}** · Medium **{medium}** · Low **{low}**\n\n"
+    )
+
+    mapped = [
+        m for m in matches if m.get("confidence") in ("high", "medium")
+    ]
+    if mapped:
+        # Sort by score descending; top 15.
+        mapped_sorted = sorted(
+            mapped, key=lambda m: m.get("score", 0) or 0, reverse=True
+        )[:15]
+        rows = [
+            [
+                escape_md_cell(m.get("keyword", "")),
+                escape_md_cell(m.get("existing_ad_group", "")),
+                escape_md_cell(m.get("confidence", "")),
+                f"{(m.get('score', 0) or 0):.2f}",
+            ]
+            for m in mapped_sorted
+        ]
+        headers = ["Keyword", "Existing Ad Group", "Confidence", "Score"]
+        parts.append("### Matched Keywords (top 15)\n\n")
+        parts.append(tabulate(rows, headers=headers, tablefmt="github"))
+        parts.append("\n\n")
+    else:
+        parts.append(
+            "_No high or medium-confidence matches in this run. All ranked "
+            "keywords fall back to new cluster ad groups (see Ad Group "
+            "Clusters section above)._\n\n"
+        )
+
+    if low:
+        parts.append(
+            f"_{low} low-confidence keyword(s) routed to new cluster ad "
+            f"groups (cluster slug used as ad group name in positives.csv)._\n\n"
+        )
+
+    return "".join(parts)
+
+
 def _fmt_clicks(v) -> str:
     """Format daily click counts. Integers render as-is; floats round to 1dp
     and drop trailing `.0` so 6.0 → '6', 0.7333 → '0.7'."""
@@ -1027,6 +1107,14 @@ def render_full_report(
         "\n",
         render_clusters_section(clusters_data),
     ])
+    # Ad Group Mapping (Phase 11 ADGM-04 visualization) — after Clusters since
+    # both are organization-related; mapping shows how export_csv routes
+    # keywords to existing client ad groups. Returns "" when no sidecar.
+    _ad_group_mapping_for_section = _load_ad_group_mapping_for_render(run_dir)
+    mapping_md = render_ad_group_mapping_section(_ad_group_mapping_for_section)
+    if mapping_md:
+        sections.append("\n")
+        sections.append(mapping_md)
     # Budget Forecast (Phase 9 FRCS-04) — between Clusters and Negatives.
     # render_forecast_section returns "" when forecast is None / clusters absent,
     # so we can append unconditionally (graceful degrade).
@@ -1266,6 +1354,12 @@ Keyword Planner for actual volume + CPC.
     <span class="count" id="clusterCount"></span>
   </div>
   <div id="clustersList"></div>
+</section>
+
+<section id="ad-group-mapping" style="display:none">
+  <h2>Ad Group Mapping <span class="cluster-meta" id="agmMeta"></span></h2>
+  <div class="usage"><strong>How to use:</strong> shows which of your existing Google Ads ad groups each ranked keyword maps to (Phase 8 perf data + Jaccard token overlap × intent match). <strong>High</strong> (≥0.7) = paste into existing ad group. <strong>Medium</strong> (0.4–0.7) = review before pasting. <strong>Low</strong> (&lt;0.4) = create new ad group from cluster slug.</div>
+  <div id="agmContent"></div>
 </section>
 
 <section>
@@ -1741,9 +1835,58 @@ function renderNextSteps() {{
   }});
 }}
 
+function renderAdGroupMapping() {{
+  var agm = REPORT.ad_group_mapping;
+  if (!agm) return;
+  var matches = agm.matches || [];
+  if (!matches.length) return;
+  var section = document.getElementById("ad-group-mapping");
+  var meta = document.getElementById("agmMeta");
+  var content = document.getElementById("agmContent");
+  if (!section || !content) return;
+  section.style.display = "block";
+  var high = matches.filter(function(m){{ return m.confidence === "high"; }}).length;
+  var medium = matches.filter(function(m){{ return m.confidence === "medium"; }}).length;
+  var low = matches.filter(function(m){{ return m.confidence === "low"; }}).length;
+  var total = matches.length;
+  var coverage = (agm.mapping_coverage_pct || 0).toFixed(1);
+  meta.textContent = "coverage " + coverage + "% · " + total + " ranked · high " + high + " · medium " + medium + " · low " + low;
+  var skipped = agm.skipped_reason;
+  if (skipped) {{
+    content.innerHTML = "<p style='color:#666;font-size:13px'><em>Skipped: " + htmlEscape(skipped) + "</em></p>";
+    return;
+  }}
+  var mapped = matches.filter(function(m){{ return m.confidence === "high" || m.confidence === "medium"; }});
+  mapped.sort(function(a, b){{ return (b.score || 0) - (a.score || 0); }});
+  var top15 = mapped.slice(0, 15);
+  var html = "";
+  if (top15.length) {{
+    html += '<table><thead><tr><th>Keyword</th><th>Existing Ad Group</th><th>Confidence</th><th>Score</th></tr></thead><tbody>';
+    html += top15.map(function(m){{
+      var conf = m.confidence || "";
+      var color = conf === "high" ? "#15803d" : (conf === "medium" ? "#a16207" : "#666");
+      return '<tr><td>' + htmlEscape(m.keyword || "") + '</td>'
+        + '<td>' + htmlEscape(m.existing_ad_group || "") + '</td>'
+        + '<td style="color:' + color + ';font-weight:600">' + htmlEscape(conf) + '</td>'
+        + '<td>' + (m.score || 0).toFixed(2) + '</td></tr>';
+    }}).join("");
+    html += '</tbody></table>';
+    if (mapped.length > 15) {{
+      html += '<p style="color:#666;font-size:13px">…and ' + (mapped.length - 15) + ' more matched keyword(s).</p>';
+    }}
+  }} else {{
+    html += '<p style="color:#666;font-size:13px"><em>No high or medium-confidence matches in this run. All ranked keywords fall back to new cluster ad groups (see Ad Group Clusters section above).</em></p>';
+  }}
+  if (low) {{
+    html += '<p style="color:#666;font-size:13px"><em>' + low + ' low-confidence keyword(s) routed to new cluster ad groups (cluster slug used as ad group name in positives.csv).</em></p>';
+  }}
+  content.innerHTML = html;
+}}
+
 renderKeywords(); renderClusters(); renderCompetitors(); renderNichePulse();
 renderCompliance(); renderForecast();
 renderAccountPerf(); renderNegativesSync(); renderNegatives();
+renderAdGroupMapping();
 renderNextSteps();
 makeSortable("kwTable"); makeSortable("negTable");
 </script>
@@ -1851,6 +1994,8 @@ def build_report_json(
     }
     if ad_group_mapping_summary is not None:
         report["ad_group_mapping_summary"] = ad_group_mapping_summary
+    if ad_group_mapping is not None:
+        report["ad_group_mapping"] = ad_group_mapping
     return report
 
 
