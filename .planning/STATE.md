@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: Plan 16-02 complete — Phase 16 closed (ADGM-07..10 shipped, ADGM-11 deferred to structural-algorithm follow-up plan)
-last_updated: "2026-05-15T19:38:00.000Z"
+stopped_at: Completed Plan 16-03 — RED tests authored for ADGM-11 per-source max-Jaccard structural fix; 3 RED tests + 20 PASSED; Plan 16-04 has clean GREEN target
+last_updated: "2026-05-15T19:24:37.237Z"
 progress:
   total_phases: 15
-  completed_phases: 13
-  total_plans: 62
-  completed_plans: 62
+  completed_phases: 12
+  total_plans: 65
+  completed_plans: 63
 ---
 
 # State: Google Ad Research Agent
@@ -26,10 +26,10 @@ progress:
 
 | Field | Value |
 |-------|-------|
-| Phase | 16 — Ad-Group Mapping Token-Bag Enrichment (COMPLETE pending structural-fix follow-up plan for ADGM-11) |
-| Plan | 16-00 + 16-01 + 16-02 all complete; ADGM-11 carried as open question for next planning cycle (structural-algorithm follow-up — per-source max-jaccard / token-bag subsampling / asymmetric similarity) |
-| Status | Phase 16 closed: token-bag enrichment shipped (ADGM-07..09) + threshold rationale auditable in `references/phase11-account-structure-mapping.md` (ADGM-10) + live e2e on real Lake Worth OAuth account confirms 16.42% mapping coverage (within 0.25pp of offline goldenfile 16.67%, validating structural-not-fixture ceiling); ADGM-11 (>=50% floor) deferred |
-| Last activity | 2026-05-15 — Plan 16-02 closeout: reference-doc Phase 16 section shipped (e7492c7, +78 lines; SKILL.md untouched at 497/500); operator live e2e on `.runs/2026-05-15T180642Z-car-accident-injury-care-services/` returned `mapping_coverage_pct=16.42%`, 11 medium + 56 low + 0 high, per-source reason format verified (`jaccard=0.10 (name=0.33 kw-criterion=0.00 search-term=0.00) intent_match=True`); pytest = 18 PASSED + 1 XFAILED preserved |
+| Phase | 16 — Ad-Group Mapping Token-Bag Enrichment (ADGM-07..10 complete; ADGM-11 RED-state wired Plan 16-03 → GREEN target Plan 16-04) |
+| Plan | 16-00 + 16-01 + 16-02 + 16-03 complete; Plan 16-04 next (structural fix: replace full-union Jaccard with `max(name_j, crit_j, term_j)` in `ad_group_match.build_mapping`) |
+| Status | Plan 16-03 RED tests authored: 3 FAILED (Lake Worth floor + lynchpin per-source max + tied-sources score-VALUE 0.333 vs full-union 0.50) + 20 PASSED (C2 80% Phase 11 invariant + C5 garbage-low + ADGM-07..10 reason-field all preserved); xfail decorator removed from test_lake_worth_coverage_floor; Plan 16-04 has clean GREEN target |
+| Last activity | 2026-05-15 — Plan 16-03 RED test authoring: 4 new tests + 1 xfail-removal in test_ad_group_match.py (commit 7d76a9e, 267 insertions / 17 deletions); lynchpin `test_per_source_max_jaccard_used_for_scoring` uses constructed in-memory fixture (1 AG name='Accident' + 30 distinct non-overlapping criteria) where full-union 1/31 ≈ 0.032 → low but per-source max name_j=1.0 → high; tied-sources test uses score-VALUE assertion (≈0.333) not score-CLASS to surface the algorithm delta cleanly |
 
 ## Previous Milestone
 
@@ -108,6 +108,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 16 P00 | 12min | 2 tasks | 7 files |
 | Phase 16-ad-group-mapping-token-bag-enrichment P01 | 18min | 4 tasks | 2 files |
 | Phase 16-ad-group-mapping-token-bag-enrichment P02 | ~25min | 2 tasks (1 docs + 1 human-verify live e2e) | 1 modified + 1 created |
+| Phase 16-ad-group-mapping-token-bag-enrichment P03 | ~3min | 1 tasks | 1 files |
 
 ### Execution History
 
@@ -156,6 +157,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-02] ADGM-10 documentation routes through `references/phase11-account-structure-mapping.md` (+78 lines) NOT SKILL.md — preserves SKILL.md ≤500 invariant (still 497/500) via existing Phase 11 progressive-disclosure pointer. Threshold rationale auditable from one file read.
 - [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-02] Live e2e on real Lake Worth OAuth account observed `mapping_coverage_pct = 16.42%` vs offline goldenfile 16.67% (0.25pp delta) — confirms (a) Phase 16 enrichment wires correctly end-to-end with no regression from 0% pre-enrichment baseline, (b) goldenfile is NOT overfit, and (c) the Jaccard ceiling that caps coverage below 50% is STRUCTURAL (bag-vs-query asymmetry holds on real data), not a fixture artifact.
 - [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-02] Live sample reason field on real OAuth data: `jaccard=0.10 (name=0.33 kw-criterion=0.00 search-term=0.00) intent_match=True` — confirms meaningful matches happen one-source-at-a-time (name carries 0.33, kw + st 0.00) while full-union Jaccard dilutes to 0.10. Directly motivates per-source max-jaccard as the leading structural-fix candidate for ADGM-11 follow-up.
+- [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-03] 4 RED tests + xfail-removal pin per-source max-Jaccard contract for Plan 16-04; suite runs 3 FAILED (Lake Worth floor + lynchpin per-source max + tied-sources score-VALUE 0.333 vs full-union 0.50) + 20 PASSED (C2 80% invariant + C5 garbage-low preserved). Score-VALUE assertion in tied-sources test (not score-CLASS) is the key TDD pattern: full-union 0.50 also classifies high, so a class-only assertion would have masked the algorithm shift.
 
 ### Open Questions / Todos
 
@@ -178,9 +180,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T19:38:00.000Z
+**Last session:** 2026-05-15T19:24:37.233Z
 
-**Stopped at:** Plan 16-02 complete — Phase 16 closed (ADGM-07..10 shipped, ADGM-11 deferred); live Lake Worth OAuth e2e at 16.42% mapping_coverage_pct validates predictive validity of offline goldenfile and confirms structural Jaccard ceiling.
+**Stopped at:** Completed Plan 16-03 — RED tests authored for ADGM-11 per-source max-Jaccard structural fix; 3 RED tests + 20 PASSED; Plan 16-04 has clean GREEN target
 
 **Next session:** Author a structural-algorithm follow-up plan for ADGM-11 (>=50% mapping coverage floor). Leading candidate per 16-02 live sample reason-field evidence: per-source max-jaccard replacing full-union Jaccard in `ad_group_match.py::_classify`. Plan should also pin a 2nd real OAuth account for the next-account calibration cycle once the structural fix lands.
 
