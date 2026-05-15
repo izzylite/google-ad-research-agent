@@ -1,0 +1,1162 @@
+[
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "lake worth car accident lawyer",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 233,
+    "signal_count": 3,
+    "source_diversity": 2,
+    "sources": [
+      "serper-organic",
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": 40
+  },
+  {
+    "cpc_micros": 1900000,
+    "difficulty": 1,
+    "intent": "transactional",
+    "keyword": "urgent care royal palm beach",
+    "match_type": "phrase",
+    "parent_topic": "urgent care royal palm beach",
+    "score": 232,
+    "signal_count": 2,
+    "source_diversity": 2,
+    "sources": [
+      "serper-related",
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 2280000,
+    "theme": "",
+    "volume": 200
+  },
+  {
+    "cpc_micros": 2500000,
+    "difficulty": 4,
+    "intent": "transactional",
+    "keyword": "lake worth urgent care",
+    "match_type": "phrase",
+    "parent_topic": "urgent care lake worth",
+    "score": 134,
+    "signal_count": 4,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": 3000000,
+    "theme": "",
+    "volume": 50
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "auto accident injury treatment wellington",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 133,
+    "signal_count": 3,
+    "source_diversity": 1,
+    "sources": [
+      "serper-organic"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "lake worth lantana urgent care clinic",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 133,
+    "signal_count": 3,
+    "source_diversity": 1,
+    "sources": [
+      "serper-organic"
+    ],
+    "suggested_max_cpc_micros": 2700000,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": 1700000,
+    "difficulty": 5,
+    "intent": "transactional",
+    "keyword": "24 hour urgent care west palm beach",
+    "match_type": "phrase",
+    "parent_topic": "24 hour urgent care west palm beach",
+    "score": 132,
+    "signal_count": 2,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": 2040000,
+    "theme": "",
+    "volume": 200
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "auto injury chiropractor lake worth",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 132,
+    "signal_count": 2,
+    "source_diversity": 1,
+    "sources": [
+      "serper-organic"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": 0,
+    "difficulty": 9,
+    "intent": "transactional",
+    "keyword": "urgent care palm beach",
+    "match_type": "phrase",
+    "parent_topic": "urgent care west palm beach",
+    "score": 132,
+    "signal_count": 2,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": 0,
+    "theme": "",
+    "volume": 100
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "24 hour urgent care lake worth",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": 2700000,
+    "theme": "",
+    "volume": 20
+  },
+  {
+    "cpc_micros": 1700000,
+    "difficulty": 7,
+    "intent": "transactional",
+    "keyword": "24 hour urgent care palm beach gardens",
+    "match_type": "phrase",
+    "parent_topic": "urgent care palm beach gardens",
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": 2040000,
+    "theme": "",
+    "volume": 150
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "24 hour urgent care wellington fl",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": 2040000,
+    "theme": "",
+    "volume": 0
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "accident clinic west palm beach",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": 20
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "accident doctor lake worth beach",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "auto accident care palm beach county",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-organic"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "auto accident clinic west palm beach",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": 10
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "auto accident injury chiropractor lake worth",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "auto accident injury treatment lake worth beach",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "car accident chiropractor treatment west palm beach",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "car accident doctor lake worth",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": 10
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "lake worth personal injury rehab",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "motor vehicle accident injuries lake worth",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "palm beach auto accident doctor",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "palm beach county vehicle accident attorneys",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-organic"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "same-day pip exam",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": 2000000,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "urgent care lake worth and jog",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": 2400000,
+    "theme": "",
+    "volume": 20
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "urgent care near lake worth beach fl",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": 2700000,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": 1900000,
+    "difficulty": 4,
+    "intent": "transactional",
+    "keyword": "urgent care palm beach gardens",
+    "match_type": "phrase",
+    "parent_topic": "urgent care palm beach gardens",
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": 2280000,
+    "theme": "",
+    "volume": 350
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "west palm beach car crash physician",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "transactional",
+    "keyword": "whiplash west palm beach fl",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 131,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-organic"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": 1700000,
+    "difficulty": 7,
+    "intent": "commercial",
+    "keyword": "primary care and urgent care",
+    "match_type": "phrase",
+    "parent_topic": "urgent care vs primary care",
+    "score": 123,
+    "signal_count": 3,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": 1360000,
+    "theme": "",
+    "volume": 30
+  },
+  {
+    "cpc_micros": 11000000,
+    "difficulty": 0,
+    "intent": "commercial",
+    "keyword": "car accident injury clinic",
+    "match_type": "phrase",
+    "parent_topic": "car accident injury clinic",
+    "score": 122,
+    "signal_count": 2,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 8800000,
+    "theme": "",
+    "volume": 800
+  },
+  {
+    "cpc_micros": 0,
+    "difficulty": 25,
+    "intent": "commercial",
+    "keyword": "accident injury clinics",
+    "match_type": "phrase",
+    "parent_topic": "accident injury chiropractor near me",
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 0,
+    "theme": "",
+    "volume": 150
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": 0,
+    "intent": "commercial",
+    "keyword": "auto accident chiropractic care",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": "benefits of chiropractic care after car accident",
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": 200
+  },
+  {
+    "cpc_micros": 10000000,
+    "difficulty": 7,
+    "intent": "commercial",
+    "keyword": "auto accident injury",
+    "match_type": "phrase",
+    "parent_topic": "auto accident injury",
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 8000000,
+    "theme": "",
+    "volume": 6400
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "commercial",
+    "keyword": "auto accident injury care pip",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 6800000,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "commercial",
+    "keyword": "auto accident injury clinics",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 6800000,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": 17000000,
+    "difficulty": 1,
+    "intent": "commercial",
+    "keyword": "auto accident injury treatment",
+    "match_type": "phrase",
+    "parent_topic": "auto accident treatment",
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 13600000,
+    "theme": "",
+    "volume": 350
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "commercial",
+    "keyword": "auto injury physicians",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "commercial",
+    "keyword": "best whiplash chiropractors",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": 0
+  },
+  {
+    "cpc_micros": 8000000,
+    "difficulty": 8,
+    "intent": "commercial",
+    "keyword": "car accident injury chiropractor",
+    "match_type": "phrase",
+    "parent_topic": "car accident chiropractic care",
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 6400000,
+    "theme": "",
+    "volume": 100
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "commercial",
+    "keyword": "car wreck injury physician",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "commercial",
+    "keyword": "expert auto injury care",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 6800000,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": 7000000,
+    "difficulty": null,
+    "intent": "commercial",
+    "keyword": "injury clinic and rehab",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": 5600000,
+    "theme": "",
+    "volume": 20
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "commercial",
+    "keyword": "injury clinic rehab",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-organic"
+    ],
+    "suggested_max_cpc_micros": 6800000,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": 9000000,
+    "difficulty": 5,
+    "intent": "commercial",
+    "keyword": "motor vehicle accident treatment",
+    "match_type": "phrase",
+    "parent_topic": "treatment after car accident",
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 7200000,
+    "theme": "",
+    "volume": 20
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "commercial",
+    "keyword": "personal injury auto accident chiropractic",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "commercial",
+    "keyword": "top accident clinic west palm beach",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 6800000,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "commercial",
+    "keyword": "whiplash physical therapy clinic",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 121,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "navigational",
+    "keyword": "car accident doctor palm beach county primaryuc",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 118,
+    "signal_count": 8,
+    "source_diversity": 1,
+    "sources": [
+      "serper-organic"
+    ],
+    "suggested_max_cpc_micros": 1100000,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": 450000,
+    "difficulty": null,
+    "intent": "navigational",
+    "keyword": "primary urgent care center",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 113,
+    "signal_count": 3,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": 450000,
+    "theme": "",
+    "volume": 10
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "navigational",
+    "keyword": "sportscare physical therapy in lake worth fl",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 112,
+    "signal_count": 2,
+    "source_diversity": 1,
+    "sources": [
+      "serper-organic"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "navigational",
+    "keyword": "6447 lake worth road",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 111,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": 10
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "navigational",
+    "keyword": "dr javed lantana",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 111,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "navigational",
+    "keyword": "lake worth injury and wellness",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 111,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-related"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": 10
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "navigational",
+    "keyword": "lake worth injury wellness - facebook",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 111,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-organic"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "navigational",
+    "keyword": "lake worth medical injury center",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 111,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": 1100000,
+    "difficulty": 38,
+    "intent": "navigational",
+    "keyword": "orthopedic center of palm beach county",
+    "match_type": "phrase",
+    "parent_topic": "orthopedic center of palm beach county",
+    "score": 111,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 1100000,
+    "theme": "",
+    "volume": 600
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "navigational",
+    "keyword": "palm beach gardens medical injury center",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 111,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 1100000,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "navigational",
+    "keyword": "pip lawyer lake worth fischetti law group",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 111,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-organic"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": 1500000,
+    "difficulty": 0,
+    "intent": "navigational",
+    "keyword": "urgent care of the palm beaches",
+    "match_type": "phrase",
+    "parent_topic": "urgent care west palm beach",
+    "score": 111,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": 1500000,
+    "theme": "",
+    "volume": 200
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "navigational",
+    "keyword": "whiplash - palm beach orthopedic institute",
+    "match_type": "phrase",
+    "parent_topic": null,
+    "score": 111,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-organic"
+    ],
+    "suggested_max_cpc_micros": 1100000,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "informational",
+    "keyword": "does urgent care take pip insurance",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 107,
+    "signal_count": 2,
+    "source_diversity": 1,
+    "sources": [
+      "serper-paa"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "informational",
+    "keyword": "car accident 14 day rule",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 106,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "websearch-baseline"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "informational",
+    "keyword": "does dr g urgent care treat injuries",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 106,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-paa"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "informational",
+    "keyword": "what are the 4 phases of whiplash",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 106,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-paa"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": null
+  },
+  {
+    "cpc_micros": null,
+    "difficulty": null,
+    "intent": "informational",
+    "keyword": "what is the average whiplash payout",
+    "match_type": "phrase",
+    "no_cpc_data": true,
+    "parent_topic": null,
+    "score": 106,
+    "signal_count": 1,
+    "source_diversity": 1,
+    "sources": [
+      "serper-paa"
+    ],
+    "suggested_max_cpc_micros": null,
+    "theme": "",
+    "volume": 0
+  }
+]

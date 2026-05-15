@@ -1,0 +1,477 @@
+{
+  "customer_id": "4580213643",
+  "fetched_at": "2026-05-15T15:43:44.006962Z",
+  "horizon_days": 30,
+  "items": [
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "BROAD",
+          "text": "auto accident doctor"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "BROAD",
+          "text": "car accident clinic"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "car accident doctor"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "car accident clinic"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "auto accident clinic"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "car accident clinic"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "auto accident doctors"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "chiropractor after car accident"
+        },
+        "status": "ENABLED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "doctor for car accident"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "doctors for car accidents"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "urgent care after car accident"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "urgent care after car accident"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "accident and injury clinic"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "car accident clinic near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "accident doctor near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "car accident urgent care"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "injury clinic near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "car accident injury clinic"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "auto accident doctor near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "auto injury doctor near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "car accident doctor near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "car crash doctor"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "accident injury clinic near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "car accident clinic near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "injury doctors near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "should i go to the doctor after a car accident"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "accident injury clinic near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "urgent care car accident"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "no fault doctor near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "BROAD",
+          "text": "PIP doctor"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "urgent care or er after car accident"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "pip doctors near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "doctor after car accident near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "car accident exam"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "PIP doctor near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "PHRASE",
+          "text": "medical evaluation after car accident"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "pip doctor near me"
+        },
+        "status": "PAUSED"
+      },
+      "ad_group_name": "Accident Exams – Lake Worth"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "auto accident clinic"
+        },
+        "status": "ENABLED"
+      },
+      "ad_group_name": "AG1 - Accident Urgent Care / Doctor"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "urgent care after car accident"
+        },
+        "status": "ENABLED"
+      },
+      "ad_group_name": "AG1 - Accident Urgent Care / Doctor"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "car accident clinic near me"
+        },
+        "status": "ENABLED"
+      },
+      "ad_group_name": "AG1 - Accident Urgent Care / Doctor"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "accident doctor near me"
+        },
+        "status": "ENABLED"
+      },
+      "ad_group_name": "AG1 - Accident Urgent Care / Doctor"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "car accident doctor near me"
+        },
+        "status": "ENABLED"
+      },
+      "ad_group_name": "AG1 - Accident Urgent Care / Doctor"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "urgent care car accident"
+        },
+        "status": "ENABLED"
+      },
+      "ad_group_name": "AG1 - Accident Urgent Care / Doctor"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "no fault doctor near me"
+        },
+        "status": "ENABLED"
+      },
+      "ad_group_name": "AG2 - PIP / No-Fault Exam"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "pip doctor near me"
+        },
+        "status": "ENABLED"
+      },
+      "ad_group_name": "AG2 - PIP / No-Fault Exam"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "pip accident doctor"
+        },
+        "status": "ENABLED"
+      },
+      "ad_group_name": "AG2 - PIP / No-Fault Exam"
+    },
+    {
+      "ad_group_criterion": {
+        "keyword": {
+          "match_type": "EXACT",
+          "text": "pip doctor lake worth"
+        },
+        "status": "ENABLED"
+      },
+      "ad_group_name": "AG2 - PIP / No-Fault Exam"
+    }
+  ]
+}

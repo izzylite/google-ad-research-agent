@@ -1,0 +1,8 @@
+{
+  "expected_ad_groups": [
+    "Accident Exams – Lake Worth"
+  ],
+  "mapping_coverage_pct_floor": 50.0,
+  "notes": "Generated 2026-05-15 from Lake Worth real run (.runs/2026-05-15T153121Z-car-accident-injury-care-services). Real account has 1 ENABLED AG (Accident Exams – Lake Worth) + 2 PAUSED (AG1/AG2). Phase 11 today yields 0% coverage because search-term-only bag is missing kw_criteria. Phase 16 floor: >=50% high+medium after _build_ag_token_bag unions kw_criteria + AG name tokens + top-N search terms. Floor not equality — Wave 2 calibration may yield 55-75% depending on threshold tuning.",
+  "total_ranked": 66
+}

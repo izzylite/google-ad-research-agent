@@ -1,0 +1,28 @@
+{
+  "ad_groups": [
+    {
+      "ad_group_id": "189273064986",
+      "name": "Accident Exams – Lake Worth",
+      "status": "ENABLED"
+    },
+    {
+      "ad_group_id": "200076790927",
+      "name": "AG1 - Accident Urgent Care / Doctor",
+      "status": "PAUSED"
+    },
+    {
+      "ad_group_id": "202035407731",
+      "name": "AG2 - PIP / No-Fault Exam",
+      "status": "PAUSED"
+    }
+  ],
+  "campaigns": [
+    {
+      "name": "Search | Lake Worth Accident Exams | Manual CPC",
+      "status": "PAUSED"
+    }
+  ],
+  "customer_id": "4580213643",
+  "fetched_at": "2026-05-15T15:43:40.356833Z",
+  "horizon_days": 30
+}
