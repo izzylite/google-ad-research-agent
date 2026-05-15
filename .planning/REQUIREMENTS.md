@@ -179,6 +179,20 @@ Milestone v1.3 — Phase 12 only. Replace Tavily landing-page extraction w/ Clau
 - [x] **PULSE-11**: `pulse_synth.py` drops Tavily branch in trending-themes source merging; single-source niche pulse logic simplified
 - [x] **PULSE-12**: SKILL.md Steps 27-30 (Phase 7) drop Tavily news mention; REQUIREMENTS.md marks original PULSE-02 deprecated (was Tavily news search; now N/A — superseded by PULSE-10)
 
+## v1.4 Requirements (Positives Sync)
+
+Milestone v1.4 — Phase 14 only. Mirror negatives-sync UX for positives: diff ranked keywords against the client's currently-active Google Ads keywords, surface only net-new in `positives.csv`. Eliminates manual dedup pain on re-runs against the same account. Uses existing Google Ads OAuth from Phase 8.
+
+### Positives Sync (Phase 14)
+
+- [ ] **POS-01**: `perf_fetch.py` adds new GAQL against `keyword_view` (last 30d) pulling `ad_group_criterion.keyword.text`, `ad_group_criterion.keyword.match_type`, `ad_group_criterion.status`, `metrics.impressions/clicks/conversions/cost_micros`; writes `raw/google-ads-keywords.json`. PMax campaigns excluded (no kw-level data).
+- [ ] **POS-02**: `perf_synth.py` adds `cross_ref_positives(ranked, existing_kws)` producing `positives-sync.json` with 4 buckets — `already_active` / `paused_in_account` / `covered_by_broad` / `new_to_add` — plus stats block mirroring `negatives-sync.json` structure.
+- [ ] **POS-03**: `render_report.py` adds `render_positives_sync_section()` — markdown + HTML — surfacing stats line + enumerated `new_to_add` list (with category/justification per row) + count-only `already_active` + collapsible `paused_in_account` + `covered_by_broad`; mirrors negatives-sync UX.
+- [ ] **POS-04**: `export_csv.py` filters `positives.csv` rows to `new_to_add` only by default when `positives-sync.json` present; new `--include-existing` CLI flag opts back into full ranked list.
+- [ ] **POS-05**: Phase 14 graceful-skips when `raw/google-ads-keywords.json` absent (no Google Ads OAuth in `.env`) — report omits Positives Sync section, `positives.csv` falls back to full ranked list.
+- [ ] **POS-06**: SKILL.md adds optional LLM re-tag step after `cross_ref_positives` — re-classifies borderline cases (semantic dupes like `urgent care lake worth` vs `lake worth urgent care`, match-type drift like ranked exact vs account broad covering same kw) by reading `positives-sync.json` + emitting refined tags.
+- [ ] **POS-07**: Test coverage: `test_perf_synth.py` adds `cross_ref_positives` unit tests (each bucket exercised); `tests/fixtures/golden_positives_sync.json` byte-exact fixture; `test_perf_fetch.py` mocks `keyword_view` GAQL response via respx.
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -305,18 +319,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PULSE-10 | Phase 12 | Complete |
 | PULSE-11 | Phase 12 | Complete |
 | PULSE-12 | Phase 12 | Complete |
+| POS-01 | Phase 14 | Pending |
+| POS-02 | Phase 14 | Pending |
+| POS-03 | Phase 14 | Pending |
+| POS-04 | Phase 14 | Pending |
+| POS-05 | Phase 14 | Pending |
+| POS-06 | Phase 14 | Pending |
+| POS-07 | Phase 14 | Pending |
 
 **Coverage:**
 - v1.0 requirements: 52 total (Phases 1-8, all complete)
 - v1.1 requirements: 23 total (Phase 9 + 10, all complete)
 - v1.2 requirements: 11 total (Phase 11, all complete)
 - v1.3 requirements: 11 / 11 Complete (TVLY×4 + WFCH×4 + PULSE×3) — Phase 12
+- v1.4 requirements: 0 / 7 Complete (POS×7) — Phase 14 pending
 - v1.3 mapped to phases: 11 (Phase 12)
+- v1.4 mapped to phases: 7 (Phase 14)
 - Unmapped: 0
 - Orphaned: 0
 
-**Total: 89 / 89 Complete** (52 v1.0 + 23 v1.1 + 11 v1.2 + 11 v1.3).
+**Total: 89 Complete / 7 Pending = 96 v1 requirements** (52 v1.0 + 23 v1.1 + 11 v1.2 + 11 v1.3 + 7 v1.4).
 
 ---
 *Requirements defined: 2026-05-08*
-*Last updated: 2026-05-15 — Phase 12 plans 6/6 executed; all 11 v1.3 requirements (TVLY-01..04 + WFCH-01..04 + PULSE-10..12) marked Complete. Milestone v1.3 shipped (Tavily dropped; WebFetch replaces COMP-03 landing-page extraction; Serper /news single-source for niche pulse). Total requirements: 89/89 Complete (52 v1.0 + 23 v1.1 + 11 v1.2 + 11 v1.3).*
+*Last updated: 2026-05-15 — Milestone v1.4 (Positives Sync) started; 7 new requirements POS-01..07 mapped to Phase 14 (pending). Total v1 surface: 96 requirements (89 Complete + 7 Pending).*
