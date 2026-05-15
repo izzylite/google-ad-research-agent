@@ -202,6 +202,22 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - [x] 11-03-PLAN.md — Wave 2: integrations (export_csv mapping-aware + render_report Geographic Focus + Next Steps step-3 rewrite)
 - [x] 11-04-PLAN.md — Wave 3: SKILL.md pointer + references/phase11-account-structure-mapping.md + human-verify e2e smoke
 
+---
+
+## Milestone v1.3: Source Consolidation
+
+### Phase 12: Source Consolidation (Drop Tavily)
+**Goal:** Drop Tavily entirely. Replace Phase 5 COMP-03 landing-page extraction with Claude's built-in WebFetch (mirrors WebSearch baseline pattern). Drop redundant Phase 7 Tavily news call (Serper /news covers it). Reduce paid API surface from {Serper, Tavily, Ahrefs, Google Ads} to {Serper, Ahrefs, Google Ads}.
+**Depends on:** Phase 5 (competitor_intel.py extension), Phase 7 (pulse_fetch.py extension). All other phases unaffected.
+**Requirements:** TVLY-01, TVLY-02, TVLY-03, TVLY-04, WFCH-01, WFCH-02, WFCH-03, WFCH-04, PULSE-10, PULSE-11, PULSE-12
+**Success Criteria** (what must be TRUE):
+  1. `scripts/tavily_extract.py` deleted; `tavily-python` removed from pyproject.toml; `TAVILY_API_KEY` stripped from `.env.example` + `lib/config.py`; project still runs end-to-end on a brief.
+  2. SKILL.md Phase 5 instructs Claude to WebFetch top 3-5 advertiser landing pages per cluster and write `{headline, cta, offer}` to `raw/competitor-landing-pages.json` via Write tool (no helper script).
+  3. `competitor_intel.py` keeps Serper requery for ads block + Serper-organic fallback for advertiser identity; Tavily code path deleted.
+  4. `pulse_fetch.py` removes `_tavily_news` call; only Serper `/news` survives; `pulse_synth.py` simplified to single-source.
+  5. Full test suite passes after removal (target: 252+ tests, with test_tavily_extract.py deleted and Phase 5/7 tests adapted to new contract).
+**Plans:** TBD
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -217,6 +233,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 9. Campaign Economics and Compliance | 6/6 | Complete    | 2026-05-14 |
 | 10. Operator Launch Kit | 5/5 | Complete    | 2026-05-14 |
 | 11. Account-Structure Mapping | 5/5 | Complete    | 2026-05-14 |
+| 12. Source Consolidation (Drop Tavily) | 0/0 | Not started | — |
 
 ## Coverage Map
 
@@ -232,9 +249,10 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 | 9 | BIDS-01, BIDS-02, BIDS-03, BIDS-04, FRCS-01, FRCS-02, FRCS-03, FRCS-04, FRCS-05, CMPL-01, CMPL-02, CMPL-03, CMPL-04, CMPL-05 | 14 |
 | 10 | EXPT-01, EXPT-02, EXPT-03, EXPT-04, EXPT-05, STEP-01, STEP-02, STEP-03, STEP-04 | 9 |
 | 11 | GEO-01, GEO-02, GEO-03, GEO-04, GEO-05, ADGM-01, ADGM-02, ADGM-03, ADGM-04, ADGM-05, ADGM-06 | 11 |
-| **Total** | | **78 / 78** |
+| 12 | TVLY-01..04, WFCH-01..04, PULSE-10..12 | 11 |
+| **Total** | | **89 / 89** |
 
-No orphans. No duplicates. Every v1 + v1.1 + v1.2 requirement maps to exactly one phase.
+No orphans. No duplicates. Every v1.0 + v1.1 + v1.2 + v1.3 requirement maps to exactly one phase.
 
 ## Phase Ordering Rationale
 

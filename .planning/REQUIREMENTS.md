@@ -155,6 +155,30 @@ Milestone v1.2 — Phase 11 only. Team feedback driven: research narrows to spec
 - [x] **ADGM-05**: `export_csv.py` reads `ad-group-mapping.json` when present; positives.csv `Ad Group` column = existing ad group name for matched keywords, cluster slug for unmapped. ad_groups.csv lists only NEW ad groups (skip existing ones to avoid Editor duplicate-name errors).
 - [x] **ADGM-06**: `render_report.py` Next Steps section conditionally rewrites when mapping coverage > 50% — "Add keywords to existing ad groups: <names>" replaces "Create ad groups: <new names>"; existing ad groups listed by name with keyword count.
 
+## v1.3 Requirements (Source Consolidation — Drop Tavily)
+
+Milestone v1.3 — Phase 12 only. Replace Tavily landing-page extraction w/ Claude WebFetch (built-in). Drop redundant Tavily news call in Phase 7 (Serper /news covers it). Reduce paid API surface by one vendor.
+
+### Tavily Removal
+
+- [ ] **TVLY-01**: `scripts/tavily_extract.py` deleted; any `lib/` Tavily helper removed
+- [ ] **TVLY-02**: `TAVILY_API_KEY` removed from `.env.example`, `lib/config.py` validation list, and any project docs/README
+- [ ] **TVLY-03**: `pyproject.toml` deps drop `tavily-python`; fixture files with `tavily-` prefix renamed or deleted; raw output filenames `tavily-*.json` removed from glob references
+- [ ] **TVLY-04**: `tests/test_tavily_extract.py` deleted; conftest fixtures pruned; respx mocks for Tavily removed
+
+### WebFetch Replacement for COMP-03
+
+- [ ] **WFCH-01**: SKILL.md Phase 5 step (Step 19) rewrites — Claude invokes WebFetch from skill prompt for top 3-5 advertisers per cluster, mirrors WebSearch baseline pattern in Step 7
+- [ ] **WFCH-02**: Skill writes extracted `{headline, cta, offer}` per advertiser to `raw/competitor-landing-pages.json` via Write tool (replaces `raw/tavily-<domain>.json` files)
+- [ ] **WFCH-03**: `competitor_intel.py` drops Tavily call path; keeps Serper requery for ads block + Serper-organic fallback for advertiser identity discovery
+- [ ] **WFCH-04**: Source taxonomy in `merge_signals.py` removes `tavily-extract` from 6-source list; the new `webfetch-landing` source is NOT merged into main keyword pool (landing-page extraction is Phase 5 competitor intel only, not keyword harvest)
+
+### Pulse Tavily Drop
+
+- [ ] **PULSE-10**: `pulse_fetch.py` removes `_tavily_news` call; only Serper `/news` (PULSE-01) survives; `raw/tavily-news.json` no longer written
+- [ ] **PULSE-11**: `pulse_synth.py` drops Tavily branch in trending-themes source merging; single-source niche pulse logic simplified
+- [ ] **PULSE-12**: SKILL.md Steps 27-30 (Phase 7) drop Tavily news mention; REQUIREMENTS.md marks original PULSE-02 deprecated (was Tavily news search; now N/A — superseded by PULSE-10)
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -270,12 +294,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADGM-04 | Phase 11 | Complete |
 | ADGM-05 | Phase 11 | Complete |
 | ADGM-06 | Phase 11 | Complete |
+| TVLY-01 | Phase 12 | Pending |
+| TVLY-02 | Phase 12 | Pending |
+| TVLY-03 | Phase 12 | Pending |
+| TVLY-04 | Phase 12 | Pending |
+| WFCH-01 | Phase 12 | Pending |
+| WFCH-02 | Phase 12 | Pending |
+| WFCH-03 | Phase 12 | Pending |
+| WFCH-04 | Phase 12 | Pending |
+| PULSE-10 | Phase 12 | Pending |
+| PULSE-11 | Phase 12 | Pending |
+| PULSE-12 | Phase 12 | Pending |
 
 **Coverage:**
-- v1.0 requirements: 52 total (mapped to Phases 1-8, all complete)
-- v1.1 requirements: 23 total (Phase 9: 14, Phase 10: 9, all complete)
-- v1.2 requirements: 11 total (GEO×5, ADGM×6) — Phase 11
-- v1.2 mapped to phases: 11 (Phase 11)
+- v1.0 requirements: 52 total (Phases 1-8, all complete)
+- v1.1 requirements: 23 total (Phase 9 + 10, all complete)
+- v1.2 requirements: 11 total (Phase 11, all complete)
+- v1.3 requirements: 11 total (TVLY×4 + WFCH×4 + PULSE×3) — Phase 12
+- v1.3 mapped to phases: 11 (Phase 12)
 - Unmapped: 0
 - Orphaned: 0
 
