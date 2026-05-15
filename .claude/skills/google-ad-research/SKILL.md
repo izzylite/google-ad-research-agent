@@ -78,6 +78,7 @@ Do NOT ask all five every time — that buries the operator in noise.
 | **brand terms** | The brief names the brand or competitor brands but does not list every term/variation |
 | **competitor URLs** | The brief names competitors by name but does not provide URLs |
 | **geo_focus** | The location is at state/region level and operator hints at sub-area focus (county or city). Comma-separated list — e.g., "Palm Beach County, Lake Worth". Drives `serp_fetch.py --geo-focus` + `merge_signals.py` city filter (GEO-01..03). |
+| **campaign_focus** | The brief targets ONE specific existing Google Ads campaign in the operator's account (rather than account-wide research). Single name OR pipe-separated list (no spaces around pipes for list form). Example: `Search \| Lake Worth Accident Exams \| Manual CPC` (single, spaced pipes = one name) or `Campaign A\|Campaign B` (list). Drives `perf_fetch.py --campaign-filter` — narrows all 4 GAQL queries to the named campaign(s); Positives Sync / Negatives Sync / Ad Group Mapping inherit the narrowed raw data automatically. Omit when researching account-wide (CAMP-04 graceful degrade). |
 
 When you ask, ask ONE field per turn. After the operator answers, re-evaluate whether other triggers now fire. Skip silently when no trigger fires.
 
@@ -109,6 +110,7 @@ When all required fields are non-empty (and any opened optional follow-ups are r
 - **Brand terms:** {brand_terms}
 - **Competitor URLs:** {competitor_urls}
 - **Geo focus:** {geo_focus}
+- **Campaign focus:** {campaign_focus}
 
 ## Raw operator paste
 
