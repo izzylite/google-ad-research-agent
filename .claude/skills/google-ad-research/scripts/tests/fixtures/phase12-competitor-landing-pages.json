@@ -1,0 +1,26 @@
+{
+  "captured_at": "2026-05-15T00:05:00Z",
+  "clusters": {
+    "grocery_delivery_transactional": {
+      "representative_keyword": "grocery delivery",
+      "advertisers": [
+        {
+          "domain": "tesco.com",
+          "url": "https://www.tesco.com/groceries",
+          "headline": "Fresh groceries delivered today",
+          "cta": "Order now",
+          "offer": "Free delivery over £40",
+          "extract_status": "ok"
+        },
+        {
+          "domain": "sainsburys.co.uk",
+          "url": "https://www.sainsburys.co.uk/shop/grocery",
+          "headline": null,
+          "cta": null,
+          "offer": null,
+          "extract_status": "failed"
+        }
+      ]
+    }
+  }
+}

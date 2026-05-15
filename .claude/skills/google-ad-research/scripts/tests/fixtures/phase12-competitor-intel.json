@@ -1,0 +1,27 @@
+{
+  "metadata": {
+    "generated_at": "2026-05-15T00:00:00Z"
+  },
+  "clusters": {
+    "grocery_delivery_transactional": {
+      "representative_keyword": "grocery delivery",
+      "ads": [],
+      "advertisers": [
+        {
+          "domain": "tesco.com",
+          "url": "https://www.tesco.com/groceries",
+          "title": "Tesco Groceries — Same Day Delivery",
+          "description": "Order online today.",
+          "position": 1
+        },
+        {
+          "domain": "sainsburys.co.uk",
+          "url": "https://www.sainsburys.co.uk/shop/grocery",
+          "title": "Sainsbury's Online",
+          "description": "Fresh food delivered.",
+          "position": 2
+        }
+      ]
+    }
+  }
+}

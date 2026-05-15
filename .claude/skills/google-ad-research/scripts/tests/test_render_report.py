@@ -1152,3 +1152,81 @@ def test_next_steps_no_rewrite_low_coverage(brief_fields_phase10, forecast_phase
     step3 = steps[2]["text"]
     assert "Create ad groups" in step3
     assert "Add keywords to existing ad groups" not in step3
+
+
+# ---------------------------------------------------------------------------
+# Phase 12 WFCH-02: render_report JOINs competitor-intel.json +
+# competitor-landing-pages.json into the competitor section.
+# ---------------------------------------------------------------------------
+def _skip_unless_join_implemented() -> None:
+    """Per-function skip-guard mirrors Phase 10/11 pattern in this file.
+
+    Wave 2 plan 12-04 lands `_load_competitor_landing_pages` on render_report.
+    Until then this test SKIPS (RED-via-skip) so the legacy GREEN suite stays
+    intact.
+    """
+    if MODULE_MISSING:
+        pytest.skip("render_report not yet implemented")
+    if not hasattr(render_report, "_load_competitor_landing_pages"):
+        pytest.skip("Phase 12 WFCH-02 not yet implemented — Wave 2 plan 12-04 lands the JOIN helper")
+
+
+def test_competitor_section_joins_webfetch_results(tmp_path: Path) -> None:
+    """WFCH-02: report.md competitor section must surface verbatim WebFetch
+    headline / CTA / offer for advertisers that have a landing-pages entry.
+
+    Wave 2 plan 12-04 wires render_report to read raw/competitor-landing-pages.json
+    and JOIN it against raw/competitor-intel.json by (cluster_name, domain, url).
+    """
+    _skip_unless_join_implemented()
+
+    # Stage minimal run folder with both Phase 12 fixtures
+    run_dir = tmp_path / "2026-05-15T000000Z-phase12-test"
+    (run_dir / "raw").mkdir(parents=True)
+
+    shutil.copy(
+        FIXTURES_DIR / "phase12-competitor-intel.json",
+        run_dir / "raw" / "competitor-intel.json",
+    )
+    shutil.copy(
+        FIXTURES_DIR / "phase12-competitor-landing-pages.json",
+        run_dir / "raw" / "competitor-landing-pages.json",
+    )
+
+    # Minimum sibling files render_report.main needs
+    (run_dir / "brief.md").write_text(
+        "# Campaign Brief\n\n"
+        "**Industry:** grocery\n"
+        "**Product:** delivery\n"
+        "**Location:** UK\n"
+        "**Language:** en-GB\n"
+        "**Audience:** families\n",
+        encoding="utf-8",
+    )
+    (run_dir / "ranked.json").write_text(json.dumps([]), encoding="utf-8")
+    (run_dir / "clusters.json").write_text(
+        json.dumps({
+            "metadata": {"clustered_at": "2026-05-15T00:00:00Z", "total_keywords": 0, "total_clusters": 1},
+            "clusters": [
+                {"name": "grocery_delivery_transactional", "intent": "transactional", "keywords": []}
+            ],
+            "orphans": [],
+        }),
+        encoding="utf-8",
+    )
+    (run_dir / "negatives.json").write_text(
+        json.dumps({"strong": [], "considered": [], "investigate": []}),
+        encoding="utf-8",
+    )
+
+    rc = render_report.main(["--run-dir", str(run_dir)])
+    assert rc == 0, f"render_report.main exited non-zero: {rc}"
+
+    report_md = (run_dir / "report.md").read_text(encoding="utf-8")
+    # Verbatim WebFetch values must appear in competitor section
+    assert "Fresh groceries delivered today" in report_md, \
+        "WFCH-02: headline from competitor-landing-pages.json not rendered"
+    assert "Order now" in report_md, \
+        "WFCH-02: CTA from competitor-landing-pages.json not rendered"
+    assert "Free delivery over £40" in report_md, \
+        "WFCH-02: offer from competitor-landing-pages.json not rendered"
