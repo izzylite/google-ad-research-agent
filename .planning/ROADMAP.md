@@ -284,7 +284,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
 - [ ] 15-03-PLAN.md — Wave 3: SKILL.md Step 3/4 wiring + references/phase8-account-data.md Step 33 + end-to-end Lake Worth smoke — CAMP-03, CAMP-04
 
 ### Phase 16: Ad Group Mapping Token-Bag Enrichment
-**Goal:** `ad_group_match.py` Jaccard scoring uses an enriched per-AG token bag (AG name ∪ active kw_criteria tokens ∪ top-N search-term tokens) instead of AG name only, lifting high+medium mapping coverage from 0% to 50%+ on real client accounts whose AG names are short labels. When Phase 14 `raw/google-ads-keywords.json` is absent, falls back silently to current name-only Jaccard (backward compat for pre-Phase-14 accounts).
+**Goal:** `ad_group_match.py` Jaccard scoring uses an enriched per-AG token bag (AG name ∪ active kw_criteria tokens ∪ top-N search-term tokens) instead of the current search-terms-only bag, lifting high+medium mapping coverage from 0% to 50%+ on real client accounts whose AG names are short labels. When Phase 14 `raw/google-ads-keywords.json` is absent, falls back silently to the current search-terms-only Jaccard plus AG name addition (AG name ∪ search-terms — backward compat for pre-Phase-14 accounts, with the AG-name token contribution as the only Phase 16 delta vs Phase 11 in that fallback path).
 **Depends on:** Phase 15 (calibrates against the narrowed dataset Phase 15 produces — running token-bag enrichment against the full-account dataset gives noisier threshold calibration), Phase 14 (consumes `raw/google-ads-keywords.json` for AG kw-criteria evidence), Phase 11 (extends existing `ad_group_match.py` algorithm + threshold config).
 **Requirements:** ADGM-07, ADGM-08, ADGM-09, ADGM-10, ADGM-11
 **Success Criteria** (what must be TRUE):
