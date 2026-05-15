@@ -3,12 +3,11 @@
 # dependencies = [
 #     "httpx>=0.28",
 #     "httpx-retries>=0.5",
-#     "tavily-python>=0.7.24",
 #     "python-dotenv>=1.0",
 #     "python-slugify>=8.0",
 # ]
 # ///
-"""competitor_intel.py — Per-cluster Serper requery, affiliate filter, domain dedup, Tavily LP extract.
+"""competitor_intel.py — Per-cluster Serper requery, affiliate filter, domain dedup.
 
 CLI:
     uv run competitor_intel.py --run-dir <abs path> [--gl uk] [--hl en-GB] [--max-advertisers 5]
@@ -17,12 +16,15 @@ Reads:  <run_dir>/clusters.json
 Writes: <run_dir>/raw/competitor-intel.json
 
 Stdout (exactly one JSON line):
-    {"run_dir": "...", "clusters_processed": N, "serper_credits_used": N, "tavily_credits_used": N}
+    {"run_dir": "...", "clusters_processed": N, "serper_credits_used": N}
 
 Exit codes:
     0  ok
-    2  retryable (Tavily quota exceeded)
-    3  fatal (missing input file, bad API key, missing env var)
+    2  retryable (Serper HTTP error)
+    3  fatal (missing input file, bad Serper API key, missing env var)
+
+Landing-page extraction is Phase 5 Step 19 (Claude WebFetch in SKILL.md), not Python.
+Advertisers are emitted directly from the post-dedupe Serper ad block.
 """
 from __future__ import annotations
 
@@ -42,13 +44,6 @@ import httpx  # noqa: E402
 from lib.config import load_env  # noqa: E402
 from lib.http import build_client  # noqa: E402
 from lib.log import configure_logger  # noqa: E402
-
-from tavily import TavilyClient  # noqa: E402
-from tavily import (  # noqa: E402
-    InvalidAPIKeyError,
-    MissingAPIKeyError,
-    UsageLimitExceededError,
-)
 
 # Re-use fetch_seed and normalise_response from serp_fetch.py
 from serp_fetch import fetch_seed, normalise_response  # noqa: E402
@@ -88,7 +83,7 @@ AFFILIATE_DOMAINS = frozenset({
 
 
 # ---------------------------------------------------------------------------
-# Helper functions (all importable for unit tests without Serper/Tavily)
+# Helper functions (all importable for unit tests without Serper)
 # ---------------------------------------------------------------------------
 
 def extract_domain(url: str) -> str:
@@ -168,9 +163,9 @@ def filter_ads(ads: list[dict]) -> tuple[list[dict], int]:
 # ---------------------------------------------------------------------------
 
 def main_with_args(argv: list[str]) -> int:
-    """Parse argv, run per-cluster Serper + Tavily pipeline, write competitor-intel.json."""
+    """Parse argv, run per-cluster Serper requery + fallback pipeline, write competitor-intel.json."""
     parser = argparse.ArgumentParser(
-        description="Per-cluster competitor ad copy + LP extraction.",
+        description="Per-cluster competitor ad copy (Serper-only).",
     )
     parser.add_argument("--run-dir", required=True, type=Path,
                         help="Absolute path to the sealed run folder.")
@@ -187,15 +182,14 @@ def main_with_args(argv: list[str]) -> int:
 
     run_dir = args.run_dir
 
-    # Load env / validate keys
+    # Load env / validate keys (Serper only; LP extraction moved to Phase 5 WebFetch)
     try:
-        load_env(require=("SERPER_API_KEY", "TAVILY_API_KEY"))
+        load_env(require=("SERPER_API_KEY",))
     except EnvironmentError as exc:
         log.error(str(exc))
         return 3
 
     serper_key = os.environ["SERPER_API_KEY"]
-    tavily_key = os.environ["TAVILY_API_KEY"]
 
     # Read clusters.json
     clusters_path = run_dir / "clusters.json"
@@ -219,17 +213,14 @@ def main_with_args(argv: list[str]) -> int:
             "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "clusters_input": "clusters.json",
             "serper_credits_used": 0,
-            "tavily_credits_used": 0,
         },
         "clusters": {},
     }
 
     serper_credits = 0
-    tavily_credits = 0
 
-    # Build clients
+    # Build Serper client
     serper_client = build_client(timeout=30.0)
-    tavily_client = TavilyClient(api_key=tavily_key)
 
     clusters_list = clusters_data.get("clusters", [])
 
@@ -314,50 +305,21 @@ def main_with_args(argv: list[str]) -> int:
         # 4. Top N advertisers
         top_ads = ads_deduped[:max_adv]
 
-        # 5. Tavily LP extract
-        lp_urls = [a["link"] for a in top_ads if a.get("link")]
-        advertisers: list[dict] = []
-
-        if lp_urls:
-            try:
-                tavily_response = tavily_client.extract(
-                    urls=lp_urls,
-                    extract_depth="basic",
-                    format="markdown",
-                    include_usage=True,
-                )
-            except (InvalidAPIKeyError, MissingAPIKeyError) as exc:
-                log.error(f"Tavily auth failure: {exc}")
-                serper_client.close()
-                return 3
-            except UsageLimitExceededError as exc:
-                log.error(f"Tavily quota exceeded: {exc}")
-                serper_client.close()
-                return 2
-            except Exception as exc:
-                log.warning(f"Tavily extract failed for {name!r}: {exc}")
-                tavily_response = {"results": [], "failed_results": [], "usage": {}}
-
-            tavily_fetched_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-            usage = tavily_response.get("usage", {})
-            tavily_credits += usage.get("extract_credits", 0)
-
-            for result in tavily_response.get("results", []):
-                advertisers.append({
-                    "domain": extract_domain(result.get("url", "")),
-                    "url": result.get("url", ""),
-                    "raw_content": result.get("raw_content", ""),
-                    "tavily_fetched_at": tavily_fetched_at,
-                    "extract_status": "ok",
-                })
-
-            for failed in tavily_response.get("failed_results", []):
-                advertisers.append({
-                    "domain": extract_domain(failed.get("url", "")),
-                    "url": failed.get("url", ""),
-                    "raw_content": "",
-                    "extract_status": "failed",
-                })
+        # 5. Build advertisers list directly from Serper top_ads.
+        #    Landing-page extraction is Phase 5 Step 19 (Claude WebFetch in
+        #    SKILL.md), not Python. The render_report _load_competitor_landing_pages
+        #    helper (WFCH-02, Plan 12-04) joins raw/competitor-landing-pages.json
+        #    onto these advertisers entries for the final report.
+        advertisers = [
+            {
+                "domain": extract_domain(ad.get("displayUrl") or ad.get("link", "")),
+                "url": ad.get("link", ""),
+                "title": ad.get("title"),
+                "description": ad.get("snippet", ""),
+                "position": ad.get("position"),
+            }
+            for ad in top_ads
+        ]
 
         # Build cluster output entry
         output["clusters"][name] = {
@@ -384,7 +346,6 @@ def main_with_args(argv: list[str]) -> int:
 
     # Update metadata credits
     output["metadata"]["serper_credits_used"] = serper_credits
-    output["metadata"]["tavily_credits_used"] = tavily_credits
 
     # Write output
     out_path.write_text(json.dumps(output, indent=2), encoding="utf-8")
@@ -394,7 +355,6 @@ def main_with_args(argv: list[str]) -> int:
         "run_dir": str(run_dir),
         "clusters_processed": len(clusters_list),
         "serper_credits_used": serper_credits,
-        "tavily_credits_used": tavily_credits,
     }))
     return 0
 

@@ -9,7 +9,6 @@ import json
 import shutil
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 import respx
@@ -50,15 +49,6 @@ def test_ads_fetched_per_cluster(tmp_run_dir, mock_env, monkeypatch):
 
     monkeypatch.setattr("competitor_intel.fetch_seed", mock_fetch_seed)
 
-    # Mock TavilyClient
-    tavily_mock = MagicMock()
-    tavily_mock.extract.return_value = {
-        "results": [],
-        "failed_results": [],
-        "usage": {"extract_credits": 0},
-    }
-    monkeypatch.setattr("competitor_intel.TavilyClient", lambda api_key: tavily_mock)
-
     exit_code = main_with_args(["--run-dir", str(tmp_run_dir)])
 
     assert exit_code == 0
@@ -71,7 +61,12 @@ def test_ads_fetched_per_cluster(tmp_run_dir, mock_env, monkeypatch):
 
 
 def test_empty_ads_block_ok(tmp_run_dir, mock_env, monkeypatch):
-    """COMP-01: Empty ads block from informational cluster produces ads=[] advertisers=[] without exit."""
+    """COMP-01: Empty ads/organic block produces ads=[] advertisers=[] without exit.
+
+    Phase 12: post-Tavily refactor — when both ads and organic are empty after
+    fallback, advertisers list is empty (no LP extraction performed in Python;
+    WebFetch in Phase 5 Step 19 handles LP content).
+    """
     from competitor_intel import main_with_args
 
     # Single-cluster clusters.json using the informational keyword
@@ -90,13 +85,17 @@ def test_empty_ads_block_ok(tmp_run_dir, mock_env, monkeypatch):
     }
     (tmp_run_dir / "clusters.json").write_text(json.dumps(single_cluster), encoding="utf-8")
 
-    serper_empty = json.loads((FIXTURES_DIR / "serper_ads_empty.json").read_text())
+    # Both ads AND organic empty so the fallback yields no advertisers.
+    serper_empty = {
+        "searchParameters": {"q": "how does grocery delivery work", "gl": "uk", "hl": "en-GB"},
+        "organic": [],
+        "ads": [],
+        "peopleAlsoAsk": [],
+        "relatedSearches": [],
+        "credits": 1,
+    }
 
     monkeypatch.setattr("competitor_intel.fetch_seed", lambda *a, **kw: serper_empty)
-
-    tavily_mock = MagicMock()
-    tavily_mock.extract.return_value = {"results": [], "failed_results": [], "usage": {}}
-    monkeypatch.setattr("competitor_intel.TavilyClient", lambda api_key: tavily_mock)
 
     exit_code = main_with_args(["--run-dir", str(tmp_run_dir)])
 
@@ -173,12 +172,18 @@ def test_advertiser_cap_enforcement():
 
 
 # ---------------------------------------------------------------------------
-# COMP-03: Tavily LP extraction
+# COMP-03 (post-Phase-12): Advertisers list derived from Serper top_ads;
+# LP extraction moved to Claude WebFetch in Phase 5 Step 19 (SKILL.md).
 # ---------------------------------------------------------------------------
 
 
-def test_tavily_urls_built_from_top_ads():
-    """COMP-03: Top 4 deduped ads produce a list of 4 URL strings taken from the link field."""
+def test_advertiser_urls_built_from_top_ads():
+    """COMP-03 (post-Phase-12): Top 5 deduped ads produce URL list from the link field.
+
+    Originally named test_tavily_urls_built_from_top_ads; renamed and de-Tavilyfied
+    in Plan 12-02. The URL list is now consumed by Claude WebFetch in Phase 5
+    Step 19, not a Python LP-extract client.
+    """
     from competitor_intel import filter_ads, dedupe_by_domain
 
     serper_raw = json.loads((FIXTURES_DIR / "serper_ads_raw.json").read_text())
@@ -201,8 +206,14 @@ def test_tavily_urls_built_from_top_ads():
         assert not is_affiliate_domain(url)
 
 
-def test_tavily_failed_result_persisted(tmp_run_dir, mock_env, monkeypatch):
-    """COMP-03: Failed Tavily results produce advertiser entry with extract_status=failed and raw_content=''."""
+def test_advertisers_serper_only_shape(tmp_run_dir, mock_env, monkeypatch):
+    """COMP-03 (post-Phase-12): advertisers entries carry Serper-only fields.
+
+    Replaces the Phase-11 test_tavily_failed_result_persisted (asserted on
+    raw_content + extract_status — fields no longer present). Wave-0 contract
+    locked in test_advertisers_shape_post_phase12: each advertiser has exactly
+    {domain, url, title, description, position}.
+    """
     from competitor_intel import main_with_args
 
     single_cluster = {
@@ -221,21 +232,23 @@ def test_tavily_failed_result_persisted(tmp_run_dir, mock_env, monkeypatch):
     serper_raw = json.loads((FIXTURES_DIR / "serper_ads_raw.json").read_text())
     monkeypatch.setattr("competitor_intel.fetch_seed", lambda *a, **kw: serper_raw)
 
-    tavily_response = json.loads((FIXTURES_DIR / "tavily_lp_response.json").read_text())
-    tavily_mock = MagicMock()
-    tavily_mock.extract.return_value = tavily_response
-    monkeypatch.setattr("competitor_intel.TavilyClient", lambda api_key: tavily_mock)
-
     exit_code = main_with_args(["--run-dir", str(tmp_run_dir)])
     assert exit_code == 0
 
     out = json.loads((tmp_run_dir / "raw" / "competitor-intel.json").read_text())
     advertisers = out["clusters"]["same_day_delivery_transactional"]["advertisers"]
 
-    failed_entries = [a for a in advertisers if a.get("extract_status") == "failed"]
-    assert len(failed_entries) >= 1
-    for entry in failed_entries:
-        assert entry["raw_content"] == ""
+    assert advertisers, "at least one advertiser expected from serper_ads_raw fixture"
+    expected_keys = {"domain", "url", "title", "description", "position"}
+    for entry in advertisers:
+        assert set(entry.keys()) == expected_keys, (
+            f"advertisers entry has wrong keys; got {set(entry.keys())}, "
+            f"expected exactly {expected_keys}"
+        )
+        # Phase-11 Tavily fields must NOT appear
+        assert "raw_content" not in entry
+        assert "tavily_fetched_at" not in entry
+        assert "extract_status" not in entry
 
 
 def test_output_schema_valid(tmp_run_dir, mock_env, monkeypatch):
@@ -246,11 +259,6 @@ def test_output_schema_valid(tmp_run_dir, mock_env, monkeypatch):
 
     serper_raw = json.loads((FIXTURES_DIR / "serper_ads_raw.json").read_text())
     monkeypatch.setattr("competitor_intel.fetch_seed", lambda *a, **kw: serper_raw)
-
-    tavily_response = json.loads((FIXTURES_DIR / "tavily_lp_response.json").read_text())
-    tavily_mock = MagicMock()
-    tavily_mock.extract.return_value = tavily_response
-    monkeypatch.setattr("competitor_intel.TavilyClient", lambda api_key: tavily_mock)
 
     exit_code = main_with_args(["--run-dir", str(tmp_run_dir)])
     assert exit_code == 0
