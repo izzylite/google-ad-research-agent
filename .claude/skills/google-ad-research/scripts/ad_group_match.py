@@ -35,8 +35,8 @@ import sys
 
 # --- Locked taxonomy (ADGM-03; frozenset assertion fails fast at import) ---
 _THRESHOLDS: dict[str, float] = {
-    "high": 0.7,
-    "medium": 0.4,
+    "high": 0.45,
+    "medium": 0.20,
 }
 assert frozenset(_THRESHOLDS) == frozenset({"high", "medium"}), (
     "_THRESHOLDS drift — ADGM-03 taxonomy changed?"
@@ -136,15 +136,67 @@ def _now_iso_z() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _build_ag_token_bag(
+    ag_name: str,
+    kw_criteria: list[dict] | None,
+    search_terms: list[dict] | None,
+    top_n_terms: int = 10,
+) -> frozenset[str]:
+    """Phase 16 (ADGM-07): per-AG token bag = name ∪ kw_criteria ∪ top-N search-terms.
+
+    Sources:
+      1. _tokens(ag_name) — always (even if "" → empty)
+      2. _tokens(kw.ad_group_criterion.keyword.text) for kw in kw_criteria
+         where kw.ad_group_criterion.status != "REMOVED" (ADGM-07)
+      3. _tokens(st.search_term) for st in top-N search_terms by clicks desc
+         (tiebreak impressions desc; drop impressions==0) (ADGM-07 top-N cap)
+
+    Degrades gracefully (ADGM-08): kw_criteria None/empty → bag = name ∪ search-terms;
+    search_terms None/empty → bag = name ∪ kw_criteria; all empty → empty frozenset
+    (caller drops empty bags — Pitfall 6 preserved).
+    """
+    name_tokens = _tokens(ag_name or "")
+
+    crit_tokens: set[str] = set()
+    for kw in (kw_criteria or []):
+        crit = kw.get("ad_group_criterion") or {}
+        status = (crit.get("status") or "").upper()
+        if status == "REMOVED":
+            continue
+        text = ((crit.get("keyword") or {}).get("text")) or ""
+        crit_tokens |= _tokens(text)
+
+    # Search terms — filter zero-impression, sort clicks desc / impressions desc, top-N
+    filtered = [
+        st for st in (search_terms or [])
+        if (st.get("impressions") or 0) > 0
+    ]
+    filtered.sort(
+        key=lambda st: ((st.get("clicks") or 0), (st.get("impressions") or 0)),
+        reverse=True,
+    )
+    term_tokens: set[str] = set()
+    for st in filtered[:top_n_terms]:
+        term_tokens |= _tokens(st.get("search_term") or "")
+
+    return frozenset(name_tokens | crit_tokens | term_tokens)
+
+
 def _build_ad_group_index(
-    perf: dict, search_terms: dict
+    perf: dict,
+    search_terms: dict,
+    keywords: dict | None = None,
 ) -> dict[str, dict[str, Any]]:
-    """Build {ad_group_name: {token_bag, inferred_intent, status}} from Phase 8 raws.
+    """Build {ad_group_name: {token_bag, name_tokens, criterion_tokens,
+    search_term_tokens, inferred_intent, status}} from Phase 8/14 raws.
+
+    Phase 16 (ADGM-07/08): per-AG bag = name ∪ kw_criteria ∪ top-N search-terms.
+    Backward-compat: keywords=None → bag = name ∪ search-terms only (Phase 11 + name).
 
     - Filters perf.ad_groups[] to status='ENABLED' (REMOVED dropped).
-    - Buckets search_terms.items[] by ad_group_name (Pitfall 1 — verified key).
-    - Drops ad groups with empty token bags (no search-term coverage in 30-day window).
-    - Preserves original ad_group_name string byte-for-byte (Pitfall 2 — Unicode dashes).
+    - Buckets keywords.items[] + search_terms.items[] by ad_group_name (Pitfall 1).
+    - Drops ad groups with empty token bags (Pitfall 6).
+    - Preserves original ad_group_name string byte-for-byte (Pitfall 2 — Unicode).
     """
     # 1. Enumerate ENABLED ad groups from perf.ad_groups[]
     enabled_names: set[str] = set()
@@ -154,27 +206,58 @@ def _build_ad_group_index(
         if name and status == "ENABLED":
             enabled_names.add(name)
 
-    # 2. Bucket search_terms.items[] by ad_group_name (Pitfall 1 — name, NOT id)
-    buckets: dict[str, set[str]] = {}
-    for item in (search_terms or {}).get("items", []) or []:
+    # 2. Bucket kw_criteria + search_terms by ad_group_name (Pitfall 1 — name, NOT id)
+    kw_by_ag: dict[str, list[dict]] = {}
+    for item in (keywords or {}).get("items", []) or []:
         ag_name = item.get("ad_group_name")
-        term = item.get("search_term") or ""
         if not ag_name or ag_name not in enabled_names:
             continue
-        tokens = _tokens(term)
-        if not tokens:
-            continue
-        buckets.setdefault(ag_name, set()).update(tokens)
+        kw_by_ag.setdefault(ag_name, []).append(item)
 
-    # 3. Build the index — drop empty bags (Pitfall 6 edge — no search coverage)
-    index: dict[str, dict[str, Any]] = {}
-    for ag_name, bag in buckets.items():
-        if not bag:
+    st_by_ag: dict[str, list[dict]] = {}
+    for item in (search_terms or {}).get("items", []) or []:
+        ag_name = item.get("ad_group_name")
+        if not ag_name or ag_name not in enabled_names:
             continue
-        frozen = frozenset(bag)
+        st_by_ag.setdefault(ag_name, []).append(item)
+
+    # 3. Build the index — per-AG Phase 16 token-bag (drop empty bags Pitfall 6)
+    index: dict[str, dict[str, Any]] = {}
+    for ag_name in enabled_names:
+        kw_for_ag = kw_by_ag.get(ag_name) or []
+        st_for_ag = st_by_ag.get(ag_name) or []
+
+        # Compute partial sets for per-source reason-field attribution
+        name_tokens = _tokens(ag_name)
+        crit_tokens: set[str] = set()
+        for kw in kw_for_ag:
+            crit = kw.get("ad_group_criterion") or {}
+            status = (crit.get("status") or "").upper()
+            if status == "REMOVED":
+                continue
+            text = ((crit.get("keyword") or {}).get("text")) or ""
+            crit_tokens |= _tokens(text)
+
+        filtered = [
+            st for st in st_for_ag if (st.get("impressions") or 0) > 0
+        ]
+        filtered.sort(
+            key=lambda st: ((st.get("clicks") or 0), (st.get("impressions") or 0)),
+            reverse=True,
+        )
+        term_tokens: set[str] = set()
+        for st in filtered[:10]:
+            term_tokens |= _tokens(st.get("search_term") or "")
+
+        full_bag = frozenset(name_tokens | crit_tokens | term_tokens)
+        if not full_bag:
+            continue
         index[ag_name] = {
-            "token_bag": frozen,
-            "inferred_intent": _infer_ad_group_intent(frozen),
+            "token_bag": full_bag,
+            "name_tokens": name_tokens,
+            "criterion_tokens": frozenset(crit_tokens),
+            "search_term_tokens": frozenset(term_tokens),
+            "inferred_intent": _infer_ad_group_intent(full_bag),
             "status": "ENABLED",
         }
     return index
@@ -184,6 +267,7 @@ def build_mapping(
     ranked: list[dict],
     perf: dict,
     search_terms: dict,
+    keywords: dict | None = None,
 ) -> dict[str, Any]:
     """Compute the ad-group-mapping.json body. See module docstring for schema.
 
@@ -199,7 +283,7 @@ def build_mapping(
     Coverage % (Pitfall 7):
         (high + medium count) / total_ranked * 100  —  low EXCLUDED
     """
-    index = _build_ad_group_index(perf, search_terms)
+    index = _build_ad_group_index(perf, search_terms, keywords)
     matches: list[dict[str, Any]] = []
     unmapped_count = 0
     match_count = 0  # high + medium only (Pitfall 7)
@@ -232,18 +316,29 @@ def build_mapping(
         if confidence == "low":
             unmapped_count += 1
             resolved_ag = None
+            reason = (
+                f"jaccard={best_jaccard:.2f} intent_match={best_intent_match}"
+            )
         else:
             match_count += 1
             resolved_ag = best_ag_name
+            # Per-source Jaccards (ADGM-09) — compute against partial sets in index
+            ag = index[best_ag_name]
+            name_j = _jaccard(kw_tokens, ag["name_tokens"])
+            crit_j = _jaccard(kw_tokens, ag["criterion_tokens"])
+            term_j = _jaccard(kw_tokens, ag["search_term_tokens"])
+            reason = (
+                f"jaccard={best_jaccard:.2f} "
+                f"(name={name_j:.2f} kw-criterion={crit_j:.2f} search-term={term_j:.2f}) "
+                f"intent_match={best_intent_match}"
+            )
 
         matches.append({
             "keyword": kw_text,
             "existing_ad_group": resolved_ag,
             "confidence": confidence,
             "score": round(best_score, 4),
-            "reason": (
-                f"jaccard={best_jaccard:.2f} intent_match={best_intent_match}"
-            ),
+            "reason": reason,
         })
 
     total = len(matches)
@@ -363,7 +458,20 @@ def main_with_args(argv: list[str]) -> int:
         )
         return 3
 
-    mapping = build_mapping(ranked, perf, search_terms)
+    # Phase 16 (ADGM-08): optional Phase 14 keywords.json — graceful absence
+    keywords_path = raw_dir / "google-ads-keywords.json"
+    keywords: dict | None = None
+    if keywords_path.exists():
+        try:
+            keywords = json.loads(keywords_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            # Soft-fail: log + continue with keywords=None (graceful degrade)
+            log.warning(
+                f"google-ads-keywords.json unparseable, falling back to "
+                f"name+search-terms only: {exc}"
+            )
+
+    mapping = build_mapping(ranked, perf, search_terms, keywords)
 
     try:
         # ensure_ascii=False so Unicode dashes write byte-for-byte (Pitfall 2)

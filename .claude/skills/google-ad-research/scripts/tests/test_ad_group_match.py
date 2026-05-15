@@ -63,7 +63,13 @@ def _skip_unless_build_mapping() -> None:
 def test_module_imports():
     """Module imports cleanly; locked constants + Wave-1 public surface intact."""
     import ad_group_match as agm
-    assert agm._THRESHOLDS == {"high": 0.7, "medium": 0.4}
+    # Phase 16 recalibrated thresholds — exact values land via empirical calibration
+    # in plan 16-01. test_thresholds_recalibrated_below_phase11 sentinel locks the
+    # invariant (high < 0.7 AND medium < 0.4). This test just asserts shape + types.
+    assert set(agm._THRESHOLDS) == {"high", "medium"}
+    assert isinstance(agm._THRESHOLDS["high"], float)
+    assert isinstance(agm._THRESHOLDS["medium"], float)
+    assert 0.0 < agm._THRESHOLDS["medium"] < agm._THRESHOLDS["high"] < 1.0
     assert "near" in agm._STOPWORDS
     assert "me" in agm._STOPWORDS
     assert "best" in agm._STOPWORDS
@@ -146,22 +152,41 @@ def test_confidence_tier_high():
 
 
 def test_confidence_tier_medium_boundary():
-    """Boundary: 0.4 exactly → medium; 0.39999 → low."""
+    """Boundary: _THRESHOLDS['medium'] exactly → medium; just below → low.
+
+    Phase 16 recalibrated thresholds — test follows _THRESHOLDS values dynamically
+    (rather than hardcoding 0.4) so the boundary semantics are preserved across
+    calibration deltas. The Phase 11 boundary semantics (== threshold → medium,
+    < threshold → low) is the actual invariant under test.
+    """
     _skip_unless_build_mapping()
-    assert ad_group_match._classify(0.4) == "medium"
-    assert ad_group_match._classify(0.39999) == "low"
+    med = ad_group_match._THRESHOLDS["medium"]
+    hi = ad_group_match._THRESHOLDS["high"]
+    assert ad_group_match._classify(med) == "medium"
+    assert ad_group_match._classify(med - 1e-5) == "low"
+    # Sanity: med strictly less than hi so the medium tier is non-degenerate.
+    assert med < hi
 
 
 def test_confidence_tier_high_boundary():
-    """Boundary: 0.7 exactly → high; 0.69999 → medium."""
+    """Boundary: _THRESHOLDS['high'] exactly → high; just below → medium.
+
+    Phase 16 recalibrated thresholds — test follows _THRESHOLDS values dynamically
+    (rather than hardcoding 0.7) so the boundary semantics are preserved across
+    calibration deltas. The Phase 11 boundary semantics (== threshold → high,
+    < threshold → medium) is the actual invariant under test.
+    """
     _skip_unless_build_mapping()
-    assert ad_group_match._classify(0.7) == "high"
-    assert ad_group_match._classify(0.69999) == "medium"
+    hi = ad_group_match._THRESHOLDS["high"]
+    assert ad_group_match._classify(hi) == "high"
+    assert ad_group_match._classify(hi - 1e-5) == "medium"
 
 
 def test_confidence_tier_low():
+    """Score strictly below medium threshold → low."""
     _skip_unless_build_mapping()
-    assert ad_group_match._classify(0.2) == "low"
+    med = ad_group_match._THRESHOLDS["medium"]
+    assert ad_group_match._classify(med / 2.0) == "low"
 
 
 # ---------------------------------------------------------------------------
@@ -241,13 +266,21 @@ def test_coverage_pct_high_plus_medium_only(tmp_path):
     rc = ad_group_match.main_with_args(["--run-dir", str(run_dir)])
     assert rc == 0
     out = json.loads((run_dir / "ad-group-mapping.json").read_text(encoding="utf-8"))
-    # 8 of 10 are high/medium → coverage_pct = 80.0 (NOT 100.0).
+    # 8 of 10 are high/medium → coverage_pct = 80.0 (NOT 100.0). HARD INVARIANT.
     assert out["mapping_coverage_pct"] == pytest.approx(80.0)
-    # Per-tier sanity: 6 high + 2 medium + 2 low.
+    # Per-tier sanity: 8 of 10 land in high+medium, 2 in low.
+    # Note: exact high vs medium split is calibration-dependent (Phase 16 recalibrated
+    # _THRESHOLDS — a 0.50-score keyword may classify high under lower hi-threshold
+    # whereas Phase 11's 0.7 hi-threshold placed it at medium). The COVERAGE invariant
+    # (high+medium total = 8/10 = 80%) is what this test ultimately enforces.
     tiers = [m["confidence"] for m in out["matches"]]
-    assert tiers.count("high") == 6
-    assert tiers.count("medium") == 2
+    assert tiers.count("high") + tiers.count("medium") == 8
     assert tiers.count("low") == 2
+    # Garbage keywords must still classify as low (C5 — zero-overlap sanity).
+    low_matches = [m for m in out["matches"] if m["confidence"] == "low"]
+    low_kws = {m["keyword"] for m in low_matches}
+    assert "tomato sandwich recipe" in low_kws
+    assert "quantum mechanics tutorial" in low_kws
 
 
 # ---------------------------------------------------------------------------
