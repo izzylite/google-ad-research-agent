@@ -555,3 +555,181 @@ def test_unicode_dash_preserved_in_csv(tmp_path, clusters_phase10,
     raw_bytes = (run / "export" / "positives.csv").read_bytes()
     # UTF-8 encoding of U+2013 en-dash = 0xE2 0x80 0x93.
     assert b"\xe2\x80\x93" in raw_bytes, "en-dash bytes lost through CSV write"
+
+
+# ===========================================================================
+# Phase 14 Wave 0 — positives-sync filter RED stubs (POS-07)
+#
+# Wave 2 plan 14-04 lands the `--include-existing` flag and the positives-sync.json
+# filter on export_csv. The module-level sentinel `_POSITIVES_SYNC_SUPPORTED`
+# is set True by Wave 1 / Wave 2. Until then the per-function guard SKIPS.
+# ===========================================================================
+
+
+def _skip_unless_positives_sync_filter() -> None:
+    """Skip if Wave 2 14-04 positives-sync filter is absent."""
+    if MODULE_INCOMPLETE:
+        pytest.skip("export_csv stub — Wave 1 not yet shipped")
+    if not getattr(export_csv, "_POSITIVES_SYNC_SUPPORTED", False):
+        pytest.skip(
+            "Wave 2 14-04 not yet landed: export_csv positives-sync filter missing"
+        )
+
+
+def _stage_phase14_run(tmp_path: Path, clusters_phase10: dict,
+                       negatives_phase10: list[dict],
+                       ranked_enriched_phase10: list[dict],
+                       with_positives_sync: bool) -> Path:
+    """Stage a phase-14-style run_dir.
+
+    When `with_positives_sync` is True, write the golden positives-sync.json
+    + augment ranked-enriched + clusters with the Phase 14 ranked keywords so
+    `new_to_add` rows have a cluster fallback for the positives.csv joiner.
+    """
+    run = tmp_path / "2026-05-15T000000Z-phase-14-positives-sync"
+    (run / "raw").mkdir(parents=True)
+
+    ranked_to_write = list(ranked_enriched_phase10)
+    clusters_to_write = json.loads(json.dumps(clusters_phase10))  # deep copy
+
+    if with_positives_sync:
+        sync = json.loads(
+            (FIXTURES / "golden_positives_sync.json").read_text(encoding="utf-8")
+        )
+        # Pour the Phase 14 ranked rows (all 4 buckets) into ranked-enriched so
+        # export_csv has the rows to filter. Cluster routing uses deterministic
+        # names that match the byte-exact golden CSV.
+        bucket_to_cluster = {
+            "already_active": "urgent_care_transactional",
+            "paused_in_account": "auto_accident_transactional",
+            "covered_by_broad": "pip_clinic_transactional",
+            "new_to_add_first": "accident_chiropractor_commercial",
+            "new_to_add_second": "walk_in_clinic_transactional",
+        }
+        # Synthesize cluster rows so export_csv can find each kw → ad group.
+        new_clusters: dict[str, dict] = {}
+        all_rows = (
+            [(r, "already_active") for r in sync["already_active"]]
+            + [(r, "paused_in_account") for r in sync["paused_in_account"]]
+            + [(r, "covered_by_broad") for r in sync["covered_by_broad"]]
+        )
+        # new_to_add: order matters for byte-exact golden — index 0 → first slug
+        for idx, r in enumerate(sync["new_to_add"]):
+            key = "new_to_add_first" if idx == 0 else "new_to_add_second"
+            all_rows.append((r, key))
+
+        for row, bucket_key in all_rows:
+            cluster_name = bucket_to_cluster[bucket_key]
+            ranked_to_write.append({
+                "keyword": row["keyword"],
+                "intent": row["intent"],
+                "match_type": row["match_type"],
+                "cpc_micros": row["cpc_micros"],
+                "suggested_max_cpc_micros": row["suggested_max_cpc_micros"],
+                "score": row.get("score", 50),
+            })
+            new_clusters.setdefault(cluster_name, {
+                "name": cluster_name,
+                "intent": row["intent"],
+                "keywords": [],
+            })["keywords"].append({"keyword": row["keyword"],
+                                   "score": row.get("score", 50)})
+        clusters_to_write["clusters"].extend(new_clusters.values())
+
+        (run / "positives-sync.json").write_text(
+            json.dumps(sync), encoding="utf-8",
+        )
+
+    (run / "ranked-enriched.json").write_text(
+        json.dumps(ranked_to_write), encoding="utf-8",
+    )
+    (run / "clusters.json").write_text(
+        json.dumps(clusters_to_write), encoding="utf-8",
+    )
+    (run / "negatives.json").write_text(
+        json.dumps(negatives_phase10), encoding="utf-8",
+    )
+    (run / "brief.md").write_text(
+        "# Campaign Brief\n\n**Industry:** test\n"
+        "**Product:** phase 14 positives sync\n"
+        "**Location:** FL\n**Language:** en-US\n**Audience:** test\n",
+        encoding="utf-8",
+    )
+    return run
+
+
+def test_export_csv_default_filters_to_new_to_add(tmp_path, clusters_phase10,
+                                                   negatives_phase10,
+                                                   ranked_enriched_phase10):
+    """positives-sync.json present + no --include-existing → positives.csv
+    byte-exact matches golden_positives_new_to_add.csv (only new_to_add rows)."""
+    _skip_unless_positives_sync_filter()
+    run = _stage_phase14_run(
+        tmp_path, clusters_phase10, negatives_phase10,
+        ranked_enriched_phase10, with_positives_sync=True,
+    )
+    rc = export_csv.main(["--run-dir", str(run)])
+    assert rc == 0
+
+    got = (run / "export" / "positives.csv").read_bytes()
+    expected = (FIXTURES / "golden_positives_new_to_add.csv").read_bytes()
+    assert got == expected, (
+        "positives.csv byte-exact mismatch vs golden_positives_new_to_add.csv"
+    )
+
+
+def test_export_csv_include_existing_flag_emits_all(tmp_path, clusters_phase10,
+                                                     negatives_phase10,
+                                                     ranked_enriched_phase10):
+    """--include-existing → all 4 buckets surface + Status column appended."""
+    _skip_unless_positives_sync_filter()
+    run = _stage_phase14_run(
+        tmp_path, clusters_phase10, negatives_phase10,
+        ranked_enriched_phase10, with_positives_sync=True,
+    )
+    rc = export_csv.main(["--run-dir", str(run), "--include-existing"])
+    assert rc == 0
+
+    path = run / "export" / "positives.csv"
+    with path.open("r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames or []
+        rows = list(reader)
+
+    # Status column appended after Final URL
+    assert "Status" in fieldnames, "Status column missing under --include-existing"
+    assert fieldnames[-1] == "Status", (
+        f"Status must be last column, got fieldnames={fieldnames}"
+    )
+
+    # All 5 Phase 14 ranked rows present (already + paused + covered + 2 new).
+    kws = {r["Keyword"] for r in rows}
+    assert "urgent care lake worth" in kws
+    assert "auto accident clinic" in kws
+    assert "pip insurance clinic" in kws
+    assert "accident chiropractor lake worth" in kws
+    assert "walk in clinic boca raton" in kws
+
+
+def test_export_csv_graceful_fallback_when_sync_absent(tmp_path, clusters_phase10,
+                                                        negatives_phase10,
+                                                        ranked_enriched_phase10):
+    """No positives-sync.json → identical to pre-Phase-14 behaviour (golden_positives.csv)."""
+    _skip_unless_positives_sync_filter()
+    run = _stage_phase14_run(
+        tmp_path, clusters_phase10, negatives_phase10,
+        ranked_enriched_phase10, with_positives_sync=False,
+    )
+    rc = export_csv.main(["--run-dir", str(run)])
+    assert rc == 0
+
+    # Match pre-Phase-14 byte-exact contract from Phase 10 golden.
+    got = (run / "export" / "positives.csv").read_bytes()
+    # The staged run dir slug here is "phase-14-positives-sync" which would
+    # change the Campaign cell vs Phase 10 golden. Test the row contract by
+    # parsing and asserting all 8 ranked-enriched keywords surface (no filter).
+    decoded = got.decode("utf-8")
+    for row in ranked_enriched_phase10:
+        assert row["keyword"] in decoded, (
+            f"fallback path missing keyword {row['keyword']!r}"
+        )

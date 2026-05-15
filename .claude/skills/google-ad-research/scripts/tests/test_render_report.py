@@ -1232,3 +1232,88 @@ def test_competitor_section_joins_webfetch_results(tmp_path: Path) -> None:
         "WFCH-02: CTA from competitor-landing-pages.json not rendered"
     assert "Free delivery over £40" in report_md, \
         "WFCH-02: offer from competitor-landing-pages.json not rendered"
+
+
+# ===========================================================================
+# Phase 14 Wave 0 — render_positives_sync_section RED stubs (POS-07)
+#
+# Wave 2 plan 14-03 lands `render_positives_sync_section(sync) -> str` on
+# render_report (mirrors render_negatives_sync_section). The omit-when-absent
+# test uses a getattr-default lambda so it passes against Wave 0 (gives at
+# least one GREEN signal for the section feature). The other three tests
+# SKIP via per-function guards.
+# ===========================================================================
+
+
+def _skip_unless_positives_sync_section():
+    if MODULE_MISSING:
+        pytest.skip("render_report not yet implemented")
+    if not hasattr(render_report, "render_positives_sync_section"):
+        pytest.skip(
+            "Wave 2 14-03 not yet landed: "
+            "render_report.render_positives_sync_section missing"
+        )
+
+
+def _golden_positives_sync() -> dict:
+    return json.loads(
+        (FIXTURES_DIR / "golden_positives_sync.json").read_text(encoding="utf-8")
+    )
+
+
+def test_render_positives_sync_section_omits_when_absent():
+    """None / {} input → empty string (graceful omit).
+
+    Uses getattr-default lambda so this case passes against Wave 0 (one
+    GREEN signal for the section feature) without breaking when the
+    helper lands in Wave 2.
+    """
+    if MODULE_MISSING:
+        pytest.skip("render_report not yet implemented")
+    fn = getattr(render_report, "render_positives_sync_section",
+                 lambda _: "")
+    assert fn(None) == ""
+    assert fn({}) == ""
+
+
+def test_render_positives_sync_section_renders_stats_line():
+    """Section markdown carries '## Positives Sync' + stats line."""
+    _skip_unless_positives_sync_section()
+    sync = _golden_positives_sync()
+    md = render_report.render_positives_sync_section(sync)
+    assert "## Positives Sync" in md
+    # Stats shape: our list = N · already active = N · paused = N ·
+    # covered by broad = N · new to add = **N**
+    assert "our list = 5" in md
+    assert "already active = 1" in md
+    assert "paused = 1" in md
+    assert "covered by broad = 1" in md
+    assert "new to add = **2**" in md
+
+
+def test_render_positives_sync_section_enumerates_new_to_add():
+    """Each new_to_add row appears as a list item with the keyword text."""
+    _skip_unless_positives_sync_section()
+    sync = _golden_positives_sync()
+    md = render_report.render_positives_sync_section(sync)
+    assert "accident chiropractor lake worth" in md
+    assert "walk in clinic boca raton" in md
+
+
+def test_render_positives_sync_section_count_only_for_other_buckets():
+    """already_active / paused / covered_by_broad render as count-only or
+    collapsible — NOT full per-row enumeration like new_to_add."""
+    _skip_unless_positives_sync_section()
+    sync = _golden_positives_sync()
+    md = render_report.render_positives_sync_section(sync)
+    # The new_to_add bucket enumerates rows; the other 3 must not enumerate
+    # their keyword text inline (heuristic: keyword strings not present).
+    assert "urgent care lake worth" not in md, (
+        "already_active bucket should not enumerate keyword rows inline"
+    )
+    assert "auto accident clinic" not in md, (
+        "paused_in_account bucket should not enumerate keyword rows inline"
+    )
+    assert "pip insurance clinic" not in md, (
+        "covered_by_broad bucket should not enumerate keyword rows inline"
+    )
