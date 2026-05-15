@@ -93,8 +93,11 @@ The skill splits into two layers that communicate only through files in a sealed
 | 9 | Bid + forecast + compliance | `ranked-enriched.json` (+suggested_max_cpc_micros), `forecast.json`, `compliance-flags.json` | `bid_suggest.py`, `forecast_budget.py`, `compliance_check.py` |
 | 10 | Operator launch kit (Editor CSVs) | `export/{positives,negatives,ad_groups}.csv` | `export_csv.py` |
 | 11 | Account-structure mapping | `ad-group-mapping.json` | `ad_group_match.py` |
+| 14 | Positives sync (existing-keyword dedup) | `positives-sync.json` | `merge_signals.py`, `perf_synth.py` |
+| 15 | Campaign focus (narrow to target campaign) | `account-perf.json` (filtered) | `perf_synth.py` |
+| 16 | Token-bag enrichment + per-source max-Jaccard | `ad-group-mapping.json` (enriched matches) | `ad_group_match.py` |
 
-Phases 8-11 **auto-run when prerequisites are present** (Ahrefs + Google Ads creds in `.env`, geo focus in brief). Phases 1-6 are the always-on core. No per-phase prompts — skill announces explicit skip + reason when a phase can't run.
+Phases 8-11 + 14-16 **auto-run when prerequisites are present** (Ahrefs + Google Ads creds in `.env`, geo focus in brief). Phases 1-6 are the always-on core. No per-phase prompts — skill announces explicit skip + reason when a phase can't run.
 
 ### Signal sources
 
@@ -163,7 +166,7 @@ uv run --project .claude/skills/google-ad-research/scripts \
   pytest .claude/skills/google-ad-research/scripts/tests/ -q
 ```
 
-Expect **250 passed, 0 failed, 0 skipped** at v1.3.
+Expect **283 passed, 0 failed** at v1.5.
 
 ---
 
@@ -203,9 +206,9 @@ Open Claude Code in this directory and paste a brief. The skill activates on phr
 > — all prereqs in .env. No further prompts.
 ```
 
-### Phase 8-11: default behavior
+### Phase 8-11 + 14-16: default behavior
 
-All four auto-run when prerequisites are present in `.env` + brief. No prompts. Skill announces explicit skip + reason if a phase can't run.
+All auto-run when prerequisites are present in `.env` + brief. No prompts. Skill announces explicit skip + reason if a phase can't run.
 
 | Phase | Default | Auto-run trigger | What it adds |
 |-------|---------|------------------|--------------|
@@ -213,6 +216,9 @@ All four auto-run when prerequisites are present in `.env` + brief. No prompts. 
 | **9 — Economics + Compliance** | **Auto-run** | Phase 8 produced `cpc_micros` | Max CPC per keyword (mutated into `ranked-enriched.json`), budget forecast bands (`forecast.json`), vertical compliance flags (`compliance-flags.json`). Pure compute. |
 | **10 — Operator Launch Kit** | **Auto-run** | Phase 9 completed | `{run}/export/` Editor v2.x CSVs: `positives.csv` (with Max CPC), `negatives.csv` (tiered), `ad_groups.csv`. Next-Steps checklist with daily budget + Max CPC pre-filled. |
 | **11 — Account-Structure Mapping** | **Auto-run** | Brief has `Geo focus:` field OR Phase 8 produced account data | Geo eligibility filter (state/county/city — drops out-of-area keywords), existing-ad-group preservation (skill won't re-create ad groups your account already has). |
+| **14 — Positives Sync** | **Auto-run** | Phase 8 produced account keyword data | Deduplicates suggested keywords against the existing account positives (`positives-sync.json`) — operator only sees genuinely new keywords. |
+| **15 — Campaign Focus** | **Auto-run** | Brief has `Campaign focus:` field | Narrows Phase 8 account pull to one target campaign — sharper threshold calibration, less noise from off-target ad groups. |
+| **16 — Token-Bag Enrichment** | **Auto-run** | Phase 14 OAuth keywords pulled | Per-source max-Jaccard scoring (AG name ∪ kw_criteria ∪ search-terms tokens) — lifts mapping coverage to 50%+ on short-name-AG accounts (was 0% pre-Phase-16). |
 
 **To get the full pipeline by default**, set all 7 keys in `.env`. Skill announces a skip + reason whenever a phase can't run. No silent skips, no per-phase prompts.
 
@@ -300,8 +306,8 @@ scripts/
 │   └── references/                       ← phase-specific rubrics
 ├── .planning/                            ← GSD planning artifacts
 │   ├── PROJECT.md                        ← project context, scope, key decisions
-│   ├── ROADMAP.md                        ← 12 phases, completion status
-│   ├── REQUIREMENTS.md                   ← 89 requirements traced to phases
+│   ├── ROADMAP.md                        ← 14 active phases (Phase 7 removed, Phase 13 backlog), completion status
+│   ├── REQUIREMENTS.md                   ← 107 requirements traced to phases
 │   ├── STATE.md                          ← current position, decisions, history
 │   ├── research/                         ← stack + features + architecture + pitfalls
 │   └── phases/                           ← per-phase RESEARCH/PLAN/VERIFICATION
@@ -327,8 +333,8 @@ scripts/
 
 - [`CLAUDE.md`](CLAUDE.md) — Claude Code project conventions (skill location, secret discipline, run-folder rules)
 - [`.planning/PROJECT.md`](.planning/PROJECT.md) — project context, scope, key decisions
-- [`.planning/ROADMAP.md`](.planning/ROADMAP.md) — 12 phases + completion status
-- [`.planning/REQUIREMENTS.md`](.planning/REQUIREMENTS.md) — every requirement (89 v1) traced to a phase
+- [`.planning/ROADMAP.md`](.planning/ROADMAP.md) — 14 active phases + completion status
+- [`.planning/REQUIREMENTS.md`](.planning/REQUIREMENTS.md) — every requirement (107 v1) traced to a phase
 - [`.planning/research/SUMMARY.md`](.planning/research/SUMMARY.md) — domain research synthesis
 - [`.planning/research/PITFALLS.md`](.planning/research/PITFALLS.md) — pitfalls + mitigations
 - [`.claude/skills/google-ad-research/SKILL.md`](.claude/skills/google-ad-research/SKILL.md) — operator workflow
@@ -342,19 +348,24 @@ scripts/
 | **v1.0** | Phases 1-6 — core pipeline (Phase 7 Niche Pulse shipped here, removed post-v1.3) | Shipped 2026-05-08 |
 | **v1.1** | Phases 8-10 — Account Data + Volume, Economics, Launch Kit | Shipped 2026-05-14 |
 | **v1.2** | Phase 11 — Account-Structure Mapping | Shipped 2026-05-15 |
-| **v1.3** | Phase 12 — Source Consolidation | Shipped 2026-05-15 |
+| **v1.3** | Phase 12 — Source Consolidation (drop Tavily) | Shipped 2026-05-15 |
+| **v1.4** | Phase 14 — Positives Sync (existing-keyword dedup) | Shipped 2026-05-15 |
+| **v1.5** | Phases 15-16 — Campaign Focus + Ad-Group Token-Bag Enrichment | Shipped 2026-05-15 |
 
-**89/89 requirements complete.** Full test suite: 250 passed.
+**107/107 requirements complete.** Full test suite: 283 passed.
 
 ---
 
-## Roadmap (post-v1.3)
+## Roadmap (post-v1.5)
 
 | Item | Status |
 |------|--------|
-| Composite ranking weight calibration (after 3-5 real runs) | v1.4 candidate |
-| Match-type recommendation conservatism re-tune | v1.4 candidate |
-| FRCS avg-CPC ratio + band spread calibration | v1.4 candidate |
+| Second-account calibration of Phase 16 `{high: 0.30, medium: 0.08}` thresholds | watch-item |
+| Shape-contract smoke test between `perf_fetch.py` output and downstream consumers | watch-item |
+| Phase 13 — Landing-Page Extract vendor swap | backlog (defer-until-friction) |
+| Composite ranking weight calibration (after 3-5 real runs) | v2 candidate |
+| Match-type recommendation conservatism re-tune | v2 candidate |
+| FRCS avg-CPC ratio + band spread calibration | v2 candidate |
 | SERP cache by query hash to reduce repeat API spend | v2 |
 | Run-diff script comparing two runs by `report.json` | v2 |
 | Multi-locale fan-out (one brief, multiple country/language reports) | v2 |
@@ -383,4 +394,4 @@ scripts/
 
 ## Acknowledgments
 
-Built using the [GSD (Get Shit Done) methodology](https://github.com/get-shit-done/get-shit-done) for phase-driven greenfield projects with goal-backward verification at every step. 12 phases, 89 requirements, 250 tests, 4 milestones — all driven from one campaign-brief-to-research-package contract.
+Built using the [GSD (Get Shit Done) methodology](https://github.com/get-shit-done/get-shit-done) for phase-driven greenfield projects with goal-backward verification at every step. 14 active phases, 107 requirements, 283 tests, 6 milestones — all driven from one campaign-brief-to-research-package contract.
