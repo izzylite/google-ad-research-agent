@@ -165,8 +165,10 @@ def _build_ag_token_bag(
 
     Sources:
       1. _tokens(ag_name) — always (even if "" → empty)
-      2. _tokens(kw.ad_group_criterion.keyword.text) for kw in kw_criteria
-         where kw.ad_group_criterion.status != "REMOVED" (ADGM-07)
+      2. _tokens(kw["keyword"]) for kw in kw_criteria where kw["status"] != "REMOVED"
+         (ADGM-07). FLAT shape per perf_fetch.py:292-303 (canonical OAuth puller
+         output): {keyword, match_type, status, ad_group_id, ad_group_name,
+         campaign_name, impressions, clicks, conversions, cost_micros}.
       3. _tokens(st.search_term) for st in top-N search_terms by clicks desc
          (tiebreak impressions desc; drop impressions==0) (ADGM-07 top-N cap)
 
@@ -178,11 +180,10 @@ def _build_ag_token_bag(
 
     crit_tokens: set[str] = set()
     for kw in (kw_criteria or []):
-        crit = kw.get("ad_group_criterion") or {}
-        status = (crit.get("status") or "").upper()
+        status = (kw.get("status") or "").upper()
         if status == "REMOVED":
             continue
-        text = ((crit.get("keyword") or {}).get("text")) or ""
+        text = kw.get("keyword") or ""
         crit_tokens |= _tokens(text)
 
     # Search terms — filter zero-impression, sort clicks desc / impressions desc, top-N
@@ -225,9 +226,17 @@ def _build_ad_group_index(
         if name and status == "ENABLED":
             enabled_names.add(name)
 
-    # 2. Bucket kw_criteria + search_terms by ad_group_name (Pitfall 1 — name, NOT id)
+    # 2. Bucket kw_criteria + search_terms by ad_group_name (Pitfall 1 — name, NOT id).
+    # keywords source: accepts either {"items": [...]} (canonical OAuth puller wrapper
+    # per perf_fetch.py:292-303) or a bare list. Items are FLAT-shape dicts:
+    # {keyword, match_type, status, ad_group_id, ad_group_name, campaign_name, ...}.
+    kw_items: list[dict]
+    if isinstance(keywords, list):
+        kw_items = keywords
+    else:
+        kw_items = (keywords or {}).get("items", []) or []
     kw_by_ag: dict[str, list[dict]] = {}
-    for item in (keywords or {}).get("items", []) or []:
+    for item in kw_items:
         ag_name = item.get("ad_group_name")
         if not ag_name or ag_name not in enabled_names:
             continue
@@ -246,15 +255,18 @@ def _build_ad_group_index(
         kw_for_ag = kw_by_ag.get(ag_name) or []
         st_for_ag = st_by_ag.get(ag_name) or []
 
-        # Compute partial sets for per-source reason-field attribution
+        # Compute partial sets for per-source reason-field attribution.
+        # FLAT shape per perf_fetch.py:292-303 (canonical OAuth puller output):
+        # kw["keyword"] (text), kw["status"] (REMOVED filter — perf_fetch already
+        # excludes REMOVED in GAQL, defensive filter retained for fixture safety;
+        # PAUSED keywords are RETAINED for token-bag enrichment per ADGM-07).
         name_tokens = _tokens(ag_name)
         crit_tokens: set[str] = set()
         for kw in kw_for_ag:
-            crit = kw.get("ad_group_criterion") or {}
-            status = (crit.get("status") or "").upper()
+            status = (kw.get("status") or "").upper()
             if status == "REMOVED":
                 continue
-            text = ((crit.get("keyword") or {}).get("text")) or ""
+            text = kw.get("keyword") or ""
             crit_tokens |= _tokens(text)
 
         filtered = [

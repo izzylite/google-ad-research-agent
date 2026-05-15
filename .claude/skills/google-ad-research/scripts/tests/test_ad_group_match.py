@@ -494,13 +494,21 @@ def test_reason_field_per_source_attribution(tmp_path):
 
 
 def test_token_bag_unions_all_three_sources():
-    """ADGM-07 — _build_ag_token_bag unions ag_name ∪ kw_criteria ∪ search_terms."""
+    """ADGM-07 — _build_ag_token_bag unions ag_name ∪ kw_criteria ∪ search_terms.
+
+    kw_criteria items follow the FLAT shape written by perf_fetch.py:292-303
+    (canonical OAuth puller output): {keyword, match_type, status, ad_group_name,
+    ad_group_id, ...}. Plan 16-04 follow-up corrected the reader and fixtures
+    away from the previous (incorrect) nested {ad_group_criterion: {keyword:
+    {text}}} shape.
+    """
     _skip_unless_phase16()
     bag = ad_group_match._build_ag_token_bag(
         ag_name="Accident Exams – Lake Worth",
         kw_criteria=[
             {"ad_group_name": "Accident Exams – Lake Worth",
-             "ad_group_criterion": {"keyword": {"text": "auto accident doctor"}}}
+             "keyword": "auto accident doctor",
+             "status": "ENABLED"}
         ],
         search_terms=[
             {"ad_group_name": "Accident Exams – Lake Worth",
@@ -598,10 +606,8 @@ def test_per_source_max_jaccard_used_for_scoring(tmp_path):
         "items": [
             {
                 "ad_group_name": "Accident",
-                "ad_group_criterion": {
-                    "status": "ENABLED",
-                    "keyword": {"text": tok},
-                },
+                "keyword": tok,
+                "status": "ENABLED",
             }
             for tok in distinct_criteria_tokens
         ]
@@ -708,10 +714,8 @@ def test_max_jaccard_boundary_tied_sources(tmp_path):
         "items": [
             {
                 "ad_group_name": "cardiology clinic",
-                "ad_group_criterion": {
-                    "status": "ENABLED",
-                    "keyword": {"text": "heart specialist"},
-                },
+                "keyword": "heart specialist",
+                "status": "ENABLED",
             }
         ]
     }
