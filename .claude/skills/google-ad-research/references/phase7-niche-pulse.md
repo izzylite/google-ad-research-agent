@@ -20,7 +20,7 @@ Ask the operator:
 
 > "Run Phase 7 (Niche Pulse) — fetch news from the last 7 days to surface
 > trending themes, regulatory shifts, and competitor news? Costs ~12 Serper
-> credits + ~12 Tavily credits."
+> credits."
 
 If yes → continue. If no → skip to next phase or stop.
 
@@ -38,17 +38,16 @@ uv run "${CLAUDE_SKILL_DIR}/scripts/pulse_fetch.py" \
   --num 10
 ```
 
-Parse stdout JSON. Surface `serper_news_count`, `tavily_news_count`,
-`serper_credits_used`, `tavily_credits_used` to the operator.
+Parse stdout JSON. Surface `serper_news_count` and `serper_credits_used` to
+the operator.
 
 Exit code handling:
 - **Exit 0:** continue to Step 29.
-- **Exit 2:** Tavily quota exceeded — partial data still written. Ask operator
-  to continue with partial pulse or stop.
+- **Exit 2:** retryable Serper HTTP error (rate limit / 5xx). Ask operator to
+  retry once or continue with whatever partial data was written.
 - **Exit 3:** auth or fatal IO. Stop and surface stderr.
 
-**Do not advance until both `raw/serper-news.json` and `raw/tavily-news.json`
-exist.**
+**Do not advance until `raw/serper-news.json` exists.**
 
 ## Step 29: Synthesize the pulse
 

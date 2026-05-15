@@ -20,50 +20,67 @@ Parse stdout JSON. Surface to operator:
 > "Phase 5 signal collection:
 > - Clusters processed: {clusters_processed}
 > - Serper credits used: {serper_credits_used} (~${serper_credits_used * 0.001:.3f})
-> - Tavily credits used: {tavily_credits_used} (~${tavily_credits_used * 0.005:.3f})
 > - Competitor intel: `{run_dir}/raw/competitor-intel.json`"
 
 Exit code handling:
 - **Exit 0:** continue to Step 19.
-- **Exit 2 (Tavily quota):** Warn operator "Tavily quota reached — partial LP data available. Proceed to Step 19 with available data? (y/n)". Continue only if yes.
-- **Exit 3:** Surface error from stderr. Do NOT proceed.
+- **Exit 2:** retryable Serper HTTP error (rate limit / 5xx). Warn operator "Serper returned a transient error — retry? (y/n)". Re-run once if yes; if it fails again, surface stderr and stop.
+- **Exit 3:** fatal (missing input file, bad API key, missing env var). Surface error from stderr. Do NOT proceed.
 
 **Do not advance to Step 19 until competitor-intel.json exists in `{run_dir}/raw/`.**
 
-### Step 19: Extract headline, CTA, and offer from landing pages (COMP-03)
+### Step 19: Extract landing-page value props via WebFetch (COMP-03 + WFCH-01..02)
 
-Read `{run_dir}/raw/competitor-intel.json` using the Read tool.
+Read `{run_dir}/raw/competitor-intel.json` using the Read tool. For each cluster, the JSON contains an `advertisers` list whose entries carry `domain`, `url`, `title`, `description`, and `position` (Serper-only shape; no landing-page content yet).
 
 For each cluster in `competitor-intel.json["clusters"]`:
-  For each advertiser in the cluster's `advertisers` list where `extract_status == "ok"` and `raw_content` is non-empty:
+  Pick the top 3-5 advertisers (sorted by `position` ascending; `position` 1 is the most prominent paid result). For each picked advertiser:
 
-    Read the advertiser's `raw_content`. Extract:
-    - **headline**: the most prominent heading — the first H1 line (line starting with `# `) or, if absent, the first bold phrase (`**...**`). Truncate to ≤ 10 words. Do NOT invent; if no heading or bold phrase found, use `null`.
-    - **cta**: the primary call-to-action — the first imperative verb phrase or button text found (e.g., in a Markdown link like `[Order Now](#order)` extract "Order Now"). If none found, use `null`.
-    - **offer**: any discount, free trial, free delivery, or price claim found verbatim in the text (e.g., "Free delivery on orders over £40", "3 months free"). If none, use `null`.
+  1. Call **WebFetch** with the advertiser's `url` and a structured extraction prompt:
 
-Compile results per cluster into a `competitor_summary` list:
+     > "From this landing page, extract three short fields verbatim from the visible content (do NOT invent or summarize):
+     > - **headline**: the most prominent on-page heading — the first H1, or the first bold marketing phrase if H1 is generic. Maximum 10 words. `null` if not present.
+     > - **cta**: the primary call-to-action button text or imperative verb phrase (e.g., 'Order Now', 'Book a Free Consult', 'Get a Quote'). `null` if not present.
+     > - **offer**: any explicit discount, free trial, free delivery, or price claim found verbatim on the page (e.g., 'Free delivery over £40', '3 months free', '20% off first order'). `null` if not present.
+     >
+     > Return a single JSON object: `{\"headline\": ..., \"cta\": ..., \"offer\": ...}`."
+
+  2. Follow redirects once at most. If the page is geo-blocked, JS-only, or returns an error, record `extract_status = "failed"` with `headline`/`cta`/`offer` set to `null`. Do NOT retry; failed extractions are expected on ~30% of paid landing pages and not a workflow error.
+
+  3. Otherwise record `extract_status = "ok"` plus the extracted three fields.
+
+After processing every picked advertiser across every cluster, aggregate into the following schema and Write it to `{run_dir}/raw/competitor-landing-pages.json` using the Write tool:
 
 ```json
-[
-  {
-    "cluster": "<cluster_name>",
-    "representative_keyword": "<keyword>",
-    "advertisers": [
-      {
-        "domain": "<domain>",
-        "headline": "<extracted or null>",
-        "cta": "<extracted or null>",
-        "offer": "<extracted or null>"
-      }
-    ]
+{
+  "captured_at": "<ISO timestamp>",
+  "clusters": {
+    "<cluster_name>": {
+      "representative_keyword": "<keyword>",
+      "advertisers": [
+        {
+          "domain": "<domain>",
+          "url": "<url>",
+          "headline": "<extracted verbatim or null>",
+          "cta": "<extracted verbatim or null>",
+          "offer": "<extracted verbatim or null>",
+          "extract_status": "ok|failed"
+        }
+      ]
+    }
   }
-]
+}
 ```
 
-Skip clusters with no ok-status advertisers (log internally, do not surface).
+**Rules for extraction (Pitfall mitigations):**
 
-**Do not advance to Step 20 until you have processed every cluster with ≥ 1 ok advertiser.**
+- **Verbatim only.** Headline/CTA/offer must be present on the page text. Do NOT generate marketing copy. WebFetch is extraction, not generation.
+- **Single redirect cap.** If the first WebFetch request returns a redirect, follow it once. If the second response also redirects, mark `failed`. Prevents redirect loops on tracking links.
+- **Maximum 5 advertisers per cluster.** Skip the rest even if present — diminishing returns.
+- **Failures are normal.** JS-heavy pages, age-gates, geo-blocks, and bot-detection all produce `failed` entries. Operator-facing report degrades gracefully via the fallback to Serper ad title + description.
+- **Skip clusters with no advertisers.** No-ads clusters get no entry in `clusters` (do not write empty `advertisers` lists).
+
+**Do not advance to Step 20 until `{run_dir}/raw/competitor-landing-pages.json` exists.**
 
 ### Step 20: Confirm Phase 5 complete and stop
 
@@ -71,9 +88,10 @@ Tell the operator:
 
 > "Phase 5 complete. Competitor intel summary:
 > - {N_clusters_with_ads} clusters had paid ads
-> - {N_advertisers_extracted} advertiser landing pages successfully extracted
-> - {N_advertisers_failed} advertiser pages failed extraction (JS-heavy or geo-blocked)
+> - {N_advertisers_extracted} advertiser landing pages successfully extracted via WebFetch
+> - {N_advertisers_failed} advertiser pages failed extraction (JS-heavy, geo-blocked, or bot-protected)
 >
 > Competitor-intel raw data: `{run_dir}/raw/competitor-intel.json`
+> Landing-page extracts: `{run_dir}/raw/competitor-landing-pages.json`
 >
 > Phase 6 (report assembly) begins at Step 21. Load `.claude/skills/google-ad-research/references/phase6-negatives-report.md` with the Read tool when entering Phase 6."
