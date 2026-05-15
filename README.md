@@ -103,7 +103,7 @@ Phases 7-11 are **sidecars** — operator opts in per-run. Phases 1-6 are the al
 | [Ahrefs API](https://ahrefs.com/api) (Phase 8, optional) | Real MSV + keyword difficulty | metered |
 | [Google Ads API](https://developers.google.com/google-ads/api) (Phase 8, optional) | Account-level performance context | $0 |
 
-**Paid surface is intentionally minimal.** Phase 12 (Milestone v1.3) dropped Tavily — landing-page extraction now uses Claude's built-in WebFetch, news harvest uses Serper `/news` only. Single paid API in the core pipeline (Serper); Ahrefs + Google Ads opt-in for Phase 8 enrichment.
+**Paid surface is intentionally minimal.** Landing-page extraction uses Claude's built-in WebFetch ($0). News harvest uses Serper `/news`. Single paid API in the core pipeline (Serper); Ahrefs + Google Ads opt-in for Phase 8 enrichment.
 
 ### Score formula
 
@@ -222,8 +222,6 @@ Open Claude Code in this directory and paste a brief. The skill activates on phr
 | **Core total (Phases 1-6)** | | **~$0.03 / run** |
 | **+ all sidecars except Ahrefs** | | **~$0.05 / run** |
 
-Phase 12 dropped Tavily — landing-page extraction now $0 via WebFetch.
-
 ---
 
 ## Architecture
@@ -317,7 +315,7 @@ scripts/
 1. **No real search volume in the core.** Phases 1-6 rank on `source_diversity` × intent × `signal_count` — a popularity proxy, not Google's actual data. Phase 8 (opt-in) adds Ahrefs MSV. Otherwise paste the final keyword list into Keyword Planner for volume + CPC.
 2. **Brief quality drives output quality.** A vague brief produces vague keywords. Five required fields (industry, product, location, language, audience) are enforced for a reason.
 3. **Serper ads block is unreliable in some verticals.** Healthcare and several others return 0 ads even when Google clearly shows them. The competitor intel script falls back to top organic results — those landing pages contain the same value props paid advertisers would highlight, so the downstream analysis still works.
-4. **WebFetch can fail on JS-heavy or bot-blocked sites.** Typical success rate ~80% in production runs. The `competitor-landing-pages.json` schema includes `extract_status` so failures are visible; `report.md` shows fallback text per failed advertiser. If real-world friction grows, Phase 13 (Serper `/scrape` vendor swap) is parked in the ROADMAP backlog ready to activate.
+4. **WebFetch can fail on JS-heavy or bot-blocked sites.** Typical success rate ~80% in production runs. The `competitor-landing-pages.json` schema includes `extract_status` so failures are visible; `report.md` shows fallback text per failed advertiser.
 5. **Niche pulse themes have noise.** N-gram clustering surfaces some news-source bylines and reporter names. Stop-token list filters most; the Highlights block at the top of the section is curated to high-priority items only.
 6. **Single-operator design.** No multi-tenant, no auth, no shared state. The skill expects one PPC operator running it for in-house or solo agency campaigns. Productizing for end clients is out of scope for v1.
 
@@ -342,7 +340,7 @@ scripts/
 | **v1.0** | Phases 1-7 — core pipeline + Niche Pulse | Shipped 2026-05-08 |
 | **v1.1** | Phases 8-10 — Account Data + Volume, Economics, Launch Kit | Shipped 2026-05-14 |
 | **v1.2** | Phase 11 — Account-Structure Mapping | Shipped 2026-05-15 |
-| **v1.3** | Phase 12 — Source Consolidation (drop Tavily) | Shipped 2026-05-15 |
+| **v1.3** | Phase 12 — Source Consolidation | Shipped 2026-05-15 |
 
 **89/89 requirements complete.** Full test suite: 250 passed.
 
@@ -352,7 +350,6 @@ scripts/
 
 | Item | Status |
 |------|--------|
-| Landing-page extract: Serper `/scrape` vendor swap (if WebFetch friction observed) | Phase 13 — backlog, defer-until-friction |
 | Composite ranking weight calibration (after 3-5 real runs) | v1.4 candidate |
 | Match-type recommendation conservatism re-tune | v1.4 candidate |
 | FRCS avg-CPC ratio + band spread calibration | v1.4 candidate |
