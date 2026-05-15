@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: "Completed Plan 16-05 — Phase 16 fully closed (ADGM-07..11 shipped; per-source max-Jaccard structural fix lifted Lake Worth coverage to 50.75%); v1.5 milestone Complete (11/11 reqs)"
-last_updated: "2026-05-15T21:00:00.000Z"
+stopped_at: Completed Plan 16-05 — Phase 16 fully closed (ADGM-07..11 shipped; per-source max-Jaccard structural fix lifted Lake Worth coverage to 50.75%); reference doc Phase 16 section now records algorithm rationale + final calibration evidence + live e2e closeout + reader/writer shape-fix discovery; STATE.md decisions/open-questions reflect closure; REQUIREMENTS.md ADGM-11 row verified clean; SKILL.md unchanged at 497/500; v1.5 milestone Complete (11/11 reqs).
+last_updated: "2026-05-15T20:20:31.939Z"
 progress:
   total_phases: 15
   completed_phases: 13

@@ -294,7 +294,7 @@ From one campaign brief, deliver campaign-ready keyword research — clusters, c
   4. Recalibrated thresholds (likely tighter, e.g. 0.5 high / 0.25 medium vs current 0.7 / 0.4) are documented in `references/phase11-account-structure-mapping.md` with empirical rationale from at least 2 real-account calibration runs.
   5. Operator pastes new ranked keywords into Google Ads Editor and lands them in the right existing ad groups (high+medium tier) without re-thinking account structure — the original v1.2 promise of "respect client's existing AG structure" finally lands operationally on short-name-AG accounts.
 **Status:** Complete (initial close 2026-05-15 via Plans 16-00..02 shipped ADGM-07..10 + ADGM-11 deferred under option-a; gap-closure cycle 2026-05-15 via Plans 16-03 RED + 16-04 GREEN landed the structural fix and satisfied ADGM-11 at 50.75% live Lake Worth coverage; Plan 16-05 docs closeout 2026-05-15 updated `references/phase11-account-structure-mapping.md` with algorithm rationale + calibration sweep + shape-bug discovery, closing the phase audit trail). All 5 requirements complete.
-**Plans:** 6/6 plans executed
+**Plans:** 6/6 plans complete
 - [x] 16-00-PLAN.md — Wave 1: Lake Worth golden fixtures + 5 RED tests + PHASE16_INCOMPLETE guard
 - [x] 16-01-PLAN.md — Wave 2: `_build_ag_token_bag` + keywords-aware index + per-source reason field + `_THRESHOLDS` recalibrated to {0.30, 0.10} (option-a deferral applied) — ADGM-07, ADGM-08, ADGM-09
 - [x] 16-02-PLAN.md — Wave 3: reference-doc Phase 16 section (+78 lines; SKILL.md untouched at 497/500) + live Lake Worth OAuth e2e closeout (16.42% observed vs 16.67% offline — within 0.25pp predictive validity) — ADGM-10
