@@ -19,6 +19,7 @@ Writes:
 
 CLI:
     uv run perf_fetch.py --run-dir <abs> [--customer-id XXXX] [--days 30]
+        [--campaign-filter "<name>"]   # single, or pipe-separated 'A|B|C'
 
 Stdout (one JSON line):
     {"search_terms_count": N, "campaigns_count": N, "ad_groups_count": N,
@@ -319,7 +320,31 @@ def main_with_args(argv: list[str]) -> int:
     )
     parser.add_argument("--days", type=int, default=30,
                         help="Performance horizon in days (default 30).")
+    parser.add_argument(
+        "--campaign-filter", default=None,
+        help="Optional campaign name filter — single name or pipe-separated list "
+             "(e.g., 'Search | Lake Worth Accident Exams | Manual CPC' or "
+             "'Campaign A|Campaign B'). When set, all 4 GAQL queries gain "
+             "AND campaign.name = '<focus>' (single) or IN (...) (list). "
+             "Omit for account-wide pull (v1.4 behavior). CAMP-02.",
+    )
     args = parser.parse_args(argv)
+
+    # Normalize --campaign-filter into list[str] | None.
+    # Heuristic: Google Ads naming convention uses ' | ' (space-pipe-space) as
+    # part of a single campaign name (e.g. 'Search | Lake Worth Accident Exams
+    # | Manual CPC' is ONE campaign). The list form requires bare pipes
+    # (no spaces): 'A|B|C'. So we only split when '|' is present AND ' | '
+    # is NOT present.
+    campaign_filter: list[str] | None = None
+    if args.campaign_filter:
+        raw = args.campaign_filter
+        if "|" in raw and " | " not in raw:
+            campaign_filter = [s.strip() for s in raw.split("|") if s.strip()]
+        else:
+            campaign_filter = [raw.strip()] if raw.strip() else None
+        if campaign_filter:
+            log.info(f"Narrowing to campaign(s): {campaign_filter}")
 
     if not args.run_dir.exists():
         log.error(f"--run-dir does not exist: {args.run_dir}")
@@ -344,7 +369,7 @@ def main_with_args(argv: list[str]) -> int:
 
     try:
         log.info(f"Pulling search terms (last {args.days}d, customer={customer_id})...")
-        terms = fetch_search_terms(client, customer_id, days=args.days)
+        terms = fetch_search_terms(client, customer_id, days=args.days, campaign_filter=campaign_filter)
         (raw_dir / "google-ads-search-terms.json").write_text(
             json.dumps({"fetched_at": _now_iso(), "horizon_days": args.days,
                         "customer_id": customer_id, "items": terms},
@@ -354,7 +379,7 @@ def main_with_args(argv: list[str]) -> int:
         log.info(f"  → {len(terms)} search terms")
 
         log.info("Pulling campaign + ad_group perf...")
-        perf = fetch_perf(client, customer_id, days=args.days)
+        perf = fetch_perf(client, customer_id, days=args.days, campaign_filter=campaign_filter)
         perf["customer_id"] = customer_id
         (raw_dir / "google-ads-perf.json").write_text(
             json.dumps(perf, ensure_ascii=False, indent=2),
@@ -363,7 +388,7 @@ def main_with_args(argv: list[str]) -> int:
         log.info(f"  → {len(perf['campaigns'])} campaigns, {len(perf['ad_groups'])} ad groups")
 
         log.info("Pulling existing negative keywords...")
-        negs = fetch_existing_negatives(client, customer_id)
+        negs = fetch_existing_negatives(client, customer_id, campaign_filter=campaign_filter)
         (raw_dir / "google-ads-negatives.json").write_text(
             json.dumps({"fetched_at": _now_iso(), "customer_id": customer_id,
                         "items": negs}, ensure_ascii=False, indent=2),
@@ -372,7 +397,7 @@ def main_with_args(argv: list[str]) -> int:
         log.info(f"  → {len(negs)} existing negatives")
 
         log.info("Pulling keyword_view (active + paused account keywords)...")
-        kws = fetch_keyword_view(client, customer_id, days=args.days)
+        kws = fetch_keyword_view(client, customer_id, days=args.days, campaign_filter=campaign_filter)
         (raw_dir / "google-ads-keywords.json").write_text(
             json.dumps({"fetched_at": _now_iso(), "horizon_days": args.days,
                         "customer_id": customer_id, "items": kws},
@@ -398,6 +423,7 @@ def main_with_args(argv: list[str]) -> int:
         "keyword_count": len(kws),
         "customer_id": customer_id,
         "horizon_days": args.days,
+        "campaign_filter": campaign_filter,  # null when absent — CAMP-02 traceability
     }))
     return 0
 
