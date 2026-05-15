@@ -382,8 +382,27 @@ def test_unicode_dashes_preserved(tmp_path):
 # ADGM-07..11 — Phase 16 token-bag enrichment
 # ---------------------------------------------------------------------------
 
+@pytest.mark.xfail(
+    reason=(
+        "ADGM-11 deferred to plan 16-02 (operator decision option-a, 2026-05-15). "
+        "Structural Jaccard ceiling: Lake Worth's enriched AG token bag has ~34 "
+        "tokens (name ∪ kw_criteria ∪ top-10 search-terms) whereas typical ranked "
+        "queries carry only 4-6 tokens. Best-case jaccard caps at ~0.15-0.25 — "
+        "lowering the medium threshold below the calibration cap floor (0.10) "
+        "breaks C5 (garbage keywords like 'tomato sandwich' classify as medium). "
+        "At locked thresholds {high: 0.30, medium: 0.10}: observed coverage 16.67% "
+        "(11 medium / 66 ranked). Phase 11 80% invariant + zero-overlap garbage "
+        "guard both preserved. Closing the gap requires a structural change "
+        "(per-source max-jaccard instead of full-union jaccard, OR token bag "
+        "subsampling) — scheduled for plan 16-02 follow-up."
+    ),
+    strict=True,
+)
 def test_lake_worth_coverage_floor(tmp_path):
-    """ADGM-11 — Lake Worth golden run yields mapping_coverage_pct >= 50%."""
+    """ADGM-11 — Lake Worth golden run yields mapping_coverage_pct >= 50%.
+
+    XFAIL — option-a deferral to plan 16-02. See marker rationale above.
+    """
     _skip_unless_phase16()
     run_dir = tmp_path / "2026-05-15T120000Z-lake-worth-golden"
     (run_dir / "raw").mkdir(parents=True)
