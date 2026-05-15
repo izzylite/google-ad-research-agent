@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: "Completed 14-02-PLAN.md (perf_synth.cross_ref_positives + main wiring + POS-05 graceful skip). 250 passed, 6 skipped. Next: /gsd:execute-plan 14-03 (render_positives_sync_section)."
-last_updated: "2026-05-15T12:36:09.909Z"
+stopped_at: "Completed 14-04-PLAN.md (export_csv positives-sync filter + --include-existing flag). 256 passed (was 250+6 skipped). Wave 3 closed (14-03 + 14-04 done in parallel). Next: 14-05 (POS-03 + POS-06 LLM re-tag prose work)."
+last_updated: "2026-05-15T12:41:48.370Z"
 progress:
   total_phases: 13
   completed_phases: 10
   total_plans: 55
-  completed_plans: 52
+  completed_plans: 53
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 14 — Positives Sync |
-| Plan | 14-00, 14-01, 14-02 complete; 14-03 next |
-| Status | In progress — Wave 1 (perf_fetch + perf_synth) shipped; Wave 2 (render + export) pending |
-| Last activity | 2026-05-15 — Plan 14-02 executed: perf_synth.cross_ref_positives + _norm_kw helper + main_with_args positives-block + POS-05 graceful skip. 6 Wave 0 cross_ref_positives RED stubs flipped GREEN incl. golden byte-match. Full suite 250 passed, 6 skipped (was 244+12). Commits 306d522, 6e73321. |
+| Plan | 14-00..14-04 complete; 14-05 next |
+| Status | In progress — Wave 3 closed (14-03 render + 14-04 export shipped in parallel); Wave 4 (14-05 SKILL.md LLM re-tag) pending |
+| Last activity | 2026-05-15 — Plan 14-04 executed: export_csv positives-sync filter + --include-existing flag + Status column path + POS-05 graceful CSV-side fallback. 3 Wave 0 export_csv Phase 14 RED stubs flipped GREEN. Full suite 256 passed (was 250+6 skipped). Commit 65bb6f6. |
 
 ## Previous Milestone
 
@@ -52,7 +52,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | v1.1 requirements complete | 23 / 23 (BIDS 4/4, FRCS 5/5, CMPL 5/5, EXPT 5/5, STEP 4/4) |
 | v1.2 requirements complete | 11 / 11 (GEO 5/5, ADGM 6/6) |
 | v1.3 requirements complete | 11 / 11 (TVLY 4/4, WFCH 4/4, PULSE 3/3) |
-| v1.4 requirements complete | 4 / 7 (POS 4/7 — POS-01, POS-02, POS-05, POS-07 complete; POS-03, POS-04, POS-06 pending) |
+| v1.4 requirements complete | 5 / 7 (POS 5/7 — POS-01, POS-02, POS-04, POS-05, POS-07 complete; POS-03, POS-06 pending) |
 | Phase 10 P00 | ~25min | 2 tasks | 12 files created + 1 modified |
 | Phase 02 P00 | 7min | 2 tasks | 9 files |
 | Phase 02-signal-collection P01 | 12min | 2 tasks | 4 files |
@@ -95,6 +95,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 14 P00 | ~18min | 3 tasks | 5 created + 3 modified |
 | Phase 14 P01 | 2min | 2 tasks | 1 files |
 | Phase 14 P02 | 2min | 2 tasks | 1 files |
+| Phase 14 P04 | 3min | 2 tasks | 1 files |
 
 ### Execution History
 
@@ -257,6 +258,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 14]: [14-02] _norm_neg = _norm_kw alias chosen over copy-paste — single source of canonicalization avoids drift between negatives and positives sync. Existing 4 negatives tests stay GREEN with zero edits.
 - [Phase 14]: [14-02] cross_ref_positives bucket priority via early-continue chain (ENABLED-exact > PAUSED-exact > BROAD-cover > new). Order matches golden_positives_sync.json authored in Wave 0. covered_by_broad min-2-token guard prevents single-token false positives.
 - [Phase 14]: [14-02] main_with_args prefers ranked-enriched.json over ranked.json — Phase 9 enrichment fields (suggested_max_cpc_micros, cpc_micros) must survive into positives-sync.json buckets for Plan 14-04 CSV filter.
+- [Phase 14]: [Phase 14-04] export_csv positives-sync filter: bucket_by_kw first-write-wins with new_to_add inserted first preserves cross_ref_positives priority chain. Status defaults to new_to_add for unbucketed kws (safest race-window default). Single atomic commit covers both Tasks (sentinel+helper+flag and filter+Status) because Wave 0 tests only flip GREEN with the full chain.
 
 ### Open Questions / Todos
 
@@ -276,11 +278,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T12:35:33.607Z
+**Last session:** 2026-05-15T12:41:36.910Z
 
-**Stopped at:** Completed 14-02-PLAN.md (perf_synth.cross_ref_positives + main wiring + POS-05 graceful skip). 250 passed, 6 skipped. Next: /gsd:execute-plan 14-03 (render_positives_sync_section).
+**Stopped at:** Completed 14-04-PLAN.md (export_csv positives-sync filter + --include-existing flag). 256 passed (was 250+6 skipped). Wave 3 closed (14-03 + 14-04 done in parallel). Next: 14-05 (POS-03 + POS-06 LLM re-tag prose work).
 
-**Next session:** Run `/gsd:execute-plan 14-01` (Wave 1 perf_fetch.fetch_keyword_view + raw/google-ads-keywords.json writer — POS-01). Parallel-runnable with 14-02 (perf_synth.cross_ref_positives). RED stubs in test_perf_fetch.py + test_perf_synth.py will flip SKIP → GREEN as Wave 1 lands.
+**Next session:** Run `/gsd:execute-plan 14-05` (Wave 4 SKILL.md LLM re-tag step + Phase 8 sub-flow doc updates — POS-03 + POS-06 prose work; all Python now done). With 14-03 also complete, all 6 Wave-0 SKIP stubs are now GREEN; suite at 256 passed.
 
 **Files of record:**
 - `c:\Users\Izzy\Documents\Projects\google-ad-research-agent\.planning\PROJECT.md`
