@@ -16,7 +16,7 @@ from pathlib import Path
 
 from dotenv import find_dotenv, load_dotenv
 
-REQUIRED_KEYS: tuple[str, ...] = ("SERPER_API_KEY", "TAVILY_API_KEY")
+REQUIRED_KEYS: tuple[str, ...] = ("SERPER_API_KEY",)
 
 
 def load_env(*, require: tuple[str, ...] = ()) -> Path:
