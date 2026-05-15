@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phases
 status: unknown
-stopped_at: Completed 16-00-PLAN.md (Lake Worth golden fixtures + 5 RED Phase 16 tests scaffolded; 1 threshold sentinel FAILING by design — Wave 2 / plan 16-01 next)
-last_updated: "2026-05-15T16:36:25.258Z"
+stopped_at: Completed 16-01-PLAN.md (token-bag enrichment shipped + option-a deferral of ADGM-11 floor to plan 16-02 — Lake Worth observed 16.67% at locked thresholds 0.30/0.10; Phase 11 80% invariant preserved; 18 passed + 1 xfailed)
+last_updated: "2026-05-15T18:00:39.124Z"
 progress:
   total_phases: 15
   completed_phases: 12
   total_plans: 62
-  completed_plans: 60
+  completed_plans: 61
 ---
 
 # State: Google Ad Research Agent
@@ -27,9 +27,9 @@ progress:
 | Field | Value |
 |-------|-------|
 | Phase | 16 — Ad-Group Mapping Token-Bag Enrichment |
-| Plan | 16-00 complete; 16-01 next (Wave 2 implementation — `_build_ag_token_bag` + threshold recalibration) |
-| Status | Wave 0 scaffold shipped — 5 Lake Worth golden fixtures + 5 RED tests (4 SKIPPED + 1 threshold sentinel FAILING by design) |
-| Last activity | 2026-05-15 — Plan 16-00 complete: Lake Worth fixtures staged (5144f8f) + RED tests appended with PHASE16_INCOMPLETE guard (43de949); reproducible slimming script under scripts/; pytest = 14 PASSED + 4 SKIPPED + 1 FAILED (threshold sentinel — TDD wiring proven) |
+| Plan | 16-00 + 16-01 complete; 16-02 NEXT (gap-closure — lift Lake Worth coverage from 16.67% to >=50% via structural algorithm change per operator option-a deferral) |
+| Status | Wave 2 implementation shipped + operator-gated option-a deferral applied — token-bag enrichment working (ADGM-07/08/09/10 done); ADGM-11 floor deferred to 16-02 |
+| Last activity | 2026-05-15 — Plan 16-01 complete: `_build_ag_token_bag` + keywords-aware index + per-source reason field shipped (23c1c02); operator option-a applied (fbb7372) — _THRESHOLDS locked at {0.30, 0.10}, test_lake_worth_coverage_floor xfail'd with ADGM-11 -> 16-02 rationale; pytest = 18 PASSED + 1 XFAILED; Phase 11 80% invariant preserved |
 
 ## Previous Milestone
 
@@ -106,6 +106,7 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 | Phase 15-campaign-focus P02 | 2 min | 2 tasks | 1 files |
 | Phase 15-campaign-focus P03 | 12 min | 3 tasks | 3 files |
 | Phase 16 P00 | 12min | 2 tasks | 7 files |
+| Phase 16-ad-group-mapping-token-bag-enrichment P01 | 18min | 4 tasks | 2 files |
 
 ### Execution History
 
@@ -149,6 +150,8 @@ v1.0 — Core Pipeline (8 phases, 52 requirements, 108 tests). Shipped 2026-05-0
 - [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-00]: Used real-run row counts (66 ranked, 1 ENABLED AG) over plan estimates (47, 3) — plan philosophy 'fidelity to real run' wins over planner's pre-flight estimate
 - [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-00]: Keywords fixture re-shaped from flat real-data schema into nested ad_group_criterion.keyword.text form to match plan 16-01 _build_ag_token_bag contract — defers Wave 2 adapter complexity into the fixture
 - [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-00]: Threshold sentinel test ships WITHOUT skip guard — must FAIL at Wave 0 against 0.7/0.4 stub values to prove TDD wiring is connected; flips green when Wave 2 lands recalibration delta
+- [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-01] Operator chose option-a (accept Lake Worth coverage miss, defer ADGM-11 floor to plan 16-02) — Lake Worth coverage gap is STRUCTURAL not threshold-tunable; 34-token enriched AG bag vs 4-6-token queries caps observed jaccard at 0.15-0.25 within loosening cap floor (high>=0.30, medium>=0.10)
+- [Phase 16-ad-group-mapping-token-bag-enrichment]: [16-01] _THRESHOLDS locked at calibration_protocol cap FLOOR {high: 0.30, medium: 0.10} — yields 16.67% Lake Worth coverage (11 medium / 66 ranked) while preserving Phase 11 80% invariant + C5 garbage-keyword guard. xfail-with-rationale strategy on test_lake_worth_coverage_floor (strict=True) preserves test intent + signals operator-acknowledged deferral without test deletion
 
 ### Open Questions / Todos
 
@@ -170,9 +173,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-15T16:35:54.275Z
+**Last session:** 2026-05-15T18:00:29.631Z
 
-**Stopped at:** Completed 16-00-PLAN.md (Lake Worth golden fixtures + 5 RED Phase 16 tests scaffolded; 1 threshold sentinel FAILING by design — Wave 2 / plan 16-01 next)
+**Stopped at:** Completed 16-01-PLAN.md (token-bag enrichment shipped + option-a deferral of ADGM-11 floor to plan 16-02 — Lake Worth observed 16.67% at locked thresholds 0.30/0.10; Phase 11 80% invariant preserved; 18 passed + 1 xfailed)
 
 **Next session:** `/gsd:execute-plan 15-01` (perf_fetch.py `--campaign-filter` + thread through 4 GAQL queries) and/or `/gsd:execute-plan 15-02` (render_report.py `_parse_brief_fields` campaign_focus + `render_campaign_focus_section`). Plans land independently; 15-03 SKILL.md wiring follows both.
 
