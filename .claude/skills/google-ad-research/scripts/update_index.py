@@ -1,6 +1,8 @@
 # /// script
 # requires-python = ">=3.13"
-# dependencies = []
+# dependencies = [
+#     "python-slugify>=8.0",
+# ]
 # ///
 """update_index.py — append one row to .runs/INDEX.md after each completed run.
 

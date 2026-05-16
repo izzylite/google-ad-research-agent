@@ -22,6 +22,7 @@ Generate a JSON array of negative keyword objects. Every object **must** have ex
 - Do NOT include any keyword that appears in `ranked.json` (that is the positive pool)
 - Read the brief positioning before generating Considered-tier negatives — do not negate words that ARE the brand's USP (e.g., do not negate "fast" for a speed-focused brand)
 - Always include at least one row matching each baseline trigger: `jobs|careers|salary` → jobs-careers; `free|diy|tutorial|how to|guide` → free-DIY-tutorial; `used|refurb|wholesale` → used-refurb-wholesale
+- **EXCL-02: read `**Exclusions:**` from brief.md. For EVERY phrase in that list, you MUST emit at least one `Strong` negative whose `keyword` is the exclusion phrase itself (e.g., exclusion `pediatric` → emit Strong negative `"pediatric"` in category `wrong-audience`; exclusion `chiropractor` → emit Strong negative `"chiropractor"` in category `wrong-audience`). Pick the category that best matches the exclusion's reason (`wrong-audience` for audience/demographic exclusions; `used-refurb-wholesale` for "free / sliding-scale / low-income" exclusions; `wrong-geo` for off-area exclusions). This is defense-in-depth: `merge_signals.py` already drops these from the pool, but adding them as campaign-level negatives prevents future SERP drift from triggering ads.
 
 **Example row:**
 ```json

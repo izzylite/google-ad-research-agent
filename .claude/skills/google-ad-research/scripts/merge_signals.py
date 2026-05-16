@@ -2,6 +2,8 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "inflect>=7.5",
+#     "python-dotenv>=1.0",
+#     "python-slugify>=8.0",
 # ]
 # ///
 """merge_signals.py — raw/*.json → keywords.json (canonicalised + sourced).
@@ -338,6 +340,74 @@ def read_websearch(path: Path) -> Iterator[tuple[str, dict]]:
 # Core merge logic
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Exclusions filter (EXCL-01) — service-line + audience exclusion enforcement
+# ---------------------------------------------------------------------------
+#
+# Why this exists: the brief's `**Product:**` field carries "NOT chiropractor,
+# NOT physical therapy" prose that the LLM clustering / negative-gen step
+# reads but doesn't always honour — 2026-05-16 dogfood leaked 2 chiropractor
+# keywords + 1 pediatric keyword into positives despite Product saying NOT
+# chiropractor + Audience implying adult MVA. Operators were having to
+# manually scrub positives.csv before Editor import.
+#
+# Solution: a deterministic substring-match drop at merge_signals (same
+# layer as the geo-drift filter). Operator lists exclusion phrases in
+# `**Exclusions:**` and ANY keyword whose normalised text contains any
+# exclusion phrase is dropped from the pool BEFORE clustering / ranking /
+# report generation. The same exclusions get fed to the negatives prompt
+# (SKILL.md Step 21) as required-include Strong negatives — defense in
+# depth at the campaign level.
+
+_EXCLUSIONS_FIELD_RE: re.Pattern[str] = re.compile(
+    r"^\s*-?\s*\*\*Exclusions:\*\*\s*(.+)$",
+    re.MULTILINE | re.IGNORECASE,
+)
+
+
+def _parse_exclusions(brief_text: str) -> list[str]:
+    """Extract normalised exclusion phrases from `**Exclusions:**` in brief.md.
+
+    Returns a list of lowercased, single-space-normalised phrases. Comma-
+    separated; minimum 3 chars per phrase to avoid over-matching common short
+    words. Returns [] when the field is absent or the value is blank
+    (filter inactive, full backward compat with pre-EXCL-01 briefs).
+    """
+    if not brief_text:
+        return []
+    m = _EXCLUSIONS_FIELD_RE.search(brief_text)
+    if not m:
+        return []
+    phrases: list[str] = []
+    for chunk in m.group(1).split(","):
+        norm = re.sub(r"\s+", " ", chunk.lower()).strip()
+        # Strip punctuation that would prevent substring match against
+        # keywords like "pain-management" vs operator's "pain management".
+        norm = re.sub(r"[^\w\s]", " ", norm)
+        norm = re.sub(r"\s+", " ", norm).strip()
+        if norm and len(norm) >= 3:
+            phrases.append(norm)
+    return phrases
+
+
+def _keyword_drifts_exclusions(text: str, exclusions: list[str]) -> bool:
+    """True iff `text` contains any exclusion phrase as a normalised substring.
+
+    Empty exclusions → False (filter inactive, backward compat).
+    Case-insensitive. Substring match (not whole-word) so an exclusion
+    "chiropract" catches "chiropractor", "chiropractic", "chiropractors";
+    operator can use either the stem or the full word.
+    """
+    if not exclusions or not text:
+        return False
+    # Match the same normalisation pipeline used for the exclusions phrase
+    # list so "pain-management" in a keyword is comparable to "pain
+    # management" in the exclusions list.
+    norm = re.sub(r"[^\w\s]", " ", text.lower())
+    norm = re.sub(r"\s+", " ", norm).strip()
+    return any(p in norm for p in exclusions)
+
+
 def _build_state_filter(brief_text: str) -> set[str]:
     """Detect target US state(s) in brief.md and return states to KEEP.
 
@@ -390,6 +460,7 @@ def _keyword_drifts_geo(text: str, allowed_states: set[str]) -> bool:
 def merge_raw_files(raw_dir: Path,
                     *, allowed_states: set[str] | None = None,
                     city_filter: dict[str, set[str]] | None = None,
+                    exclusions: list[str] | None = None,
                     dropped_counter: dict[str, int] | None = None,
                     ) -> dict[str, dict]:
     """Read all raw/*.json files and merge signals into a dict keyed by lemma_hash.
@@ -404,9 +475,14 @@ def merge_raw_files(raw_dir: Path,
             When 'out' is non-empty, keywords containing any of those city
             names are dropped (GEO-03 Pitfall 5 hierarchy applied via the
             filter construction, not here).
+        exclusions: optional list of normalised phrases from brief's
+            `**Exclusions:**` field (EXCL-01). Keywords whose normalised text
+            contains any phrase as a substring are dropped — used to
+            deterministically enforce service-line + audience exclusions that
+            the Product / Audience prose alone can't guarantee.
         dropped_counter: optional dict the function increments to record
-            keyword drops per filter ('city', 'state'); enables telemetry in
-            stdout JSON.
+            keyword drops per filter ('city', 'state', 'exclusion'); enables
+            telemetry in stdout JSON.
 
     Returns:
         {lemma_hash: {"canonical": str, "lemma_hash": str, "variants": set, "sources": list}}
@@ -414,11 +490,13 @@ def merge_raw_files(raw_dir: Path,
     groups: dict[str, dict] = {}
     allowed_states = allowed_states or set()
     city_filter = city_filter or {"in": set(), "out": set()}
+    exclusions = exclusions or []
     if dropped_counter is None:
-        dropped_counter = {"city": 0, "state": 0}
+        dropped_counter = {"city": 0, "state": 0, "exclusion": 0}
     else:
         dropped_counter.setdefault("city", 0)
         dropped_counter.setdefault("state", 0)
+        dropped_counter.setdefault("exclusion", 0)
 
     def _add(text: str, attr: dict) -> None:
         """Canonicalise text and add attribution to the appropriate group."""
@@ -437,6 +515,14 @@ def merge_raw_files(raw_dir: Path,
         # (city filter inactive when geo_focus empty — backward compat).
         if _keyword_drifts_city(text, city_filter):
             dropped_counter["city"] += 1
+            return
+
+        # EXCL-01: drop keywords matching any operator-defined exclusion
+        # phrase. Backward compat — exclusions empty → no-op. Runs AFTER
+        # geo filters so the telemetry distinguishes drop reasons clearly
+        # (operator can audit each filter's effectiveness independently).
+        if _keyword_drifts_exclusions(text, exclusions):
+            dropped_counter["exclusion"] += 1
             return
 
         try:
@@ -574,11 +660,18 @@ def main_with_args(argv: list[str]) -> int:
             f"geo_focus={geo_focus}"
         )
 
-    dropped_counter: dict[str, int] = {"city": 0, "state": 0}
+    # EXCL-01: read `**Exclusions:**` from brief. Empty list → filter inactive
+    # (backward compat — pre-EXCL-01 briefs continue to work unchanged).
+    exclusions = _parse_exclusions(brief_text)
+    if exclusions:
+        log.info(f"Exclusions filter active: {len(exclusions)} phrases — {exclusions}")
+
+    dropped_counter: dict[str, int] = {"city": 0, "state": 0, "exclusion": 0}
     groups = merge_raw_files(
         raw_dir,
         allowed_states=allowed_states,
         city_filter=city_filter,
+        exclusions=exclusions,
         dropped_counter=dropped_counter,
     )
     if not groups:
@@ -610,6 +703,10 @@ def main_with_args(argv: list[str]) -> int:
         "cities_filtered_out": sorted(city_filter["out"]),
         "keywords_dropped_city_filter": dropped_counter["city"],
         "keywords_dropped_state_filter": dropped_counter["state"],
+        # EXCL-01 telemetry — operator audits per-run effectiveness of the
+        # exclusions list, decides whether to add/remove phrases for next run.
+        "exclusions": exclusions,
+        "keywords_dropped_exclusion_filter": dropped_counter["exclusion"],
     }))
     return 0
 

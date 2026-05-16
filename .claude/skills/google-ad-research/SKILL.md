@@ -77,12 +77,75 @@ Do NOT ask all five every time — that buries the operator in noise.
 | **language exclusions** | The location is multilingual (Belgium, Switzerland, Canada) and only one language matters |
 | **brand terms** | The brief names the brand or competitor brands but does not list every term/variation |
 | **competitor URLs** | The brief names competitors by name but does not provide URLs |
-| **geo_focus** | The location is at state/region level and operator hints at sub-area focus (county or city). Comma-separated list — e.g., "Palm Beach County, Lake Worth". Drives `serp_fetch.py --geo-focus` + `merge_signals.py` city filter (GEO-01..03). |
+| **exclusions** | The Product field uses "NOT X" / "excluding X" / "not including X" language OR the Audience implies a specialty exclusion (adult-only vs pediatric, human vs veterinary, MVA vs workers-comp). Comma-separated list of tokens/phrases to drop from research output ENTIRELY (positives and negatives generation alike). Drives `merge_signals.py` substring filter (EXCL-01). Examples: `pediatric, veterinary, dental, mental health, chiropractor, physical therapy, pain management, orthopedic`. See **Step 3b** below — auto-derive from Product / Audience before sealing. |
+| **geo_focus** | The location is at state/region level and operator hints at sub-area focus (county or city). Comma-separated list — e.g., "Palm Beach County, Lake Worth". Drives `serp_fetch.py --geo-focus` + `merge_signals.py` city filter (GEO-01..03). **Ambiguity guard:** if the operator's list mixes a county-level token (contains "County", "Parish", "Borough", "Province") AND a city-level token, see **Step 3a** below — you must resolve scope before advancing. |
 | **campaign_focus** | The brief targets ONE specific existing Google Ads campaign in the operator's account (rather than account-wide research). Single name OR pipe-separated list (no spaces around pipes for list form). Example: `Search \| Lake Worth Accident Exams \| Manual CPC` (single, spaced pipes = one name) or `Campaign A\|Campaign B` (list). Drives `perf_fetch.py --campaign-filter` — narrows all 4 GAQL queries to the named campaign(s); Positives Sync / Negatives Sync / Ad Group Mapping inherit the narrowed raw data automatically. Omit when researching account-wide (CAMP-04 graceful degrade). |
 
 When you ask, ask ONE field per turn. After the operator answers, re-evaluate whether other triggers now fire. Skip silently when no trigger fires.
 
-**Do not advance to Step 4 if you opened an optional follow-up loop without resolving it.**
+**Do not advance to Step 3a / Step 4 if you opened an optional follow-up loop without resolving it.**
+
+### Step 3a: Disambiguate geo_focus scope (GEO-06)
+
+This runs only when **all four** are true:
+1. The operator provided a `geo_focus` value in Step 3.
+2. The value contains at least one **county-level token** — case-insensitive substring match against `"County"`, `"Parish"`, `"Borough"`, `"Province"` (e.g., `"Palm Beach County"`, `"Orleans Parish"`, `"Staten Island Borough"`).
+3. The value ALSO contains at least one **city-level token** — any token without those keywords (e.g., `"Lake Worth"`, `"West Palm Beach"`).
+4. The two tokens are not the same area (`"Brooklyn Borough"` + `"Brooklyn"` is one place — skip the prompt).
+
+When triggered, ask the operator EXACTLY this question once, then wait for the answer:
+
+> "Your geographic focus contains both a **county-level** token (`{county_token}`) and a **city-level** token (`{city_token}`). Which scope do you want?
+>
+> **(a) City-only.** Research only `{city_token}`-area SERPs. Drops other cities within `{county_token}`. Use this when the active campaign is radius-targeted to `{city_token}` and the county appears in the brief only as broader context.
+>
+> **(b) County-wide.** Research all cities within `{county_token}` including `{city_token}`. Use this when the campaign actually targets multiple cities in the county OR when you're prepping research for future campaign expansion into other county cities.
+>
+> Reply `a` or `b`."
+
+Treat any answer other than `a` or `b` as a re-prompt (do not infer). Once the operator picks:
+
+- **If `a` (city-only):** rewrite the brief's `geo_focus` to contain ONLY the city token(s); drop the county token entirely. Append a comment line beneath the field for audit: `<!-- GEO-06: disambiguated to city-only on {ISO timestamp} -->`.
+- **If `b` (county-wide):** keep the brief's `geo_focus` as-is. Append: `<!-- GEO-06: disambiguated to county-wide on {ISO timestamp} -->`.
+
+**Why this matters.** Without the guard, "Palm Beach County, Lake Worth" silently expands into research covering WPB, Palm Beach Gardens, Wellington, Delray, Royal Palm Beach — surprising the operator when the active campaign is Lake Worth-radius-only. The 2026-05-15 dogfood run for Primary Urgent Care Centers shipped 6 out-of-scope clusters because this guard didn't exist; recovery required a full re-run.
+
+**Do not advance to Step 4 until the disambiguation question is resolved.**
+
+### Step 3b: Auto-derive Exclusions from Product + Audience (EXCL-01)
+
+This runs when **either** is true:
+1. The brief's `Product:` field contains "NOT X" / "excluding X" / "not including X" patterns (e.g., `urgent care + PIP exams (NOT chiropractor, NOT physical therapy, NOT pain management, NOT orthopedics)`).
+2. The brief's `Audience:` field implies a specialty exclusion: any of `adult`, `victim(s)`, `patient(s)`, `worker(s)`, `veteran(s)` → pediatric is implicitly out-of-audience; `human` mentioned or implied → veterinary is out-of-audience; medical/healthcare vertical → dental + mental health are out-of-audience unless Product explicitly includes them.
+
+When triggered, **derive an Exclusions list** by combining:
+- Every "NOT X" item from Product (split on commas, strip "NOT" / "excluding" / "not including" prefixes)
+- Default audience exclusions inferred from Audience semantics (e.g., adult MVA brief → add `pediatric`)
+- Default category exclusions inferred from medical vertical (when off-product) → `veterinary`, `dental`, `mental health`, `psychiatric`, `geriatric`
+
+Then ask the operator to confirm or edit the list, ONCE:
+
+> "I'm going to drop any keyword containing these phrases from the research pool entirely (positives AND negatives). The exclusions will also be auto-included as Strong wrong-audience / wrong-product negatives so they're blocked at the campaign level too.
+>
+> Derived from your Product + Audience: `{exclusions_list}`
+>
+> Reply with one of:
+> - `ok` — use this list as-is
+> - `edit: <new comma-separated list>` — replace with your own
+> - `add: <phrases>` / `remove: <phrases>` — incremental tweaks
+> - `skip` — disable the filter (use only when the LLM's prose-reading of Product is sufficient; not recommended for tight-budget single-campaign briefs)"
+
+Apply the operator's reply, then write the final list to the brief's `**Exclusions:**` field.
+
+**Rules:**
+- Phrase length minimum: 3 characters per phrase (sub-3 phrases over-match generic words; filter strips them automatically).
+- Substring match is case-insensitive. `chiropract` catches `chiropractor`, `chiropractic`, `chiropractors` — operator can use either the stem or the full word; the stem is safer.
+- The list is **additive** to negatives generation (Step 21 must auto-include each phrase as a Strong negative in `wrong-audience` or `used-refurb-wholesale` category as appropriate).
+- Skipping the filter (operator replies `skip`) is logged in the rendered brief as `<!-- EXCL-01: filter disabled by operator on {ISO timestamp} -->` for audit.
+
+**Why this matters.** The 2026-05-15 + 2026-05-16 dogfood runs both leaked off-service-line keywords (chiropractor, physical therapy, pain management) and off-audience keywords (pediatric) into positives despite Product/Audience prose explicitly excluding them. The LLM clustering / negative-gen pass reads Product as guidance, not as a contract — a deterministic substring drop at `merge_signals.py` is the contract. Operators were having to scrub `positives.csv` by hand before every Editor import.
+
+**Do not advance to Step 4 until Exclusions is set (or operator explicitly chose `skip`).**
 
 ### Step 4: Render the brief and save it
 
@@ -109,6 +172,7 @@ When all required fields are non-empty (and any opened optional follow-ups are r
 - **Language exclusions:** {language_exclusions}
 - **Brand terms:** {brand_terms}
 - **Competitor URLs:** {competitor_urls}
+- **Exclusions:** {exclusions}
 - **Geo focus:** {geo_focus}
 - **Campaign focus:** {campaign_focus}
 

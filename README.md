@@ -29,9 +29,12 @@ This skill compresses all of that into one guided session. Paste a brief, answer
 
 - **One brief → full package.** Ranked keywords, ad-group clusters, competitor ad copy + landing-page value props, tiered negatives, geo-filtered targeting, suggested Max CPC, daily budget forecast, compliance flags — all in one run.
 - **Google Ads Editor paste-ready.** Three CSVs (`positives.csv`, `negatives.csv`, `ad_groups.csv`) drop straight into Editor v2.x — no manual reformatting.
-- **Account-aware.** When connected to your Google Ads account, the skill dedupes against your existing keywords + ad groups, so you only see what's genuinely new.
-- **Campaign-focused.** Point the skill at one specific campaign in your account and it narrows everything (search terms, keywords, negatives) to that scope.
-- **Geo-precise.** Lake Worth ≠ Lake Worth Texas. The skill filters out off-target geographies before they pollute the keyword list.
+- **Budget-aware.** Set a daily cap in the brief and the report tells you exactly which keywords fit the budget (priority-sorted launch list with cumulative spend). No more "the forecast recommends $338/day on a $82 account."
+- **Brand-safe.** When you list your client's brand in `Brand terms:`, the skill will never label any variant of it as a competitor — your own branded traffic can't be accidentally suppressed.
+- **Service-line strict.** An `Exclusions:` field deterministically drops off-service keywords (e.g., chiropractor / PT / pain management) before they reach the report — not just LLM-prose guidance.
+- **Account-aware.** When connected to your Google Ads account, the skill dedupes against your existing keywords, negatives, and ad groups, so you only see what's genuinely new.
+- **Campaign-focused.** Point the skill at one specific campaign in your account and it narrows everything (search terms, keywords, negatives, ad-group mapping) to that scope.
+- **Geo-precise.** Lake Worth ≠ Lake Worth Texas. The skill filters out off-target geographies before they pollute the keyword list, and asks you to disambiguate when a brief mixes a county-level token with a city-level one.
 - **Compliance scan included.** Flags regulated verticals (medical, legal, etc.) and links to Google Ads policy verification before launch.
 - **Interactive HTML report + printable PDF.** Self-contained HTML with sortable tables and CSV export buttons; PDF for stakeholder review.
 - **Audit trail.** Every run lives in a sealed dated folder — you can rerun, diff, or hand off any past research.
@@ -87,19 +90,35 @@ In Claude Code, paste a brief. The skill activates on keywords like *"keyword re
 
 ### Example brief
 
+A minimal brief works (just the 5 required fields), but the richer the brief, the tighter the output. This is what a real client-account brief looks like:
+
 ```
 I'm running a Google Ads campaign for an urgent care clinic in Lake Worth FL,
 targeting recent car accident victims with PIP insurance coverage.
 
 Industry: medical / urgent care
-Product: car accident injury care services
+Product: urgent care exam + PIP documentation for car accident victims
+         (NOT chiropractor, NOT physical therapy, NOT pain management,
+          NOT orthopedics — those are refer-out specialties)
 Location: Lake Worth FL
 Language: en-US
 Audience: car accident victims with PIP insurance
 
-Geographic focus: Palm Beach County, Lake Worth
+Budget: $82/day / $1,600/mo
+Brand terms: Primary Urgent Care Centers, Primary Urgent Care, Primary UC, primaryuc.com
+Exclusions: chiropract, physical therapy, pain management, orthopedic,
+            pediatric, veterinary, dental, mental health, psychiatric, geriatric
+Geographic focus: Lake Worth
 Campaign focus: Search | Lake Worth Accident Exams | Manual CPC
 ```
+
+The optional fields each unlock specific guardrails:
+
+- `Budget:` → the report's **What Fits Your Cap** subsection delivers a priority-sorted launch list under your daily cap, instead of a forecast that exceeds budget.
+- `Brand terms:` → the negative-generation step is blocked from labelling any variant of your brand as a competitor.
+- `Exclusions:` → off-service-line and off-audience keywords (e.g., `pediatric urgent care lake worth`) are dropped from the keyword pool entirely, before clustering. Each exclusion is also auto-added as a Strong negative.
+- `Geo focus:` (single city) → only the city's SERPs are researched. If you mix a county and a city, the skill asks you to disambiguate before generating anything.
+- `Campaign focus:` → account dedup narrows to one named campaign so the existing-keywords / negatives / ad-groups sync isn't polluted by unrelated campaigns.
 
 ### Required fields
 
@@ -115,14 +134,15 @@ The skill enforces five required fields. If any are missing it will ask before d
 
 ### Optional fields
 
-Use these to sharpen the research. They activate extra phases:
+Use these to sharpen the research. Each one activates a specific guardrail:
 
 | Field | What it does |
 |-------|-------------|
-| **Geographic focus** | Narrows keyword discovery to specific counties or cities — drops out-of-area results before ranking. Example: `Palm Beach County, Lake Worth` |
+| **Budget** | Daily and/or monthly spend cap. Activates the **What Fits Your Cap** launch-list subsection in the report. Example: `$82/day / $1,600/mo` |
+| **Brand terms** | Comma-separated brand variants. Protects them from being labelled as competitor negatives. Example: `Acme, Acme Inc, acme.com` |
+| **Exclusions** | Comma-separated phrases (or word stems) to drop from research output entirely. Keywords containing any phrase are dropped at intake; each phrase is auto-added as a Strong negative. Use word stems for safer matching (e.g., `chiropract` catches `chiropractor`, `chiropractic`, `chiropractors`). Example: `chiropract, physical therapy, pediatric, veterinary` |
+| **Geographic focus** | Single city or comma-separated cities. Drops out-of-area SERP results before ranking. If you mix a county-level token (`Palm Beach County`) with a city-level token (`Lake Worth`), the skill asks you to clarify scope. Example: `Lake Worth` |
 | **Campaign focus** | Points the skill at one specific campaign in your Google Ads account. All account-aware features (existing keywords, negatives, ad groups, performance) narrow to that campaign. Example: `Search \| Lake Worth Accident Exams \| Manual CPC` |
-| **Budget** | Daily / monthly spend target |
-| **Brand terms** | Brand keywords to include |
 | **Competitor URLs** | Specific competitor sites to inspect |
 | **Geo exclusions** | Sub-regions to exclude (e.g., `Europe excluding UK`) |
 | **Language exclusions** | Languages to skip (for multilingual regions) |
@@ -176,19 +196,26 @@ Every run lands in a dated folder under `.runs/`. Here's what's inside:
 ```
 You:  I'm running a Google Ads campaign for an urgent care clinic in Lake
       Worth FL, targeting recent car accident victims with PIP insurance...
+      Budget $82/day, exclude chiro / PT / pain mgmt, brand is Primary UC.
 
 Skill: [confirms five required fields and any optional fields]
+       [auto-derives Exclusions from Product NOT-clauses + Audience;
+        asks operator to confirm before sealing the brief]
        [generates seed keywords, pulls SERPs, extracts landing pages,
         classifies intent, clusters, generates negatives, runs account
         sync + bid + forecast + compliance + Editor CSVs]
 
        Run complete:
-       - 86 keywords → 12 clusters (4 transactional, 2 commercial,
-         3 navigational, 3 informational)
-       - 48 negatives (33 Strong, 12 Considered, 3 Investigate)
+       - 59 keywords → 9 clusters (3 transactional, 1 commercial,
+         2 navigational, 3 informational)
+       - 59 negatives (48 Strong, 5 Considered, 5 Investigate)
        - Compliance flagged: medical + legal — verify before launch
-       - Daily spend forecast: ~$338/day (mid)
-       - Account sync: 1 already active, 4 paused, 81 new candidates
+       - Exclusions filter dropped 3 off-service keywords pre-cluster
+       - Budget Forecast: 0.49x your $82/day cap
+         → Launch list: 32 keywords at $42.46/day cumulative
+       - Account sync: 3 already active, 1 paused, 55 new candidates
+       - Negatives sync: 27 already in account, 58 new candidates
+       - Ad-group mapping coverage: 55.9% → routes to existing AGs
        - Open report.html for interactive view
 ```
 

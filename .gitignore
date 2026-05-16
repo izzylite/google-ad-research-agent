@@ -2,6 +2,7 @@
 .env
 .env.local
 *.key
+appflow_google_ads_api_team_starter/
 
 # Python
 __pycache__/

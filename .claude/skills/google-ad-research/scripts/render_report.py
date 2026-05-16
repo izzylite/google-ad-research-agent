@@ -80,11 +80,30 @@ USAGE_COMPETITORS = (
     "your responsive search ad headlines and descriptions."
 )
 USAGE_NEGATIVES = (
-    "**How to use:** add Strong-tier negatives to all campaigns immediately "
-    "(they're high-confidence noise filters). Review Considered-tier "
-    "negatives against your specific brand positioning before adding — some "
-    "may be valid traffic for your tier. Skip Investigate-tier until you "
-    "see them eat budget in search-term reports."
+    "**What this is for:** negative keywords block irrelevant searches from "
+    "triggering your ads. Untreated noise (recruitment queries, DIY "
+    "tutorials, wrong-audience searches, far-away geos) eats budget without "
+    "ever converting. Adding these up front prevents the bleed.\n\n"
+    "**Tier glossary** — read this before scrolling the list:\n\n"
+    "- **Strong** = zero plausible buyer intent for this campaign. "
+    "Recruitment (`jobs`, `careers`), DIY (`how to`, `home remedies`), "
+    "wrong audience (pediatric for an adult clinic; lawyers when you're a "
+    "doctor), wrong geo (other states / far-away cities), wrong reimbursement "
+    "model (`free clinic`, `low income`). **Action: add to the campaign on "
+    "Day 1, no review needed.**\n"
+    "- **Considered** = probably off-target, but depends on positioning. "
+    "Direct competitor brand names (you may bid on them as a counter-attack), "
+    "price-comparison terms (`cheap`, `discount`), premium qualifiers if "
+    "you're a value brand. **Action: read each row's justification against "
+    "your brand positioning, then add or skip.**\n"
+    "- **Investigate** = edge cases that might be relevant. Related-but-"
+    "different insurance regimes, generic out-of-region but possibly-"
+    "serviceable areas. **Action: skip on launch. Watch search-term reports "
+    "for 2-4 weeks; if these queries actually appear and don't convert, "
+    "promote to Strong then.**\n\n"
+    "Tip: keywords are also grouped by **category** within each tier "
+    "(jobs-careers, free-DIY-tutorial, competitor-brand, wrong-geo, wrong-"
+    "audience, used-refurb-wholesale) so you can scan or import in batches."
 )
 USAGE_ENRICHED = (
     "**How to use:** real Ahrefs data — monthly volume, CPC, Keyword "
@@ -103,20 +122,44 @@ USAGE_ACCOUNT_PERF = (
     "shows which are most efficient at conversion."
 )
 USAGE_NEG_SYNC = (
-    "**How to use:** `already_in_account` rows are negatives your account "
-    "already excludes — no action. `new_candidate` rows are missing — add "
-    "**Strong** tier to all campaigns now, review **Considered** + "
-    "**Investigate** before adding. Saves duplicate work between research "
-    "and account audit."
+    "**What this is for:** cross-references the negatives we generated "
+    "against the negatives already in your Google Ads account, so you only "
+    "see net-new candidates to add — no duplicate Editor work.\n\n"
+    "**Bucket glossary:**\n\n"
+    "- **already in account** = our generated negative already exists in "
+    "your account's negative list (matched via normalised string). "
+    "**Action: none — already covered.**\n"
+    "- **new candidate** = negative isn't in your account yet. "
+    "**Action: paste into the Editor from `negatives.csv`.**\n\n"
+    "Within the new-candidate bucket, rows keep their **tier** (Strong / "
+    "Considered / Investigate — see the Negative Keywords section above "
+    "for tier definitions). **Add Strong first, review Considered against "
+    "brand positioning, skip Investigate until search-term data justifies "
+    "them.**"
 )
 USAGE_POS_SYNC = (
-    "**How to use:** compare our ranked positives against the live Google "
-    "Ads account. `new to add` rows are what to paste into positives.csv "
-    "for the Editor import. `already active` / `paused` / `covered by "
-    "broad` are surfaced as count-only audit signals — drill into "
-    "`positives-sync.json` if you want the full per-row breakdown. Section "
-    "omits gracefully when `positives-sync.json` is absent (no Google Ads "
-    "OAuth wired)."
+    "**What this is for:** cross-references our ranked positives against "
+    "the live keyword list in your Google Ads account, so you don't waste "
+    "Editor imports on keywords that already exist.\n\n"
+    "**Bucket glossary:**\n\n"
+    "- **already active** = our keyword is already ENABLED in your "
+    "campaign (exact match or normalised close variant). "
+    "**Action: none — covered.**\n"
+    "- **paused in account** = the keyword exists in the account but is "
+    "PAUSED. **Action: decide whether to re-enable the existing one, or "
+    "add a fresh variant if performance was the reason it was paused.**\n"
+    "- **covered by broad** = an active broad / phrase keyword in the "
+    "account would already match this query. **Action: none — broad "
+    "coverage exists; only narrow into exact if you want tighter ad "
+    "copy for a SKAG.**\n"
+    "- **new to add** = our keyword is genuinely net-new — not in the "
+    "account in any form. **Action: paste from `positives.csv` into "
+    "the Editor.**\n\n"
+    "Bucket detection runs a normalised string match first, then a Claude "
+    "re-tag pass (Step 34a) catches token reorders, semantic synonyms "
+    "(e.g. *physician* = *doctor*), and match-type drift. The `retag_"
+    "reason` field on individual rows in `positives-sync.json` shows which "
+    "rule applied."
 )
 
 TIER_ORDER = ["Strong", "Considered", "Investigate"]
@@ -167,9 +210,22 @@ def _micros_to_usd(micros: int | None) -> str:
     return f"${micros / 1_000_000:.2f}"
 
 TIER_DESCRIPTIONS = {
-    "Strong": "Add to all campaigns unconditionally.",
-    "Considered": "Add if brand is premium-positioned; review before adding for value-tier brands.",
-    "Investigate": "Needs operator review — may be valid traffic depending on campaign goal.",
+    "Strong": (
+        "Zero plausible buyer intent (jobs, DIY, wrong audience, wrong "
+        "geo, wrong reimbursement model). **Add to all campaigns "
+        "unconditionally on Day 1.**"
+    ),
+    "Considered": (
+        "Probably off-target but depends on positioning (competitor "
+        "brands, price-comparison terms, premium/value qualifiers). "
+        "**Read each justification against your brand stance, then add "
+        "or skip.**"
+    ),
+    "Investigate": (
+        "Edge cases that *might* be relevant (related insurance regimes, "
+        "borderline geos). **Skip on launch. Promote to Strong if they "
+        "appear in search-term reports without converting.**"
+    ),
 }
 
 
@@ -385,12 +441,20 @@ def render_enriched_keyword_table(ranked: list[dict], top_n: int = 100) -> str:
     return tabulate(rows, headers=headers, tablefmt="github")
 
 
-def render_account_perf_section(perf: dict) -> str:
-    """Render the Account Performance section (markdown)."""
+def render_account_perf_section(
+    perf: dict, campaign_focus: list[str] | None = None,
+) -> str:
+    """Render the Account Performance section (markdown).
+
+    When ``campaign_focus`` is non-empty, the section is labelled
+    "Campaign Performance" because perf_fetch narrowed the raw data to
+    those campaigns — "Account Performance" would misrepresent scope.
+    """
     if not perf or not isinstance(perf, dict):
         return ""
+    heading = "Campaign Performance" if campaign_focus else "Account Performance"
     parts = [
-        f"## Account Performance — last {perf.get('horizon_days', 30)} days\n\n",
+        f"## {heading} — last {perf.get('horizon_days', 30)} days\n\n",
         USAGE_ACCOUNT_PERF, "\n",
     ]
     t = perf.get("totals", {})
@@ -408,6 +472,13 @@ def render_account_perf_section(perf: dict) -> str:
 
     converted = perf.get("converted_search_terms", [])
     parts.append(f"\n### Converted search terms ({len(converted)})\n")
+    parts.append(
+        "\n_Real user queries that triggered a conversion in the last 30 "
+        "days — not your bid keywords, what was actually typed. These prove "
+        "buyer intent. **Action:** bid harder on the matching keywords, or "
+        "promote them into a dedicated single-keyword ad group with tighter "
+        "ad copy._\n"
+    )
     if not converted:
         parts.append("\n_No converted search terms in this window — too few "
                      "conversions tracked in active campaigns._\n")
@@ -428,6 +499,12 @@ def render_account_perf_section(perf: dict) -> str:
 
     lossy = perf.get("lossy_search_terms", [])
     parts.append(f"\n### Lossy search terms — negative keyword candidates ({len(lossy)})\n")
+    parts.append(
+        "\n_Queries that got clicks but never converted — they're eating "
+        "budget. **Action:** add as Strong negatives unless the gap is "
+        "attribution lag (long sales cycle) or the query is genuinely "
+        "relevant and just needs better landing-page match._\n"
+    )
     if not lossy:
         parts.append("\n_No lossy terms detected._\n")
     else:
@@ -446,6 +523,12 @@ def render_account_perf_section(perf: dict) -> str:
 
     by_roas = perf.get("top_by_roas", [])
     parts.append(f"\n### Top campaigns by ROAS ({len(by_roas)})\n")
+    parts.append(
+        "\n_Revenue per ad dollar (1.0x = breakeven, 3.0x = $3 returned per "
+        "$1 spent). **Action:** scale top performers (add budget); pause "
+        "anything well below your target ROAS. With a `Campaign focus:` set "
+        "in the brief, this narrows to the targeted campaign(s) only._\n"
+    )
     if not by_roas:
         parts.append("\n_No campaigns with positive ROAS in window._\n")
     else:
@@ -946,10 +1029,50 @@ def render_forecast_section(forecast: dict | None) -> str:
 
     parts = ["## Budget Forecast\n\n"]
     parts.append(
-        "_Directional estimates — not Google's official forecast. Use the "
-        "**mid** band for a sane Day 1 budget; bracket with low/high once "
-        "click-through data lands._\n\n"
+        "**What this is for:** previews what this keyword list would cost "
+        "to run, before you commit budget. Each cluster gets **low / mid / "
+        "high** bands for daily clicks, daily spend, and a mid monthly "
+        "total. The bands capture auction volatility — actual numbers "
+        "land inside the range on most accounts.\n\n"
+        "**How to use:**\n\n"
+        "1. **Set Day 1 daily budget** from the campaign **mid** total. "
+        "If it exceeds the client's cap, trim informational clusters or "
+        "tighten Max CPCs in [Suggested CPC] before launch.\n"
+        "2. **Sanity-check ROAS.** Mid spend × target CPA = conversions "
+        "needed to break even. If that number looks unrealistic given "
+        "the mid clicks band, the brief needs more budget or a "
+        "narrower keyword scope.\n"
+        "3. **Brief stakeholders with low / high.** Use the low band "
+        "to show downside risk; use high to set upside expectations. "
+        "Have that conversation **before** launch, not after week 1.\n\n"
+        "_Directional only — not Google's Performance Planner. Real "
+        "numbers shift ±30-50% with ad relevance, quality scores, and "
+        "seasonality. Re-run forecast after 2 weeks of live data for "
+        "an account-calibrated version._\n\n"
     )
+
+    # FRCS-06 over-cap warning — sits ABOVE the cluster table so the operator
+    # sees the scope mismatch before scrolling the numbers.
+    clamp = forecast.get("budget_clamp")
+    if clamp and clamp.get("over_cap_ratio") is not None and clamp["over_cap_ratio"] > 1.0:
+        parts.append(
+            f"> ⚠ **Forecast is {clamp['over_cap_ratio']}x your "
+            f"${clamp['daily_cap_usd']:.2f}/day cap.** The full keyword "
+            f"pool can't be bid at this budget. See the **What Fits Your "
+            f"Cap** subsection below for the priority-sorted launch list "
+            f"({clamp['fitting_count']} keywords, "
+            f"${clamp['cumulative_spend_mid_usd']:.2f}/day mid). The "
+            f"keywords NOT in the launch list stay in research output for "
+            f"future campaign expansion (either they'd push spend over cap, "
+            f"or they lack the volume/CPC data needed to forecast).\n\n"
+        )
+    elif clamp and clamp.get("over_cap_ratio") is not None:
+        parts.append(
+            f"> ✓ **Forecast fits your ${clamp['daily_cap_usd']:.2f}/day cap** "
+            f"({clamp['over_cap_ratio']}x ratio). All {clamp['fitting_count']} "
+            f"bidable keywords land within budget — full pool is the launch "
+            f"list.\n\n"
+        )
 
     # Per-cluster table
     rows = []
@@ -994,6 +1117,58 @@ def render_forecast_section(forecast: dict | None) -> str:
             f"${totals.get('daily_spend_high_usd', 0):.2f} daily spend · "
             f"${totals.get('monthly_spend_mid_usd', 0):.2f} monthly (mid).\n\n"
         )
+
+    # FRCS-06: "What fits your cap" priority-sorted launch list — only renders
+    # when brief carries `**Budget:**`. Operator sees the actual keywords they
+    # should put behind the budget cap, sorted highest-intent first with a
+    # running cumulative spend column so they can eyeball the cutoff.
+    if clamp and clamp.get("keywords_fitting_cap"):
+        parts.append("\n### What Fits Your Cap\n\n")
+        parts.append(
+            f"_Priority-sorted launch list at the **${clamp['daily_cap_usd']:.2f}/day** "
+            f"cap. Sort: transactional → commercial → navigational → informational; "
+            f"within each, signal_count desc then score desc. Cumulative spend "
+            f"tops out at **${clamp['cumulative_spend_mid_usd']:.2f}/day "
+            f"({clamp['fitting_count']} keywords)** — well within the "
+            f"${clamp['daily_cap_usd']:.2f}/day cap. This is your Day 1 "
+            f"launch list; everything else stays in research output for "
+            f"future expansion._\n\n"
+        )
+        rows = []
+        for r in clamp["keywords_fitting_cap"]:
+            rows.append([
+                escape_md_cell(r.get("keyword", "")),
+                escape_md_cell(r.get("intent", "")),
+                escape_md_cell(r.get("cluster", "")),
+                r.get("score", 0),
+                f"${r.get('daily_spend_mid_usd', 0):.2f}",
+                f"${r.get('cumulative_spend_usd', 0):.2f}",
+            ])
+        parts.append(tabulate(
+            rows,
+            headers=[
+                "Keyword", "Intent", "Cluster",
+                "Score", "Daily Spend Mid", "Cumulative",
+            ],
+            tablefmt="github",
+        ))
+        parts.append("\n\n")
+        if clamp.get("keywords_dropped"):
+            dropped_preview = clamp["keywords_dropped"][:10]
+            more = len(clamp["keywords_dropped"]) - len(dropped_preview)
+            preview_str = ", ".join(
+                f"`{escape_md_cell(k)}`" for k in dropped_preview
+            )
+            parts.append(
+                f"**Dropped from launch list** ({clamp['dropped_count']} "
+                f"keywords): {preview_str}"
+            )
+            if more > 0:
+                parts.append(f", and {more} more")
+            parts.append(
+                ". See `forecast.json` → `budget_clamp.keywords_dropped[]` "
+                "for the complete list.\n\n"
+            )
 
     # "How this is calculated" — FRCS-05 methodology mirrors module constants
     method = forecast.get("methodology", {}) or {}
@@ -1362,7 +1537,12 @@ def render_full_report(
     # Account perf first (real campaign data, action-this-week)
     if account_perf:
         sections.append("\n")
-        sections.append(render_account_perf_section(account_perf))
+        _camp_focus_for_perf = _split_campaign_focus(
+            (brief_fields_for_geo.get("campaign_focus") or "").strip()
+        )
+        sections.append(render_account_perf_section(
+            account_perf, campaign_focus=_camp_focus_for_perf,
+        ))
     # Negatives sync (action: what to add to account)
     if negatives_sync:
         sections.append("\n")
@@ -1592,12 +1772,21 @@ Keyword Planner for actual volume + CPC.
 
 <section id="forecast" style="display:none">
   <h2>Budget Forecast <span class="cluster-meta" id="forecastMeta"></span></h2>
-  <div class="usage"><strong>How to use:</strong> directional estimates only. Use the <strong>mid</strong> band for a sane Day 1 budget; bracket with low/high once click-through data lands. NOT Google's official forecast.</div>
+  <div class="usage">
+    <p style="margin:0 0 8px"><strong>What this is for:</strong> previews what this keyword list would cost to run, before you commit budget. Each cluster gets <strong>low / mid / high</strong> bands for daily clicks, daily spend, and a mid monthly total. The bands capture auction volatility — actual numbers land inside the range on most accounts.</p>
+    <p style="margin:0 0 4px"><strong>How to use:</strong></p>
+    <ol style="margin:0 0 8px;padding-left:20px">
+      <li><strong>Set Day 1 daily budget</strong> from the campaign <strong>mid</strong> total. If it exceeds the client's cap, trim informational clusters or tighten Max CPCs before launch.</li>
+      <li><strong>Sanity-check ROAS.</strong> Mid spend × target CPA = conversions needed to break even. If that number looks unrealistic given the mid clicks band, the brief needs more budget or a narrower keyword scope.</li>
+      <li><strong>Brief stakeholders with low / high.</strong> Use the low band to show downside risk; use high to set upside expectations. Have that conversation <em>before</em> launch, not after week 1.</li>
+    </ol>
+    <p style="margin:0;font-size:12px;color:#555"><em>Directional only — not Google's Performance Planner. Real numbers shift ±30-50% with ad relevance, quality scores, and seasonality. Re-run forecast after 2 weeks of live data for an account-calibrated version.</em></p>
+  </div>
   <div id="forecastContent"></div>
 </section>
 
 <section id="account-perf">
-  <h2>Account Performance <span class="cluster-meta" id="perfMeta"></span></h2>
+  <h2><span id="perfTitle">Account Performance</span> <span class="cluster-meta" id="perfMeta"></span></h2>
   <div class="usage"><strong>How to use:</strong> what your account actually did. <strong>Converted search terms</strong> are gold — bid harder. <strong>Lossy search terms</strong> (clicks no conv) = negative candidates. <strong>Top by ROAS</strong> = scale candidates.</div>
   <div id="perfContent">
     <p style="color:#666;font-size:13px;">No account-perf.json — run Phase 8 perf_fetch + perf_synth.</p>
@@ -1606,7 +1795,15 @@ Keyword Planner for actual volume + CPC.
 
 <section id="negatives-sync">
   <h2>Negative Keyword Sync <span class="cluster-meta" id="negSyncMeta"></span></h2>
-  <div class="usage"><strong>How to use:</strong> cross-references our generated negatives vs your account's existing negative list. <strong>New candidates</strong> are what to add to the account — Strong tier first.</div>
+  <div class="usage">
+    <p style="margin:0 0 8px"><strong>What this is for:</strong> cross-references the negatives we generated against the negatives already in your Google Ads account, so you only see net-new candidates to add — no duplicate Editor work.</p>
+    <p style="margin:0 0 4px"><strong>Bucket glossary:</strong></p>
+    <ul style="margin:0 0 8px;padding-left:20px">
+      <li><strong>already in account</strong> = our generated negative already exists in your account's negative list (matched via normalised string). <em>Action: none — already covered.</em></li>
+      <li><strong>new candidate</strong> = negative isn't in your account yet. <em>Action: paste into the Editor from <code>negatives.csv</code>.</em></li>
+    </ul>
+    <p style="margin:0;font-size:12px;color:#555">Within the new-candidate bucket, rows keep their <strong>tier</strong> (Strong / Considered / Investigate — see the Negative Keywords section below for full tier definitions). <strong>Add Strong first</strong>, review Considered against brand positioning, skip Investigate until search-term data justifies them.</p>
+  </div>
   <div id="negSyncContent">
     <p style="color:#666;font-size:13px;">No negatives-sync.json — run Phase 8 perf_synth.</p>
   </div>
@@ -1614,7 +1811,17 @@ Keyword Planner for actual volume + CPC.
 
 <section id="positives-sync">
   <h2>Positives Sync <span class="cluster-meta" id="posSyncMeta"></span></h2>
-  <div class="usage"><strong>How to use:</strong> compares our ranked positives vs your account's live keyword list. <strong>New to add</strong> rows are what to paste into positives.csv for the Editor import. <em>Already active</em> / <em>paused</em> / <em>covered by broad</em> are audit signals — drill into positives-sync.json for full per-row data.</div>
+  <div class="usage">
+    <p style="margin:0 0 8px"><strong>What this is for:</strong> cross-references our ranked positives against the live keyword list in your Google Ads account, so you don't waste Editor imports on keywords that already exist.</p>
+    <p style="margin:0 0 4px"><strong>Bucket glossary:</strong></p>
+    <ul style="margin:0 0 8px;padding-left:20px">
+      <li><strong>already active</strong> = our keyword is already ENABLED in your campaign (exact match or normalised close variant). <em>Action: none — covered.</em></li>
+      <li><strong>paused in account</strong> = the keyword exists in the account but is PAUSED. <em>Action: decide whether to re-enable, or add a fresh variant if performance was the reason it was paused.</em></li>
+      <li><strong>covered by broad</strong> = an active broad / phrase keyword in the account would already match this query. <em>Action: none — broad coverage exists; only narrow into exact if you want tighter ad copy for a SKAG.</em></li>
+      <li><strong>new to add</strong> = our keyword is genuinely net-new — not in the account in any form. <em>Action: paste from <code>positives.csv</code> into the Editor.</em></li>
+    </ul>
+    <p style="margin:0;font-size:12px;color:#555">Bucket detection runs a normalised string match first, then a Claude re-tag pass (Step 34a) catches token reorders, semantic synonyms (e.g. <em>physician</em> = <em>doctor</em>), and match-type drift. The <code>retag_reason</code> field on individual rows in <code>positives-sync.json</code> shows which rule applied.</p>
+  </div>
   <div id="posSyncContent">
     <p style="color:#666;font-size:13px;">No positives-sync.json — run Phase 14 perf_synth.</p>
   </div>
@@ -1638,7 +1845,16 @@ Keyword Planner for actual volume + CPC.
 
 <section>
   <h2>Negative Keywords</h2>
-  <div class="usage"><strong>How to use:</strong> add <span class="tier-Strong">Strong</span> negatives to all campaigns immediately (high-confidence noise filters). Review <span class="tier-Considered">Considered</span> negatives against your brand positioning before adding. Skip <span class="tier-Investigate">Investigate</span> until they show up eating budget in search-term reports.</div>
+  <div class="usage">
+    <p style="margin:0 0 8px"><strong>What this is for:</strong> negative keywords block irrelevant searches from triggering your ads. Untreated noise (recruitment queries, DIY tutorials, wrong-audience searches, far-away geos) eats budget without ever converting. Adding these up front prevents the bleed.</p>
+    <p style="margin:0 0 4px"><strong>Tier glossary</strong> — read this before scrolling the list:</p>
+    <ul style="margin:0 0 8px;padding-left:20px">
+      <li><span class="tier-Strong">Strong</span> = zero plausible buyer intent for this campaign. Recruitment (<code>jobs</code>, <code>careers</code>), DIY (<code>how to</code>, <code>home remedies</code>), wrong audience (pediatric for an adult clinic; lawyers when you're a doctor), wrong geo (other states / far-away cities), wrong reimbursement model (<code>free clinic</code>, <code>low income</code>). <strong>Action: add to the campaign on Day 1, no review needed.</strong></li>
+      <li><span class="tier-Considered">Considered</span> = probably off-target, but depends on positioning. Direct competitor brand names (you may bid on them as a counter-attack), price-comparison terms (<code>cheap</code>, <code>discount</code>), premium qualifiers if you're a value brand. <strong>Action: read each row's justification against your brand positioning, then add or skip.</strong></li>
+      <li><span class="tier-Investigate">Investigate</span> = edge cases that <em>might</em> be relevant. Related-but-different insurance regimes, generic out-of-region but possibly-serviceable areas. <strong>Action: skip on launch. Watch search-term reports for 2-4 weeks; if these queries actually appear and don't convert, promote to Strong then.</strong></li>
+    </ul>
+    <p style="margin:0;font-size:12px;color:#555">Keywords are also grouped by <strong>category</strong> within each tier (jobs-careers, free-DIY-tutorial, competitor-brand, wrong-geo, wrong-audience, used-refurb-wholesale) so you can scan or import in batches. Use the filter input above to narrow by keyword text or justification; use the tier dropdown to focus on one tier at a time.</p>
+  </div>
   <div class="toolbar">
     <input id="negFilter" placeholder="Filter negatives…">
     <select id="negTierFilter">
@@ -1757,10 +1973,15 @@ function renderKeywords() {{
 
 function renderAccountPerf() {{
   const perf = REPORT.account_perf || {{}};
+  const title = document.getElementById("perfTitle");
   const meta = document.getElementById("perfMeta");
   const content = document.getElementById("perfContent");
   if (!perf || !perf.synthesized_at) return;
   const t = perf.totals || {{}};
+  if (title) {{
+    const isFiltered = (REPORT.campaign_focus || []).length > 0;
+    title.textContent = isFiltered ? "Campaign Performance" : "Account Performance";
+  }}
   meta.textContent = `last ${{perf.horizon_days||30}} days · $${{(t.spend_usd||0).toLocaleString()}} spend · ${{t.conversions||0}} conv`;
   const tbl = (rows, headers, fmt) => {{
     if (!rows.length) return "<p style='color:#666;font-size:13px'>None.</p>";
@@ -1770,20 +1991,28 @@ function renderAccountPerf() {{
     <strong>Totals:</strong> spend $${{(t.spend_usd||0).toLocaleString()}} · clicks ${{(t.clicks||0).toLocaleString()}} · conv ${{t.conversions||0}} · blended CPA ${{t.blended_cpa_usd ? '$'+t.blended_cpa_usd : '—'}} · ROAS ${{t.blended_roas ? t.blended_roas+'x' : '—'}}
   </div>`;
 
+  const subUsage = (txt) => `<p style="margin:8px 0 10px;font-size:12px;color:#555;line-height:1.5">${{txt}}</p>`;
+
   const conv = perf.converted_search_terms || [];
-  html += `<details open><summary>Converted search terms <span class="cluster-meta">${{conv.length}}</span></summary>` + tbl(conv.slice(0,15),
+  html += `<details open><summary>Converted search terms <span class="cluster-meta">${{conv.length}}</span></summary>`
+    + subUsage("Real user queries that triggered a conversion in the last 30 days — not your bid keywords, what was actually typed. These prove buyer intent. <strong>Action:</strong> bid harder on the matching keywords, or promote them into a dedicated single-keyword ad group with tighter ad copy.")
+    + tbl(conv.slice(0,15),
     ["Search Term","Conv","Clicks","Cost","Campaign"],
     r => [htmlEscape(r.search_term), r.conversions.toFixed(1), r.clicks, `$${{r.cost_usd.toFixed(2)}}`, htmlEscape(r.campaign_name)]
   ) + `</details>`;
 
   const lossy = perf.lossy_search_terms || [];
-  html += `<details><summary>Lossy search terms — negative candidates <span class="cluster-meta">${{lossy.length}}</span></summary>` + tbl(lossy.slice(0,15),
+  html += `<details><summary>Lossy search terms — negative candidates <span class="cluster-meta">${{lossy.length}}</span></summary>`
+    + subUsage("Queries that got clicks but never converted — they're eating budget. <strong>Action:</strong> add as Strong negatives unless the gap is attribution lag (long sales cycle) or the query is genuinely relevant and just needs better landing-page match.")
+    + tbl(lossy.slice(0,15),
     ["Search Term","Clicks","Cost","Campaign"],
     r => [htmlEscape(r.search_term), r.clicks, `$${{r.cost_usd.toFixed(2)}}`, htmlEscape(r.campaign_name)]
   ) + `</details>`;
 
   const roas = perf.top_by_roas || [];
-  html += `<details><summary>Top campaigns by ROAS <span class="cluster-meta">${{roas.length}}</span></summary>` + tbl(roas.slice(0,10),
+  html += `<details><summary>Top campaigns by ROAS <span class="cluster-meta">${{roas.length}}</span></summary>`
+    + subUsage("Revenue per ad dollar (1.0x = breakeven, 3.0x = $3 returned per $1 spent). <strong>Action:</strong> scale top performers (add budget); pause anything well below your target ROAS. With a <code>Campaign focus:</code> set in the brief, this narrows to the targeted campaign(s) only.")
+    + tbl(roas.slice(0,10),
     ["Campaign","Status","Spend","Clicks","Conv","ROAS"],
     r => [htmlEscape(r.name), r.status, `$${{r.cost_usd.toFixed(2)}}`, r.clicks, r.conversions.toFixed(1), `${{r.roas.toFixed(2)}}x`]
   ) + `</details>`;
@@ -1884,7 +2113,29 @@ function renderForecast() {{
     return String(v);
   }};
   meta.textContent = `${{clusters.length}} clusters · $${{(totals.daily_spend_mid_usd||0).toFixed(2)}}/day mid · $${{(totals.monthly_spend_mid_usd||0).toFixed(2)}}/mo`;
-  let html = `<div style="background:#ecfdf5;border-left:4px solid #10b981;padding:10px 14px;margin-bottom:12px;border-radius:4px;font-size:13px"><strong>Campaign Totals:</strong> Daily ${{fmtClicks(totals.daily_clicks_low||0)}}/${{fmtClicks(totals.daily_clicks_mid||0)}}/${{fmtClicks(totals.daily_clicks_high||0)}} clicks · $${{(totals.daily_spend_low_usd||0).toFixed(2)}}/$${{(totals.daily_spend_mid_usd||0).toFixed(2)}}/$${{(totals.daily_spend_high_usd||0).toFixed(2)}} daily spend · $${{(totals.monthly_spend_mid_usd||0).toFixed(2)}} monthly (mid)</div>`;
+  let html = "";
+
+  // FRCS-06 over-cap warning — sits ABOVE Campaign Totals so the budget
+  // mismatch is the first thing the operator sees in this section.
+  const clamp = forecast.budget_clamp;
+  if (clamp && clamp.over_cap_ratio != null) {{
+    if (clamp.over_cap_ratio > 1.0) {{
+      html += `<div style="background:#fef2f2;border-left:4px solid #dc2626;padding:12px 16px;margin-bottom:12px;border-radius:4px;font-size:14px">
+        ⚠ <strong>Forecast is ${{clamp.over_cap_ratio}}x your $${{clamp.daily_cap_usd.toFixed(2)}}/day cap.</strong>
+        The full ${{totals.keyword_count||0}}-keyword pool can't be bid at this budget.
+        See <strong>What Fits Your Cap</strong> below for the priority-sorted launch list
+        (${{clamp.fitting_count}} keywords, $${{clamp.cumulative_spend_mid_usd.toFixed(2)}}/day mid).
+        The remaining ${{clamp.dropped_count}} keywords stay in research output for future campaign expansion.
+      </div>`;
+    }} else {{
+      html += `<div style="background:#ecfdf5;border-left:4px solid #10b981;padding:10px 14px;margin-bottom:12px;border-radius:4px;font-size:13px">
+        ✓ <strong>Forecast fits your $${{clamp.daily_cap_usd.toFixed(2)}}/day cap</strong>
+        (${{clamp.over_cap_ratio}}x ratio). All ${{clamp.fitting_count}} bidable keywords land within budget.
+      </div>`;
+    }}
+  }}
+
+  html += `<div style="background:#ecfdf5;border-left:4px solid #10b981;padding:10px 14px;margin-bottom:12px;border-radius:4px;font-size:13px"><strong>Campaign Totals:</strong> Daily ${{fmtClicks(totals.daily_clicks_low||0)}}/${{fmtClicks(totals.daily_clicks_mid||0)}}/${{fmtClicks(totals.daily_clicks_high||0)}} clicks · $${{(totals.daily_spend_low_usd||0).toFixed(2)}}/$${{(totals.daily_spend_mid_usd||0).toFixed(2)}}/$${{(totals.daily_spend_high_usd||0).toFixed(2)}} daily spend · $${{(totals.monthly_spend_mid_usd||0).toFixed(2)}} monthly (mid)</div>`;
   html += `<table><thead><tr><th>Cluster</th><th>Intent</th><th>Keywords</th><th>Daily Clicks (lo/mid/hi)</th><th>Daily Spend (lo/mid/hi)</th><th>Monthly Spend Mid</th></tr></thead><tbody>`;
   for (const c of clusters) {{
     html += `<tr>
@@ -1897,6 +2148,41 @@ function renderForecast() {{
     </tr>`;
   }}
   html += `</tbody></table>`;
+
+  // FRCS-06: "What Fits Your Cap" subsection — only renders when brief
+  // carried `**Budget:**` so the clamp was computed. Operator sees the
+  // priority-sorted launch list inline; full dropped list lives in
+  // forecast.json → budget_clamp.keywords_dropped[] for audit.
+  if (clamp && clamp.keywords_fitting_cap && clamp.keywords_fitting_cap.length) {{
+    html += `<h3 style="margin-top:20px">What Fits Your Cap</h3>`;
+    html += `<p style="font-size:13px;color:#555;margin:0 0 8px">
+      Priority-sorted launch list at the <strong>$${{clamp.daily_cap_usd.toFixed(2)}}/day</strong> cap.
+      Sort: transactional → commercial → navigational → informational; within each, signal_count desc then score desc.
+      Cumulative spend tops out at <strong>$${{clamp.cumulative_spend_mid_usd.toFixed(2)}}/day (${{clamp.fitting_count}} keywords)</strong>.
+      The remaining ${{clamp.dropped_count}} ranked keywords are research output only — drop from the Editor import or import paused, revisit when budget grows.
+    </p>`;
+    html += `<table><thead><tr><th>Keyword</th><th>Intent</th><th>Cluster</th><th data-sort="number">Score</th><th data-sort="number">Daily Spend Mid</th><th data-sort="number">Cumulative</th></tr></thead><tbody>`;
+    for (const r of clamp.keywords_fitting_cap) {{
+      html += `<tr>
+        <td><code>${{htmlEscape(r.keyword||"")}}</code></td>
+        <td><span class="intent-tag intent-${{r.intent||""}}">${{r.intent||""}}</span></td>
+        <td>${{htmlEscape(r.cluster||"")}}</td>
+        <td>${{r.score||0}}</td>
+        <td>$${{(r.daily_spend_mid_usd||0).toFixed(2)}}</td>
+        <td>$${{(r.cumulative_spend_usd||0).toFixed(2)}}</td>
+      </tr>`;
+    }}
+    html += `</tbody></table>`;
+    if (clamp.keywords_dropped && clamp.keywords_dropped.length) {{
+      const preview = clamp.keywords_dropped.slice(0, 10).map(k => `<code>${{htmlEscape(k)}}</code>`).join(", ");
+      const more = clamp.keywords_dropped.length - 10;
+      html += `<details style="margin-top:10px"><summary><strong>Dropped from launch list</strong> <span class="cluster-meta">${{clamp.keywords_dropped.length}} keywords</span></summary>
+        <p style="font-size:13px;color:#555;margin-top:8px">${{preview}}${{more > 0 ? ", and "+more+" more" : ""}}.</p>
+        <p style="font-size:12px;color:#888">Full list: <code>forecast.json → budget_clamp.keywords_dropped[]</code></p>
+      </details>`;
+    }}
+  }}
+
   const method = forecast.methodology || {{}};
   const ctrs = method.intent_ctrs || {{}};
   const ratio = method.avg_cpc_ratio || 0.65;

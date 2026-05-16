@@ -59,6 +59,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -207,6 +208,199 @@ def compute_cluster_forecast(
 
 
 # ---------------------------------------------------------------------------
+# Budget clamp (FRCS-06 — read Budget: from brief; emit what-fits-cap subset)
+# ---------------------------------------------------------------------------
+
+# Priority order for fitting the cap: highest-intent first, then by score desc.
+# Transactional keywords are the only ones with launch-day buyer-intent ROI;
+# commercial sits below; navigational only fires on its own brand searches;
+# informational rarely converts in the launch budget. The order matters when
+# we're trimming a too-broad pool to a tight cap.
+_INTENT_PRIORITY: dict[str, int] = {
+    "transactional": 0,
+    "commercial":    1,
+    "navigational":  2,
+    "informational": 3,
+}
+
+
+def _parse_daily_budget_usd(brief_path: Path) -> float | None:
+    """Extract a daily-budget cap from `**Budget:**` in brief.md.
+
+    Accepts common shorthand forms:
+        "$82/day"            → 82.0
+        "$82/day / $1,600/mo" → 82.0  (prefers /day when both present)
+        "$1,600/mo"          → 53.33 (monthly / 30)
+        "$82"                → 82.0  (no period — assume daily)
+
+    Returns None when brief.md is missing, the line is absent, or no
+    dollar amount can be parsed. Caller treats None as "no cap" — no
+    clamp applied, full forecast surfaces unmodified.
+    """
+    if not brief_path.exists():
+        return None
+    try:
+        text = brief_path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    m = re.search(
+        r"^\s*-?\s*\*\*Budget:\*\*\s*(.+)$",
+        text,
+        re.MULTILINE | re.IGNORECASE,
+    )
+    if not m:
+        return None
+    raw = m.group(1).strip()
+
+    # Try "/day" first — it's the canonical daily cap.
+    day_match = re.search(
+        r"\$\s*([\d,]+(?:\.\d+)?)\s*(?:/|\s)*day",
+        raw, re.IGNORECASE,
+    )
+    if day_match:
+        try:
+            return float(day_match.group(1).replace(",", ""))
+        except ValueError:
+            return None
+
+    # Fall back to "/mo" or "/month" — divide by 30.
+    mo_match = re.search(
+        r"\$\s*([\d,]+(?:\.\d+)?)\s*(?:/|\s)*(?:mo|month)",
+        raw, re.IGNORECASE,
+    )
+    if mo_match:
+        try:
+            return round(float(mo_match.group(1).replace(",", "")) / 30.0, 2)
+        except ValueError:
+            return None
+
+    # No period — first dollar amount, assume daily.
+    bare_match = re.search(r"\$\s*([\d,]+(?:\.\d+)?)", raw)
+    if bare_match:
+        try:
+            return float(bare_match.group(1).replace(",", ""))
+        except ValueError:
+            return None
+    return None
+
+
+def _per_keyword_daily_spend_usd(row: dict) -> float | None:
+    """Compute per-keyword mid daily spend in USD, or None when unbidable.
+
+    Mirrors the cluster-aggregate math but for a single ranked-enriched row.
+    Returns None when volume or suggested_max_cpc_micros is absent — those
+    rows can't be bid on at any budget.
+    """
+    volume = row.get("volume")
+    sugg_cpc = row.get("suggested_max_cpc_micros")
+    intent = row.get("intent", "") or ""
+    if volume is None or sugg_cpc is None:
+        return None
+    ctr = INTENT_CTRS.get(intent, 0.0)
+    if ctr == 0.0:
+        return None
+    monthly_clicks = float(volume) * ctr
+    daily_clicks = monthly_clicks / 30.0
+    avg_cpc_micros = float(sugg_cpc) * AVG_CPC_RATIO
+    daily_spend_micros = daily_clicks * avg_cpc_micros
+    return round(daily_spend_micros / 1_000_000, 4)
+
+
+def compute_budget_clamp(
+    ranked_enriched: list[dict],
+    clusters_data: dict,
+    daily_cap_usd: float | None,
+    daily_spend_mid_usd_total: float,
+) -> dict | None:
+    """Build the budget-clamp subsection of forecast.json.
+
+    Returns None when daily_cap_usd is None (no Budget: in brief). When a
+    cap is set, returns a dict carrying:
+      - daily_cap_usd            (echo of brief field)
+      - daily_spend_mid_usd      (total forecast across the full pool)
+      - over_cap_ratio           (total / cap; <1.0 = fits, >1.0 = trim needed)
+      - keywords_fitting_cap[]   (priority-sorted keywords whose cumulative
+                                  daily spend stays ≤ cap — the launch list)
+      - keywords_dropped[]       (everything else by keyword name; summary)
+      - fitting_count / dropped_count
+      - cumulative_spend_mid_usd (sum across the fitting list — what to
+                                  actually budget for)
+
+    Priority: intent class (transactional > commercial > navigational >
+    informational), then signal_count desc, then score desc — keeps the
+    highest-conviction-buyer-intent keywords at the top of the cap.
+    """
+    if daily_cap_usd is None:
+        return None
+
+    # Build kw → cluster_name index so each "what fits" row carries its
+    # destination cluster for the operator.
+    kw_to_cluster: dict[str, str] = {}
+    for cluster in clusters_data.get("clusters", []) or []:
+        name = cluster.get("name", "") or ""
+        for kw_entry in cluster.get("keywords", []) or []:
+            key = (kw_entry.get("keyword") or "").lower().strip()
+            if key:
+                kw_to_cluster[key] = name
+
+    # Annotate each row with per-keyword spend; drop unbidable.
+    annotated: list[dict] = []
+    for row in ranked_enriched:
+        spend = _per_keyword_daily_spend_usd(row)
+        if spend is None or spend <= 0:
+            continue
+        kw = (row.get("keyword") or "").lower().strip()
+        annotated.append({
+            "keyword": row.get("keyword"),
+            "intent": row.get("intent", ""),
+            "score": row.get("score", 0),
+            "signal_count": row.get("signal_count", 0),
+            "match_type": row.get("match_type", "phrase"),
+            "daily_spend_mid_usd": spend,
+            "cluster": kw_to_cluster.get(kw, ""),
+        })
+
+    # Priority sort: transactional first, then commercial, then navigational,
+    # then informational; within an intent class, signal_count desc, score desc.
+    annotated.sort(
+        key=lambda r: (
+            _INTENT_PRIORITY.get(r["intent"], 99),
+            -r.get("signal_count", 0),
+            -r.get("score", 0),
+        )
+    )
+
+    # Walk in priority order; accept rows until cumulative spend would
+    # exceed cap. A row that would overshoot is dropped (we never partially
+    # bid on a keyword).
+    fitting: list[dict] = []
+    dropped: list[str] = []
+    cumulative = 0.0
+    for row in annotated:
+        if cumulative + row["daily_spend_mid_usd"] <= daily_cap_usd:
+            cumulative = round(cumulative + row["daily_spend_mid_usd"], 4)
+            fitting.append({**row, "cumulative_spend_usd": cumulative})
+        else:
+            dropped.append(row["keyword"])
+
+    over_cap_ratio = (
+        round(daily_spend_mid_usd_total / daily_cap_usd, 2)
+        if daily_cap_usd > 0 else None
+    )
+
+    return {
+        "daily_cap_usd": round(daily_cap_usd, 2),
+        "daily_spend_mid_usd": round(daily_spend_mid_usd_total, 2),
+        "over_cap_ratio": over_cap_ratio,
+        "fitting_count": len(fitting),
+        "dropped_count": len(dropped),
+        "cumulative_spend_mid_usd": round(cumulative, 2),
+        "keywords_fitting_cap": fitting,
+        "keywords_dropped": dropped,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Top-level forecast structure (FRCS-01, FRCS-05)
 # ---------------------------------------------------------------------------
 
@@ -219,6 +413,7 @@ def build_forecast(
     ranked_enriched: list[dict],
     clusters_data: dict,
     run_id: str,
+    daily_cap_usd: float | None = None,
 ) -> dict:
     """Build full forecast.json structure (FRCS-01 schema).
 
@@ -264,7 +459,15 @@ def build_forecast(
         "unjoined_keywords": total_unjoined,
     }
 
-    return {
+    # Budget clamp (FRCS-06) — only populated when brief carries `**Budget:**`.
+    budget_clamp = compute_budget_clamp(
+        ranked_enriched,
+        clusters_data,
+        daily_cap_usd=daily_cap_usd,
+        daily_spend_mid_usd_total=daily_spend_mid_sum,
+    )
+
+    out = {
         "metadata": {
             "generated_at": _utc_iso_now(),
             "run_id": run_id,
@@ -280,6 +483,9 @@ def build_forecast(
         "clusters": cluster_forecasts,
         "campaign_totals": campaign_totals,
     }
+    if budget_clamp is not None:
+        out["budget_clamp"] = budget_clamp
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -343,7 +549,15 @@ def main_with_args(argv: list[str]) -> int:
         log.error("Failed to read input file: %s", exc)
         return 2
 
-    forecast = build_forecast(ranked, clusters_data, run_id=run_dir.name)
+    # FRCS-06: read Budget: from brief.md so build_forecast can emit the
+    # budget-clamp subset. Absent line → clamp omitted, full forecast renders
+    # unchanged (backward compat).
+    daily_cap_usd = _parse_daily_budget_usd(run_dir / "brief.md")
+    forecast = build_forecast(
+        ranked, clusters_data,
+        run_id=run_dir.name,
+        daily_cap_usd=daily_cap_usd,
+    )
 
     # Atomic-ish write: write to .tmp then rename.
     out_path = run_dir / "forecast.json"
@@ -364,6 +578,13 @@ def main_with_args(argv: list[str]) -> int:
         "daily_spend_mid_usd": forecast["campaign_totals"]["daily_spend_mid_usd"],
         "unjoined_keywords": forecast["campaign_totals"]["unjoined_keywords"],
     }
+    if "budget_clamp" in forecast:
+        bc = forecast["budget_clamp"]
+        summary["budget_cap_usd"] = bc["daily_cap_usd"]
+        summary["over_cap_ratio"] = bc["over_cap_ratio"]
+        summary["fitting_count"] = bc["fitting_count"]
+        summary["dropped_count"] = bc["dropped_count"]
+        summary["cumulative_spend_mid_usd"] = bc["cumulative_spend_mid_usd"]
     print(json.dumps(summary))
     return 0
 

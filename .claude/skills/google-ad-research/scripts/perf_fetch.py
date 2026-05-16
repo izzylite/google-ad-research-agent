@@ -129,6 +129,29 @@ def fetch_search_terms(client, customer_id: str, *, days: int = 30, campaign_fil
     return out
 
 
+def fetch_customer_name(client, customer_id: str) -> str:
+    """Pull customer.descriptive_name for the queried account.
+
+    Used as a defense-in-depth signal for the negatives brand-safety guard
+    (generate_negatives.py) — the account's own brand should never be labelled
+    as a competitor-brand negative. Returns empty string on lookup failure;
+    caller treats absent name as "no signal" rather than a hard error.
+    """
+    svc = client.get_service("GoogleAdsService")
+    try:
+        for batch in svc.search_stream(
+            customer_id=customer_id,
+            query="SELECT customer.descriptive_name FROM customer",
+        ):
+            for row in batch.results:
+                name = row.customer.descriptive_name or ""
+                if name:
+                    return name
+    except Exception:
+        return ""
+    return ""
+
+
 def fetch_perf(client, customer_id: str, *, days: int = 30, campaign_filter: list[str] | None = None) -> dict:
     """Pull campaign + ad_group performance metrics."""
     svc = client.get_service("GoogleAdsService")
@@ -381,11 +404,16 @@ def main_with_args(argv: list[str]) -> int:
         log.info("Pulling campaign + ad_group perf...")
         perf = fetch_perf(client, customer_id, days=args.days, campaign_filter=campaign_filter)
         perf["customer_id"] = customer_id
+        # Customer descriptive name — defense-in-depth for negatives brand-safety
+        # guard (generate_negatives.py reads this to never label the client's own
+        # brand as competitor-brand). Empty string on lookup failure — guard
+        # degrades gracefully to brand_terms-only.
+        perf["customer_descriptive_name"] = fetch_customer_name(client, customer_id)
         (raw_dir / "google-ads-perf.json").write_text(
             json.dumps(perf, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
-        log.info(f"  → {len(perf['campaigns'])} campaigns, {len(perf['ad_groups'])} ad groups")
+        log.info(f"  → {len(perf['campaigns'])} campaigns, {len(perf['ad_groups'])} ad groups · account: {perf['customer_descriptive_name'] or '(name unavailable)'}")
 
         log.info("Pulling existing negative keywords...")
         negs = fetch_existing_negatives(client, customer_id, campaign_filter=campaign_filter)
