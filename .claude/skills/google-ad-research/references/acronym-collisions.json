@@ -1,0 +1,112 @@
+{
+  "_meta": {
+    "purpose": "Maps brief acronyms to their Google-indexed alternative meanings. SKILL.md Step 3b reads this file during brief intake — when an acronym from this dict appears in the brief's Industry / Product / Audience fields with the brief's intended meaning DIFFERENT from one or more entries here, the skill auto-suggests adding the collisions to the Exclusions list as phrase negatives.",
+    "purpose_short": "Catch invisible budget burn from same-acronym different-meaning Google query indexing.",
+    "schema_version": "v1",
+    "operator_edit_instructions": "Add new entries as you encounter acronym collisions in dogfood. Each entry: {acronym (uppercase), intended_meaning (when used in a brief in this domain), collisions (list of phrase negatives to surface), confidence (high/medium = always suggest; low = only when budget < $200/day to avoid noise)}.",
+    "case_sensitivity": "Match the acronym case-INSENSITIVELY in the brief text — operators write 'PIP' or 'pip' or 'Pip' interchangeably."
+  },
+  "PIP": {
+    "intended_meaning": "Personal Injury Protection (US auto insurance, no-fault coverage)",
+    "collisions": [
+      "personal independence payment",
+      "disability benefit",
+      "universal credit",
+      "pay in practice",
+      "picture in picture",
+      "performance improvement plan"
+    ],
+    "confidence": "high",
+    "evidence": "2026-05-16 Primary Urgent Care dogfood — operator added all 6 as phrase negatives post-launch."
+  },
+  "EMC": {
+    "intended_meaning": "Emergency Medical Condition (Florida no-fault qualifier for full PIP)",
+    "collisions": [
+      "electromagnetic compatibility",
+      "emc testing",
+      "emc engineer"
+    ],
+    "confidence": "high",
+    "evidence": "2026-05-16 Primary Urgent Care dogfood — operator added all 3 as phrase negatives post-launch."
+  },
+  "IRS": {
+    "intended_meaning": "Industry-Recognized Standard / Information Retrieval System (any technical vertical)",
+    "collisions": [
+      "irs",
+      "internal revenue service",
+      "tax",
+      "tax refund",
+      "tax filing"
+    ],
+    "confidence": "high",
+    "evidence": "2026-05-16 Primary Urgent Care dogfood — operator flagged 'irs' / 'tax' as recurring junk-traffic queries triggered by ambiguous account naming."
+  },
+  "PT": {
+    "intended_meaning": "Physical Therapy (medical vertical)",
+    "collisions": [
+      "personal trainer",
+      "part-time",
+      "pt cruiser"
+    ],
+    "confidence": "medium",
+    "evidence": "Common medical-vertical ambiguity; surface when brief Industry mentions medical/healthcare AND budget < $300/day."
+  },
+  "ER": {
+    "intended_meaning": "Emergency Room (medical vertical)",
+    "collisions": [
+      "estimated revenue",
+      "exchange rate",
+      "external relations"
+    ],
+    "confidence": "low",
+    "evidence": "Lower-frequency collision; only surface when budget is very tight (< $150/day) AND brief Audience contains 'patient' / 'medical'."
+  },
+  "OB": {
+    "intended_meaning": "Obstetrics (medical vertical)",
+    "collisions": [
+      "old bay",
+      "old black",
+      "ocean breeze"
+    ],
+    "confidence": "low",
+    "evidence": "Rare collision; only surface in tightly-budgeted medical campaigns."
+  },
+  "MVA": {
+    "intended_meaning": "Motor Vehicle Accident (medical / legal verticals)",
+    "collisions": [
+      "minimum viable audience"
+    ],
+    "confidence": "low",
+    "evidence": "Generally safe acronym in medical context — collision is niche marketing jargon."
+  },
+  "RE": {
+    "intended_meaning": "Real Estate (when brief Industry = real estate)",
+    "collisions": [
+      "regarding",
+      "religious education",
+      "reverse engineer"
+    ],
+    "confidence": "low",
+    "evidence": "Only surface when budget < $100/day; otherwise normal phrase context disambiguates."
+  },
+  "AC": {
+    "intended_meaning": "Air Conditioning (HVAC vertical)",
+    "collisions": [
+      "alternating current",
+      "academic credit",
+      "anti-corruption"
+    ],
+    "confidence": "medium",
+    "evidence": "HVAC vertical specific; AC repair queries get polluted by electrical-engineering content."
+  },
+  "ED": {
+    "intended_meaning": "Emergency Department (medical) OR Erectile Dysfunction (DTC health) — DEPENDS on Audience context",
+    "collisions": [
+      "education",
+      "ed sheeran",
+      "executive director"
+    ],
+    "confidence": "medium",
+    "evidence": "Always surface when brief contains 'ED' — operator must confirm which meaning + add the other set as negatives."
+  }
+}

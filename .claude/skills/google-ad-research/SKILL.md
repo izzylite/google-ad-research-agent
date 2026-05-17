@@ -123,6 +123,23 @@ When triggered, **derive an Exclusions list** by combining:
 - Default audience exclusions inferred from Audience semantics (e.g., adult MVA brief → add `pediatric`)
 - Default category exclusions inferred from medical vertical (when off-product) → `veterinary`, `dental`, `mental health`, `psychiatric`, `geriatric`
 
+**EXCL-03: Morphological-form expansion.** Substring matching catches stem variants only when the stem matches. `dental` does NOT catch `dentist`. So every derived exclusion gets expanded into its noun + adjective + practitioner-noun + plural forms before being written to the brief. Use this expansion map for the medical vertical (other verticals use their own — extend the dictionary in `references/morphological-forms.json` when you hit a new vertical):
+
+| Exclusion you derive | Auto-expand to |
+|---|---|
+| `dental` | `dental, dentist, dentists, dentistry` |
+| `psychiatric` | `psychiatric, psychiatrist, psychiatrists, psychiatry` |
+| `geriatric` | `geriatric, geriatrician, geriatricians, geriatrics, elderly care` |
+| `pediatric` | `pediatric, pediatrician, pediatricians, pediatrics, peds, kids urgent care` |
+| `chiropract` | `chiropractor, chiropractors, chiropractic` (use stem `chiropract` — substring covers all) |
+| `orthopedic` | `orthopedic, orthopaedic, orthopedist, orthopedists, orthopaedics, ortho ` (trailing space to avoid matching "north") |
+| `physical therapy` | `physical therapy, physical therapist, physical therapists, physiotherapy, physiotherapist, pt clinic` |
+| `pain management` | `pain management, pain clinic, pain doctor, pain specialist` |
+| `veterinary` | `veterinary, veterinarian, vet clinic, pet care` |
+| `mental health` | `mental health, mental healthcare, behavioral health, behavioral healthcare` |
+
+Rule of thumb: if a specialty has a `-ic`/`-ical` adjective AND a `-ist`/`-ian` practitioner noun, both forms (plus plural) go in. For practitioner brands that may share generic words (`ortho` collides with `north`, `orthorexia`), add a trailing space or use the longer adjective form (`orthopedic ` not `ortho`).
+
 Then ask the operator to confirm or edit the list, ONCE:
 
 > "I'm going to drop any keyword containing these phrases from the research pool entirely (positives AND negatives). The exclusions will also be auto-included as Strong wrong-audience / wrong-product negatives so they're blocked at the campaign level too.
@@ -145,7 +162,24 @@ Apply the operator's reply, then write the final list to the brief's `**Exclusio
 
 **Why this matters.** The 2026-05-15 + 2026-05-16 dogfood runs both leaked off-service-line keywords (chiropractor, physical therapy, pain management) and off-audience keywords (pediatric) into positives despite Product/Audience prose explicitly excluding them. The LLM clustering / negative-gen pass reads Product as guidance, not as a contract — a deterministic substring drop at `merge_signals.py` is the contract. Operators were having to scrub `positives.csv` by hand before every Editor import.
 
-**Do not advance to Step 4 until Exclusions is set (or operator explicitly chose `skip`).**
+**EXCL-04: Acronym-collision auto-detection.** Read `references/acronym-collisions.json` and scan the brief's Industry / Product / Audience fields for any acronym (uppercase or lowercase) that matches a key in the dictionary. For each match:
+
+1. Check the operator's `Budget:` field. If `confidence: high`, always surface. If `confidence: medium`, surface when Budget is unset OR < $300/day. If `confidence: low`, surface only when Budget < $150/day.
+2. Show the operator the intended meaning (from the dictionary) AND the collision list, then ask:
+
+   > "Brief mentions `{acronym}`. In your domain that almost certainly means `{intended_meaning}`. Google also indexes `{acronym}` as several other meanings that can pollute search queries on this budget tier. Add the collision phrases to Exclusions?
+   >
+   > Suggested additions: `{collisions_list}`
+   >
+   > Reply `ok` / `edit: <list>` / `add: <subset>` / `skip`."
+
+3. Apply the operator's reply — append confirmed collisions to the Exclusions list before sealing the brief. Each becomes a Strong wrong-audience or used-refurb-wholesale negative via EXCL-02.
+
+**Operator-edits-only-the-dictionary contract.** The collision dictionary at `references/acronym-collisions.json` is operator-editable data. When you discover a new acronym collision during dogfood (e.g., a new vertical's "XYZ" gets polluted by "X Y Z" indexing), add an entry to the JSON file — no code change, no SKILL.md change. The skill picks it up on the next run.
+
+**Why EXCL-04 matters.** 2026-05-16 Primary Urgent Care dogfood: operator manually added 10 acronym-collision negatives (`personal independence payment`, `disability benefit`, `universal credit`, `electromagnetic compatibility`, `emc testing`, `emc engineer`, `irs`, `rental`, `tax`, `real estate`) post-launch because PIP and EMC indexes are wider than the brief's intended meaning. Surfacing these at brief intake means the operator confirms once instead of discovering them in search-term reports after spend.
+
+**Do not advance to Step 4 until Exclusions is set (or operator explicitly chose `skip`) AND any matched acronym collisions have been resolved.**
 
 ### Step 4: Render the brief and save it
 

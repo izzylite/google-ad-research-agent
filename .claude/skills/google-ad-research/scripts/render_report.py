@@ -1170,6 +1170,54 @@ def render_forecast_section(forecast: dict | None) -> str:
                 "for the complete list.\n\n"
             )
 
+    # FRCS-07: "Deferred Brand Conquest" subsection — only renders when the
+    # budget-clamp identified competitor brand-navigational keywords that
+    # should NOT enter the launch list at this budget tier. Surfaces them
+    # as Consider-negative candidates with the operator's reasoning so they
+    # can be flipped to negatives in the Editor or re-enabled when budget
+    # grows. Skip when brand_conquest_override is set (operator opted in).
+    if (
+        clamp
+        and clamp.get("brand_conquest_active")
+        and clamp.get("keywords_deferred_brand_conquest")
+    ):
+        deferred = clamp["keywords_deferred_brand_conquest"]
+        threshold = clamp.get("brand_conquest_threshold_usd", 200.0)
+        deferred_spend = clamp.get("deferred_brand_conquest_spend_usd", 0.0)
+        parts.append("\n### Deferred Brand Conquest (Consider as Negatives)\n\n")
+        parts.append(
+            f"_At your **${clamp['daily_cap_usd']:.2f}/day** cap (below the "
+            f"**${threshold:.2f}/day** brand-conquest threshold), the skill "
+            f"deferred **{len(deferred)} competitor brand-navigational "
+            f"keywords** from the launch list — they would have consumed "
+            f"**${deferred_spend:.2f}/day** ({deferred_spend / clamp['daily_cap_usd'] * 100:.0f}% "
+            f"of your budget) on conquest attempts at 2-3x normal CPC._\n\n"
+            f"**Recommended action: add these as Considered-tier negatives "
+            f"in your campaign instead.** Bidding competitor brands at this "
+            f"budget burns money against advertisers with 8+ Quality Score "
+            f"on their own brand, with no Smart Bidding data yet to know if "
+            f"conquest CPL is even visible.\n\n"
+            f"**To re-enable** (e.g., when budget grows past "
+            f"${threshold:.2f}/day): add `Brand conquest: yes` to the brief "
+            f"and re-run forecast — the deferred keywords will compete for "
+            f"the launch list like any other navigational keyword.\n\n"
+        )
+        rows = []
+        for r in deferred:
+            rows.append([
+                escape_md_cell(r.get("keyword", "")),
+                escape_md_cell(r.get("cluster", "")),
+                f"${r.get('daily_spend_mid_usd', 0):.2f}",
+                r.get("score", 0),
+            ])
+        parts.append(tabulate(
+            rows,
+            headers=["Keyword (→ Add as Negative)", "From Cluster",
+                     "Would Have Spent", "Score"],
+            tablefmt="github",
+        ))
+        parts.append("\n\n")
+
     # "How this is calculated" — FRCS-05 methodology mirrors module constants
     method = forecast.get("methodology", {}) or {}
     ctrs = method.get("intent_ctrs", {}) or {}
@@ -2181,6 +2229,36 @@ function renderForecast() {{
         <p style="font-size:12px;color:#888">Full list: <code>forecast.json → budget_clamp.keywords_dropped[]</code></p>
       </details>`;
     }}
+  }}
+
+  // FRCS-07: Deferred Brand Conquest subsection — only renders when the
+  // budget-clamp identified competitor brand-navigational keywords that were
+  // deferred from the launch list at this budget tier. Operator sees them as
+  // Consider-negative candidates instead of accidentally bidding competitor
+  // brands without Smart Bidding data.
+  if (clamp && clamp.brand_conquest_active && clamp.keywords_deferred_brand_conquest && clamp.keywords_deferred_brand_conquest.length) {{
+    const deferred = clamp.keywords_deferred_brand_conquest;
+    const threshold = clamp.brand_conquest_threshold_usd || 200;
+    const deferredSpend = clamp.deferred_brand_conquest_spend_usd || 0;
+    const pctOfBudget = clamp.daily_cap_usd > 0 ? Math.round(deferredSpend / clamp.daily_cap_usd * 100) : 0;
+    html += `<h3 style="margin-top:20px">Deferred Brand Conquest <span style="font-weight:normal;color:#666;font-size:14px">(Consider as Negatives)</span></h3>`;
+    html += `<div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:12px 16px;margin-bottom:12px;border-radius:4px;font-size:13px;line-height:1.5">
+      At your <strong>$${{clamp.daily_cap_usd.toFixed(2)}}/day</strong> cap (below the <strong>$${{threshold.toFixed(2)}}/day</strong> brand-conquest threshold), the skill deferred <strong>${{deferred.length}} competitor brand-navigational keywords</strong> from the launch list — they would have consumed <strong>$${{deferredSpend.toFixed(2)}}/day (${{pctOfBudget}}% of your budget)</strong> on conquest attempts at 2-3x normal CPC.
+      <br><br>
+      <strong>Recommended action:</strong> add these as Considered-tier negatives in your campaign instead. Bidding competitor brands at this budget burns money against advertisers with 8+ Quality Score on their own brand, with no Smart Bidding data yet to know if conquest CPL is even visible.
+      <br><br>
+      <strong>To re-enable</strong> (e.g., when budget grows past $${{threshold.toFixed(2)}}/day): add <code>Brand conquest: yes</code> to the brief and re-run forecast.
+    </div>`;
+    html += `<table><thead><tr><th>Keyword (→ Add as Negative)</th><th>From Cluster</th><th data-sort="number">Would Have Spent</th><th data-sort="number">Score</th></tr></thead><tbody>`;
+    for (const r of deferred) {{
+      html += `<tr>
+        <td><code>${{htmlEscape(r.keyword||"")}}</code></td>
+        <td>${{htmlEscape(r.cluster||"")}}</td>
+        <td>$${{(r.daily_spend_mid_usd||0).toFixed(2)}}</td>
+        <td>${{r.score||0}}</td>
+      </tr>`;
+    }}
+    html += `</tbody></table>`;
   }}
 
   const method = forecast.methodology || {{}};

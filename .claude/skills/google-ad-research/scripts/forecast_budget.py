@@ -223,6 +223,128 @@ _INTENT_PRIORITY: dict[str, int] = {
     "informational": 3,
 }
 
+# FRCS-07: budget tier below which competitor brand-navigational keywords
+# auto-defer from the launch list. Bidding competitor brand keywords costs
+# 2-3x normal CPC (we're forcing into auctions where the competitor has 8+
+# Quality Score on their own brand) AND requires Smart Bidding data to know
+# if the conquest CPL is even visible. Below this threshold neither is true,
+# so brand-conquest is wasted spend. Operator override: brief field
+# `Brand conquest: yes` bypasses the deferral.
+_BRAND_CONQUEST_BUDGET_THRESHOLD_USD: float = 200.0
+
+
+def _parse_brand_terms(brief_path: Path) -> list[str]:
+    """Extract normalised brand-term phrases from `**Brand terms:**` in brief.md.
+
+    Returns a list of lowercased, single-space-normalised phrases used to
+    distinguish operator's-own brand from competitor brands inside
+    *_brand_navigational clusters. Mirrors generate_negatives._read_brand_
+    phrases_from_brief — see that function for the rationale on minimum
+    phrase length (3 chars) and substring-vs-token-bag matching.
+    """
+    if not brief_path.exists():
+        return []
+    try:
+        text = brief_path.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    m = re.search(
+        r"^\s*-?\s*\*\*Brand terms:\*\*\s*(.+)$",
+        text, re.MULTILINE | re.IGNORECASE,
+    )
+    if not m:
+        return []
+    phrases: list[str] = []
+    for chunk in m.group(1).split(","):
+        norm = re.sub(r"\s+", " ", chunk.lower()).strip()
+        norm = re.sub(r"[^\w\s]", " ", norm)
+        norm = re.sub(r"\s+", " ", norm).strip()
+        if norm and len(norm) >= 3:
+            phrases.append(norm)
+    return phrases
+
+
+def _parse_brand_conquest_override(brief_path: Path) -> bool:
+    """Read optional brief field `**Brand conquest:**` — returns True when
+    operator explicitly opts INTO competitor-brand conquest at low budgets.
+    Default False (deferral applies).
+    """
+    if not brief_path.exists():
+        return False
+    try:
+        text = brief_path.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    m = re.search(
+        r"^\s*-?\s*\*\*Brand conquest:\*\*\s*(\S+)",
+        text, re.MULTILINE | re.IGNORECASE,
+    )
+    if not m:
+        return False
+    return m.group(1).strip().lower() in {"yes", "true", "y", "1", "on", "enabled"}
+
+
+def _is_competitor_brand_navigational(
+    kw_norm: str, cluster_name: str, brand_phrases: list[str]
+) -> bool:
+    """True iff the keyword is in a *_brand_navigational cluster AND its
+    normalised text does NOT match any operator brand phrase (i.e., it's
+    a COMPETITOR brand, not the client's own).
+
+    Detection layers (in priority order):
+
+      1. Cluster-name signal — Phase 4 clustering derives `theme_slug`
+         from the most-frequent meaningful words across the cluster's
+         keywords. So `primary_uc_brand_navigational` was named after
+         tokens that appeared throughout — meaning the CLUSTER ITSELF is
+         the operator's brand cluster (don't defer any of it). Conversely,
+         `competitor_brand_navigational` was explicitly tagged competitor
+         by the LLM (defer all of it). Cluster name is the strongest signal.
+
+      2. Per-keyword brand-phrase substring fallback — covers cases where
+         the cluster name doesn't carry a brand signal but individual
+         keywords might still match the operator's brand variants
+         (e.g., a heterogeneous navigational cluster).
+
+    Without this two-layer detection, keywords like
+    `primary and urgent care centers` get false-positive deferred from
+    own-brand clusters because the "and" inside the phrase breaks naive
+    substring matching against the brand `primary urgent care centers`.
+    """
+    cname = (cluster_name or "").lower()
+    if "brand_navigational" not in cname and "_brand_" not in cname:
+        return False
+
+    # Layer 1 — cluster-name signal.
+    # Explicit "competitor_" prefix → entire cluster is competitor brands.
+    if "competitor" in cname:
+        return True
+    # Cluster name carries operator's brand tokens → own-brand cluster.
+    # Token overlap check: split cluster slug on underscores, split each
+    # brand phrase on whitespace, intersect. Any single shared token is a
+    # strong signal because cluster slugs are short and brand-tokens are
+    # operator-curated (no noise words).
+    if brand_phrases:
+        brand_tokens: set[str] = set()
+        for phrase in brand_phrases:
+            for tok in phrase.split():
+                if len(tok) >= 3:
+                    brand_tokens.add(tok)
+        cluster_tokens = {t for t in cname.split("_") if len(t) >= 3}
+        if brand_tokens & cluster_tokens:
+            return False
+
+    # Layer 2 — per-keyword brand-phrase substring fallback.
+    if not brand_phrases:
+        # No brand phrases set — can't distinguish own vs competitor brand.
+        # Conservative: treat as competitor (worse case is operator flips via
+        # Brand conquest: yes; that's reversible).
+        return True
+    for phrase in brand_phrases:
+        if phrase in kw_norm or (len(kw_norm) >= 3 and kw_norm in phrase):
+            return False
+    return True
+
 
 def _parse_daily_budget_usd(brief_path: Path) -> float | None:
     """Extract a daily-budget cap from `**Budget:**` in brief.md.
@@ -311,6 +433,8 @@ def compute_budget_clamp(
     clusters_data: dict,
     daily_cap_usd: float | None,
     daily_spend_mid_usd_total: float,
+    brand_phrases: list[str] | None = None,
+    brand_conquest_override: bool = False,
 ) -> dict | None:
     """Build the budget-clamp subsection of forecast.json.
 
@@ -322,6 +446,13 @@ def compute_budget_clamp(
       - keywords_fitting_cap[]   (priority-sorted keywords whose cumulative
                                   daily spend stays ≤ cap — the launch list)
       - keywords_dropped[]       (everything else by keyword name; summary)
+      - keywords_deferred_brand_conquest[]  (FRCS-07: competitor brand-
+                                  navigational keywords deferred at low
+                                  budget tiers; surfaced as Consider negative
+                                  candidates in the report)
+      - brand_conquest_threshold_usd  (FRCS-07: the threshold that triggered
+                                  deferral, echoed for operator visibility)
+      - brand_conquest_active    (FRCS-07: bool — was deferral active?)
       - fitting_count / dropped_count
       - cumulative_spend_mid_usd (sum across the fitting list — what to
                                   actually budget for)
@@ -332,6 +463,17 @@ def compute_budget_clamp(
     """
     if daily_cap_usd is None:
         return None
+
+    brand_phrases = brand_phrases or []
+
+    # FRCS-07: brand-conquest deferral activates only at constrained budgets
+    # (default < $200/day). When operator explicitly opts in via
+    # `Brand conquest: yes`, override and let competitor brand keywords compete
+    # for the launch list like any other navigational keyword.
+    brand_conquest_active = (
+        daily_cap_usd < _BRAND_CONQUEST_BUDGET_THRESHOLD_USD
+        and not brand_conquest_override
+    )
 
     # Build kw → cluster_name index so each "what fits" row carries its
     # destination cluster for the operator.
@@ -344,21 +486,43 @@ def compute_budget_clamp(
                 kw_to_cluster[key] = name
 
     # Annotate each row with per-keyword spend; drop unbidable.
+    # FRCS-07: also split out competitor brand-navigational keywords when
+    # deferral is active — they go into a separate deferred list, not the
+    # priority-sorted fitting candidate pool.
     annotated: list[dict] = []
+    deferred_brand_conquest: list[dict] = []
     for row in ranked_enriched:
         spend = _per_keyword_daily_spend_usd(row)
         if spend is None or spend <= 0:
             continue
         kw = (row.get("keyword") or "").lower().strip()
-        annotated.append({
+        cluster_name = kw_to_cluster.get(kw, "")
+        annotated_row = {
             "keyword": row.get("keyword"),
             "intent": row.get("intent", ""),
             "score": row.get("score", 0),
             "signal_count": row.get("signal_count", 0),
             "match_type": row.get("match_type", "phrase"),
             "daily_spend_mid_usd": spend,
-            "cluster": kw_to_cluster.get(kw, ""),
-        })
+            "cluster": cluster_name,
+        }
+        if brand_conquest_active and _is_competitor_brand_navigational(
+            kw, cluster_name, brand_phrases
+        ):
+            deferred_brand_conquest.append({
+                **annotated_row,
+                "deferral_reason": (
+                    f"competitor brand conquest costs 2-3x normal CPC "
+                    f"(competitor has 8+ Quality Score on their own brand); "
+                    f"at ${daily_cap_usd:.2f}/day cap without proven CPL data, "
+                    f"this would consume budget that should fund transactional "
+                    f"buyer-intent keywords. Revisit at "
+                    f"${_BRAND_CONQUEST_BUDGET_THRESHOLD_USD:.2f}/day+ "
+                    f"or override with `Brand conquest: yes` in the brief."
+                ),
+            })
+        else:
+            annotated.append(annotated_row)
 
     # Priority sort: transactional first, then commercial, then navigational,
     # then informational; within an intent class, signal_count desc, score desc.
@@ -388,6 +552,10 @@ def compute_budget_clamp(
         if daily_cap_usd > 0 else None
     )
 
+    deferred_spend_usd = round(
+        sum(r["daily_spend_mid_usd"] for r in deferred_brand_conquest), 2
+    )
+
     return {
         "daily_cap_usd": round(daily_cap_usd, 2),
         "daily_spend_mid_usd": round(daily_spend_mid_usd_total, 2),
@@ -397,6 +565,13 @@ def compute_budget_clamp(
         "cumulative_spend_mid_usd": round(cumulative, 2),
         "keywords_fitting_cap": fitting,
         "keywords_dropped": dropped,
+        # FRCS-07 — brand-conquest deferral telemetry
+        "brand_conquest_active": brand_conquest_active,
+        "brand_conquest_threshold_usd": _BRAND_CONQUEST_BUDGET_THRESHOLD_USD,
+        "brand_conquest_override": brand_conquest_override,
+        "keywords_deferred_brand_conquest": deferred_brand_conquest,
+        "deferred_brand_conquest_count": len(deferred_brand_conquest),
+        "deferred_brand_conquest_spend_usd": deferred_spend_usd,
     }
 
 
@@ -414,6 +589,8 @@ def build_forecast(
     clusters_data: dict,
     run_id: str,
     daily_cap_usd: float | None = None,
+    brand_phrases: list[str] | None = None,
+    brand_conquest_override: bool = False,
 ) -> dict:
     """Build full forecast.json structure (FRCS-01 schema).
 
@@ -459,12 +636,16 @@ def build_forecast(
         "unjoined_keywords": total_unjoined,
     }
 
-    # Budget clamp (FRCS-06) — only populated when brief carries `**Budget:**`.
+    # Budget clamp (FRCS-06 + FRCS-07) — only populated when brief carries
+    # `**Budget:**`. Brand-conquest deferral (FRCS-07) requires brand_phrases
+    # to distinguish own-brand vs competitor-brand navigational keywords.
     budget_clamp = compute_budget_clamp(
         ranked_enriched,
         clusters_data,
         daily_cap_usd=daily_cap_usd,
         daily_spend_mid_usd_total=daily_spend_mid_sum,
+        brand_phrases=brand_phrases or [],
+        brand_conquest_override=brand_conquest_override,
     )
 
     out = {
@@ -552,11 +733,17 @@ def main_with_args(argv: list[str]) -> int:
     # FRCS-06: read Budget: from brief.md so build_forecast can emit the
     # budget-clamp subset. Absent line → clamp omitted, full forecast renders
     # unchanged (backward compat).
-    daily_cap_usd = _parse_daily_budget_usd(run_dir / "brief.md")
+    # FRCS-07: read Brand terms + Brand conquest override from same brief.
+    brief_path = run_dir / "brief.md"
+    daily_cap_usd = _parse_daily_budget_usd(brief_path)
+    brand_phrases = _parse_brand_terms(brief_path)
+    brand_conquest_override = _parse_brand_conquest_override(brief_path)
     forecast = build_forecast(
         ranked, clusters_data,
         run_id=run_dir.name,
         daily_cap_usd=daily_cap_usd,
+        brand_phrases=brand_phrases,
+        brand_conquest_override=brand_conquest_override,
     )
 
     # Atomic-ish write: write to .tmp then rename.
@@ -585,6 +772,14 @@ def main_with_args(argv: list[str]) -> int:
         summary["fitting_count"] = bc["fitting_count"]
         summary["dropped_count"] = bc["dropped_count"]
         summary["cumulative_spend_mid_usd"] = bc["cumulative_spend_mid_usd"]
+        # FRCS-07 telemetry
+        summary["brand_conquest_active"] = bc.get("brand_conquest_active", False)
+        summary["deferred_brand_conquest_count"] = bc.get(
+            "deferred_brand_conquest_count", 0
+        )
+        summary["deferred_brand_conquest_spend_usd"] = bc.get(
+            "deferred_brand_conquest_spend_usd", 0.0
+        )
     print(json.dumps(summary))
     return 0
 
